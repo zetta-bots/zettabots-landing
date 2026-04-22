@@ -9,6 +9,8 @@ export default async function handler(req, res) {
   const airtableToken = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID || 'appQkUKRhf7rKotbT';
 
+  const table = 'tblu2DjzxbgZ84PL6'; // Tabela de Clientes
+
   try {
     const fetchOptions = { headers: { 'apikey': key, 'Content-Type': 'application/json' }, timeout: 8000 };
 
@@ -73,17 +75,27 @@ export default async function handler(req, res) {
         }
 
       case 'get-finance':
-        return res.status(200).json({
-          success: true,
-          plan: 'ZettaBots Premium (Anual)',
-          status: 'Ativo',
-          nextBilling: '21/05/2026',
-          value: 'R$ 1.490,00',
-          invoices: [
-            { id: 'INV-8821', date: '21/04/2026', value: 'R$ 1.490,00', status: 'Pago' },
-            { id: 'INV-7712', date: '21/04/2025', value: 'R$ 1.490,00', status: 'Pago' }
-          ]
-        });
+        try {
+          const { email } = req.body;
+          const airtableRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?filterByFormula={email}='${email}'`, {
+            headers: { 'Authorization': `Bearer ${airtableToken}` }
+          });
+          const airtableData = await airtableRes.json();
+          const user = airtableData.records?.[0]?.fields || {};
+
+          return res.status(200).json({
+            success: true,
+            plan: user.plan || 'ZettaBots Basic (Trial)',
+            status: user.status === 'pago' ? 'Ativo' : (user.status || 'Trial'),
+            nextBilling: user.expiryDate ? new Date(user.expiryDate).toLocaleDateString('pt-BR') : 'A definir',
+            value: user.plan === 'Premium' ? 'R$ 1.490,00' : 'R$ 0,00',
+            invoices: [
+              { id: 'INV-TEMP', date: 'Hoje', value: user.plan === 'Premium' ? 'R$ 1.490,00' : 'R$ 0,00', status: user.status === 'pago' ? 'Pago' : 'Pendente' }
+            ]
+          });
+        } catch (e) {
+          return res.status(500).json({ error: 'Erro ao buscar dados financeiros' });
+        }
 
       case 'get-chats':
         try {

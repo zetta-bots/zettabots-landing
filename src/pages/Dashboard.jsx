@@ -22,8 +22,15 @@ export default function Dashboard() {
   const [notificationEmail, setNotificationEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [toasts, setToasts] = useState([])
   const [showSubModal, setShowSubModal] = useState(false)
   const navigate = useNavigate()
+
+  const showToast = (message, type = 'info') => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
+  }
 
   useEffect(() => {
     const savedSession = localStorage.getItem('zb_session')
@@ -82,7 +89,7 @@ export default function Dashboard() {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-finance', instanceName })
+        body: JSON.stringify({ action: 'get-finance', instanceName, email: session.email })
       })
       const data = await res.json()
       if (data.success) setFinanceData(data)
@@ -167,9 +174,9 @@ export default function Dashboard() {
       const updated = { ...session, systemPrompt: fullPrompt }
       localStorage.setItem('zb_session', JSON.stringify(updated))
       setSession(updated)
-      alert('🚀 Inteligência da Sarah atualizada com sucesso!')
+      showToast('🚀 Inteligência da Sarah atualizada com sucesso!', 'success')
     } catch (err) {
-      alert('⚠️ Erro ao salvar prompt')
+      showToast('⚠️ Erro ao salvar prompt', 'error')
     } finally { setSaving(false) }
   }
 
@@ -184,9 +191,9 @@ export default function Dashboard() {
       const updated = { ...session, webhookUrl, notificationEmail }
       localStorage.setItem('zb_session', JSON.stringify(updated))
       setSession(updated)
-      alert('🔌 Integrações salvas!')
+      showToast('🔌 Integrações salvas!', 'success')
     } catch (err) {
-      alert('⚠️ Erro ao salvar integrações')
+      showToast('⚠️ Erro ao salvar integrações', 'error')
     } finally { setSaving(false) }
   }
 
@@ -420,11 +427,22 @@ export default function Dashboard() {
                 <p style={{fontSize: '0.8rem', color: '#a1a1aa'}}>Próximo Vencimento</p>
                 <p style={{fontSize: '1.1rem'}}>{session.expiryDate || '21/05/2026'}</p>
               </div>
-              <button className="btn-primary" onClick={() => alert('Encaminhando para checkout...')}>Fazer Upgrade Business</button>
+              <button className="btn-primary" onClick={() => showToast('Encaminhando para checkout...', 'info')}>Fazer Upgrade Business</button>
             </div>
           </div>
         </div>
       )}
+
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast ${t.type}`}>
+            {t.type === 'success' && '✅'}
+            {t.type === 'error' && '❌'}
+            {t.type === 'info' && 'ℹ️'}
+            {t.message}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
