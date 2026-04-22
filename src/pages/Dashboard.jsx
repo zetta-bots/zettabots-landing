@@ -391,16 +391,17 @@ export default function Dashboard() {
 
         {activeTab === 'conexao' && (
           <div className="tab-panel">
-            <div className="glass-card" style={{textAlign: 'center'}}>
-              <h3>Conexão WhatsApp</h3>
-              <div style={{background: 'white', padding: '1rem', borderRadius: '15px', display: 'inline-block', marginTop: '1.5rem'}}>
-                {qrStatus === 'CONNECTED' ? <div style={{width: '200px', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontSize: '5rem'}}>✅</div> : 
-                 qrCode ? <img src={qrCode} alt="QR" style={{width: '200px', height: '200px'}} /> : <div className="spinner"></div>}
+            <div className="glass-card" style={{textAlign: 'center', padding: '3rem'}}>
+              <h3 style={{marginBottom: '2rem'}}>Conexão WhatsApp</h3>
+              <div style={{background: 'white', padding: '1.5rem', borderRadius: '24px', display: 'inline-block', boxShadow: '0 10px 40px rgba(0,0,0,0.3)'}}>
+                {qrStatus === 'CONNECTED' ? <div style={{width: '240px', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', fontSize: '6rem'}}>✅</div> : 
+                 qrCode ? <img src={qrCode} alt="QR" style={{width: '240px', height: '240px'}} /> : <div className="spinner" style={{width: '60px', height: '60px'}}></div>}
               </div>
-              <div style={{marginTop: '1.5rem'}}>
+              <div style={{marginTop: '2.5rem', display: 'flex', justifyContent: 'center', gap: '15px'}}>
                 <button onClick={() => fetchQrCode(selectedInstance)} className="btn-secondary">Atualizar Status</button>
-                <button onClick={() => alert('Recurso em desenvolvimento: Reset de Instância')} style={{marginLeft: '10px', background: '#ef4444', color: 'white', border: 'none', padding: '0.8rem 1.5rem', borderRadius: '10px', cursor: 'pointer'}}>Resetar WhatsApp</button>
+                <button onClick={() => alert('Recurso em desenvolvimento: Reset de Instância')} className="btn-danger">Resetar WhatsApp</button>
               </div>
+              <p style={{marginTop: '2rem', color: '#a1a1aa', fontSize: '0.85rem'}}>Aponte o WhatsApp para o QR Code acima para conectar sua instância.</p>
             </div>
           </div>
         )}
