@@ -17,20 +17,30 @@ export default async function handler(req, res) {
   
   const EVOLUTION_URL = (process.env.EVOLUTION_URL || 'https://seriousokapi-evolution.cloudfy.live').replace(/\/$/, '')
   const EVOLUTION_APIKEY = process.env.EVOLUTION_APIKEY || '1V1stsMi2TBi2qNY4sk6Ze74Gcv6g2Pk'
+  const MASTER_INSTANCE = process.env.MASTER_INSTANCE || 'ZettaBots'
 
   try {
     const cleanPhone = phone.replace(/\D/g, '')
     const phoneWithout55 = cleanPhone.startsWith('55') ? cleanPhone.substring(2) : cleanPhone
     const phoneWith55 = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
-    const filter = `OR(SEARCH('${phoneWithout55}', {adminPhone}), SEARCH('${phoneWithout55}', {instanceName}))`
+    console.log(`[AUTH] Buscando: ${phoneWithout55} | ${phoneWith55}`)
+
+    // Busca ultra-flexível em múltiplas colunas possíveis
+    const filter = `OR(
+      SEARCH('${phoneWithout55}', {adminPhone}), 
+      SEARCH('${phoneWith55}', {adminPhone}),
+      SEARCH('${phoneWithout55}', {instanceName}),
+      SEARCH('${phoneWithout55}', {WhatsApp})
+    )`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     
     const airtableRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } })
     const data = await airtableRes.json()
     
     if (!data.records || data.records.length === 0) {
-      return res.status(404).json({ error: 'Número não cadastrado.' })
+      console.log(`[AUTH] Número não encontrado no Airtable: ${phone}`)
+      return res.status(404).json({ error: 'Número não encontrado. Verifique se você já é cliente ZettaBots.' })
     }
 
     const record = data.records[0]
@@ -46,7 +56,7 @@ export default async function handler(req, res) {
     // MENSAGEM MESTRE: Enviada pela ZettaBots (Autoridade)
     const masterMessage = `🔐 *CÓDIGO ZETTABOTS:* ${code}\n\nEste é o seu acesso seguro ao painel.`
 
-    await fetch(`${EVOLUTION_URL}/message/sendText/ZettaBots`, {
+    await fetch(`${EVOLUTION_URL}/message/sendText/${MASTER_INSTANCE}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_APIKEY },
       body: JSON.stringify({

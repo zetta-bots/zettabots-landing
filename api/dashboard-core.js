@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   const url = (process.env.EVOLUTION_URL || 'https://seriousokapi-evolution.cloudfy.live').replace(/\/$/, '');
   const key = process.env.EVOLUTION_APIKEY || '1V1stsMi2TBi2qNY4sk6Ze74Gcv6g2Pk';
-  const airtableToken = process.env.AIRTABLE_TOKEN;
+  const airtableToken = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN;
   const baseId = process.env.AIRTABLE_BASE_ID || 'appQkUKRhf7rKotbT';
 
   try {
