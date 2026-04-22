@@ -20,19 +20,23 @@ export default async function handler(req, res) {
     if (!fetchRes.ok) throw new Error('Falha ao conectar com Evolution')
     
     const data = await fetchRes.json()
-    const instance = data.find(i => i.instance.instanceName === instanceName)
+    const item = Array.isArray(data) ? data.find(i => i.instance?.instanceName === instanceName) : data
 
-    if (!instance) {
+    if (!item) {
       return res.status(404).json({ error: 'Instância não encontrada' })
     }
 
-    // Retorna dados que o usuário viu no painel da Evolution
+    const counts = item._count || {}
+
+    // Retorna dados estatísticos reais
     return res.status(200).json({
       success: true,
-      owner: instance.instance.owner,
-      profileName: instance.instance.profileName,
-      profilePicture: instance.instance.profilePicture,
-      status: instance.instance.status
+      stats: {
+        contacts: counts.contacts || 0,
+        chats: counts.chats || 0,
+        messages: counts.messages || 0
+      },
+      status: item.instance?.status || 'disconnected'
     })
 
   } catch (error) {

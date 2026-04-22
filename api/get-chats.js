@@ -26,15 +26,37 @@ export default async function handler(req, res) {
     
     const data = await fetchRes.json()
     
-    // Suporte para diferentes formatos de retorno da Evolution
-    const rawChats = Array.isArray(data) ? data : (data.chats || [])
+    // Suporte robusto para Evolution API v2
+    const rawChats = Array.isArray(data) ? data : (data.chats || data.data || [])
 
-    const chats = rawChats.slice(0, 10).map(chat => ({
-      user: chat.name || chat.id?.split('@')[0] || 'Desconhecido',
-      lastMsg: chat.message || 'Conversa iniciada',
-      time: chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
-      phone: chat.id?.split('@')[0] || ''
-    }))
+    const chats = rawChats.slice(0, 20).map(chat => {
+      // Extração inteligente de Mensagem
+      const msgData = chat.lastMessage?.message || chat.message || {}
+      let lastMsg = 'Conversa ativa'
+      
+      if (typeof msgData === 'string') {
+        lastMsg = msgData
+      } else {
+        lastMsg = msgData.conversation || 
+                  msgData.extendedTextMessage?.text || 
+                  msgData.imageMessage?.caption ||
+                  (msgData.audioMessage ? '🎤 Áudio' : 
+                  (msgData.imageMessage ? '📷 Imagem' : 
+                  (msgData.videoMessage ? '🎥 Vídeo' : 'Conversa ativa')))
+      }
+
+      const id = chat.id || chat.remoteJid || ''
+      const phone = id.split('@')[0]
+
+      return {
+        id: id,
+        remoteJid: id,
+        user: chat.name || chat.pushName || (phone.length > 5 ? phone : 'Cliente WhatsApp'),
+        lastMsg: lastMsg.substring(0, 60),
+        time: chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+        phone: phone
+      }
+    })
 
     return res.status(200).json({ success: true, chats })
 

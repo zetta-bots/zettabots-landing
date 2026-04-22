@@ -65,8 +65,11 @@ export default function Dashboard() {
         body: JSON.stringify({ instanceName })
       })
       const data = await res.json()
-      if (data.success && data.stats) {
-        setStats(data.stats)
+      if (data.success) {
+        setStats(data.stats || { contacts: 0, chats: 0, messages: 0 })
+        if (data.status === 'open' || data.status === 'CONNECTED') {
+          setQrStatus('CONNECTED')
+        }
       }
     } catch (err) {
       console.error('ERRO STATS:', err)
@@ -167,20 +170,29 @@ export default function Dashboard() {
   }
 
   const handleSavePrompt = async () => {
+    if (prompt.length < 10) {
+      alert('O treinamento precisa de pelo menos 10 caracteres para ser eficaz.')
+      return
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/update-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId: session.recordId, systemPrompt: prompt, instanceName: selectedInstance })
+        body: JSON.stringify({ 
+          recordId: session.recordId, 
+          systemPrompt: prompt, 
+          instanceName: selectedInstance 
+        })
       })
-      if (!res.ok) throw new Error('Erro ao salvar prompt')
+      if (!res.ok) throw new Error('Falha na comunicação com o servidor')
+      
       const updated = { ...session, systemPrompt: prompt }
       localStorage.setItem('zb_session', JSON.stringify(updated))
       setSession(updated)
-      alert('IA atualizada com sucesso!')
+      alert('🚀 Inteligência da Sarah atualizada com sucesso! Ela já está operando com as novas regras.')
     } catch (err) {
-      alert('Erro: ' + err.message)
+      alert('⚠️ Erro ao salvar: ' + err.message)
     } finally {
       setSaving(false)
     }
@@ -192,19 +204,83 @@ export default function Dashboard() {
       const res = await fetch('/api/update-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId: session.recordId, webhookUrl, notificationEmail })
+        body: JSON.stringify({ 
+          recordId: session.recordId, 
+          webhookUrl, 
+          notificationEmail 
+        })
       })
-      if (!res.ok) throw new Error('Erro ao salvar integrações')
+      if (!res.ok) throw new Error('Erro ao salvar integrações no banco')
+      
       const updated = { ...session, webhookUrl, notificationEmail }
       localStorage.setItem('zb_session', JSON.stringify(updated))
       setSession(updated)
-      alert('Integrações salvas!')
+      alert('🔌 Configurações de integração salvas com sucesso!')
     } catch (err) {
-      alert('Erro: ' + err.message)
+      alert('⚠️ Erro: ' + err.message)
     } finally {
       setSaving(false)
     }
   }
+
+  const handleUpgrade = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recordId: session.recordId,
+          phone: session.phone,
+          email: session.email
+        })
+      })
+      const data = await res.json()
+      if (data.init_point) {
+        window.location.href = data.init_point
+      } else {
+        throw new Error('Não foi possível gerar o link de pagamento')
+      }
+    } catch (err) {
+      alert('Erro ao processar upgrade: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleTestWebhook = async () => {
+    if (!webhookUrl) {
+      alert('Por favor, insira uma URL de webhook primeiro.')
+      return
+    }
+    setSaving(true)
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          event: 'lead_test',
+          name: 'João Teste',
+          phone: '5511999999999',
+          timestamp: new Date().toISOString()
+        }),
+        mode: 'no-cors'
+      })
+      alert('🚀 Teste enviado! Verifique seu sistema de recebimento (ex: Make, n8n, Zapier).')
+    } catch (err) {
+      alert('Teste enviado com sucesso!')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') === 'success') {
+      alert('🎉 Pagamento confirmado! Seu plano PRO foi ativado com sucesso.')
+      window.history.replaceState({}, document.title, "/dashboard")
+    }
+  }, [])
 
   if (!session) return null
 
@@ -238,7 +314,7 @@ export default function Dashboard() {
       <main className="dashboard-main">
         <header className="main-header">
           <div className="header-title"><h1>Painel de Controle</h1><p className="breadcrumb">Início &gt; {activeTab}</p></div>
-          <div className="plan-badge">⭐ Plano PRO</div>
+          <div className="plan-badge">⭐ Plano {session.status === 'pago' ? 'PRO' : 'TRIAL'}</div>
         </header>
 
         {activeTab === 'status' && (
@@ -301,12 +377,14 @@ export default function Dashboard() {
                 <h3>💰 Financeiro</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                   <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Plano Ativo</span>
-                    <p style={{ fontWeight: '700', color: '#10b981' }}>ZettaBots PRO</p>
+                    <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Plano Atual</span>
+                    <p style={{ fontWeight: '700', color: session.status === 'pago' ? '#10b981' : '#f59e0b' }}>
+                      ZettaBots {session.status === 'pago' ? 'PRO' : 'TRIAL'}
+                    </p>
                   </div>
                   <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Próxima Cobrança</span>
-                    <p style={{ fontWeight: '700' }}>{session.expiryDate || '21/05/2026'}</p>
+                    <p style={{ fontWeight: '700' }}>{session.expiryDate || 'Consultar'}</p>
                   </div>
                   <button onClick={() => setShowSubModal(true)} style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem' }}>Gerenciar Assinatura</button>
                 </div>
@@ -403,7 +481,8 @@ export default function Dashboard() {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#a1a1aa' }}>URL do Webhook (Opcional)</label>
                   <input type="text" placeholder="https://sua-url.com/webhook" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} style={{ width: '100%', padding: '0.8rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '10px' }} />
                 </div>
-                <button onClick={handleSaveIntegrations} disabled={saving} style={{ width: '100%', padding: '0.8rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>{saving ? 'Salvando...' : 'Salvar Configurações'}</button>
+                <button onClick={handleSaveIntegrations} disabled={saving} style={{ width: '100%', padding: '0.8rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer', marginBottom: '1rem' }}>{saving ? 'Salvando...' : 'Salvar Configurações'}</button>
+                <button onClick={handleTestWebhook} disabled={saving} style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontWeight: '500', cursor: 'pointer' }}>{saving ? 'Enviando...' : '🚀 Enviar Lead de Teste'}</button>
               </div>
             </div>
           </div>
@@ -447,8 +526,13 @@ export default function Dashboard() {
                 <span style={{ color: '#10b981', fontWeight: '600' }}>Paga ✅</span>
               </div>
             </div>
-            <button className="btn-primary" style={{ width: '100%', padding: '1.2rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', fontSize: '1rem', boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.4)' }}>
-              Fazer Upgrade para Business
+            <button 
+              className="btn-primary" 
+              onClick={handleUpgrade}
+              disabled={saving}
+              style={{ width: '100%', padding: '1.2rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', fontSize: '1rem', boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.4)' }}
+            >
+              {saving ? 'Gerando Link...' : 'Fazer Upgrade para Business'}
             </button>
           </div>
         </div>
