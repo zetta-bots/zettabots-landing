@@ -35,10 +35,17 @@ export default function Dashboard() {
     
     const parsed = JSON.parse(savedSession)
     setSession(parsed)
-    if (parsed.email === 'richardrovigati@gmail.com' || parsed.phone === '5511999999999') {
+    
+    // Reconhecimento de Administrador Real
+    if (parsed.email === 'richardrovigati@gmail.com' || parsed.phone === '5521969875522') {
       setIsAdmin(true)
     }
-    setPrompt(parsed.systemPrompt || '')
+
+    // Limpeza de Prompt para o Cliente (Esconder tags de sistema)
+    let cleanPrompt = parsed.systemPrompt || ''
+    cleanPrompt = cleanPrompt.replace(/\[SISTEMA - SILÊNCIO TOTAL\][\s\S]*?\n\n/, '')
+    setPrompt(cleanPrompt)
+    
     setWebhookUrl(parsed.webhookUrl || '')
     setNotificationEmail(parsed.notificationEmail || parsed.email || '')
     setInstances([{ name: parsed.instanceName || parsed.phone, label: 'Instância Principal' }])
@@ -119,24 +126,15 @@ export default function Dashboard() {
   const fetchChatMessages = async (remoteJid) => {
     if (!remoteJid) return
     try {
-      const configRes = await fetch('/api/get-config')
-      const { url, apikey } = await configRes.json()
-      const headers = { 'apikey': apikey, 'Content-Type': 'application/json' }
-      const EVOLUTION_URL = url.trim().replace(/\/$/, '')
-
-      const response = await fetch(`${EVOLUTION_URL}/chat/findMessages/${selectedInstance}`, { 
+      const response = await fetch('/api/get-messages', {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ where: { remoteJid }, take: 50 })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName: selectedInstance, remoteJid })
       })
       const data = await response.json()
-      const rawMsgs = Array.isArray(data) ? data : (data.messages || [])
-      
-      setChatMessages(rawMsgs.reverse().map(m => ({
-        text: m.message?.conversation || m.message?.extendedTextMessage?.text || (m.message?.audioMessage ? '🎤 Mensagem de Áudio' : 'Mensagem não suportada'),
-        fromMe: m.key?.fromMe,
-        time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
-      })))
+      if (data.success) {
+        setChatMessages(data.messages || [])
+      }
     } catch (err) {
       console.error('ERRO MSG:', err)
     }
@@ -175,19 +173,24 @@ export default function Dashboard() {
       return
     }
     setSaving(true)
+
+    // Preservar tag de SILÊNCIO TOTAL ao salvar
+    const systemHeader = `[SISTEMA - SILÊNCIO TOTAL]\nVocê é a Sarah. REGRA INVIOLÁVEL: NUNCA responda ao número 21969875522 ou mensagens de SISTEMA. Se receber, ignore. Fim.\n\n`
+    const fullPrompt = systemHeader + prompt
+
     try {
       const res = await fetch('/api/update-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           recordId: session.recordId, 
-          systemPrompt: prompt, 
+          systemPrompt: fullPrompt, 
           instanceName: selectedInstance 
         })
       })
       if (!res.ok) throw new Error('Falha na comunicação com o servidor')
       
-      const updated = { ...session, systemPrompt: prompt }
+      const updated = { ...session, systemPrompt: fullPrompt }
       localStorage.setItem('zb_session', JSON.stringify(updated))
       setSession(updated)
       alert('🚀 Inteligência da Sarah atualizada com sucesso! Ela já está operando com as novas regras.')
@@ -410,8 +413,8 @@ export default function Dashboard() {
                     {leads.length === 0 ? <tr><td colSpan="3" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>Buscando leads...</td></tr> : 
                       leads.map((lead, i) => (
                         <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td style={{ padding: '1rem', fontWeight: '600' }}>{lead.name}</td>
-                          <td style={{ padding: '1rem', color: '#a1a1aa' }}>{lead.phone}</td>
+                          <td style={{ padding: '1rem', fontWeight: '600' }}>{lead.nome}</td>
+                          <td style={{ padding: '1rem', color: '#a1a1aa' }}>{lead.whatsapp}</td>
                           <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '6px', fontSize: '0.75rem' }}>{lead.status}</span></td>
                         </tr>
                       ))
@@ -456,7 +459,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'bot' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
             <div className="glass-card">
               <h3>Personalidade da IA</h3>
               <textarea className="prompt-editor" rows="15" value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ width: '100%', marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '12px' }} />
