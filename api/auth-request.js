@@ -24,15 +24,17 @@ export default async function handler(req, res) {
     const phoneWithout55 = cleanPhone.startsWith('55') ? cleanPhone.substring(2) : cleanPhone
     const phoneWith55 = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
-    console.log(`[AUTH] Buscando: ${phoneWithout55} | ${phoneWith55}`)
+    console.log(`[AUTH] Buscando variations: ${phoneWithout55} | ${phoneWith55}`)
 
-    // Busca ultra-robusta: Ignora formatação no Airtable
+    // Busca ultra-robusta
     const filter = `OR(
       FIND('${phoneWithout55}', {adminPhone}), 
       FIND('${phoneWith55}', {adminPhone}),
       FIND('${phoneWithout55}', {instanceName}),
       FIND('${phoneWithout55}', {WhatsApp}),
-      FIND('${phoneWithout55}', {phone})
+      FIND('${phoneWithout55}', {phone}),
+      '${phoneWithout55}' = {adminPhone},
+      '${phoneWith55}' = {adminPhone}
     )`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     
@@ -46,9 +48,13 @@ export default async function handler(req, res) {
 
     const data = await airtableRes.json()
     
+    // DEBUG: Se não achar, vamos listar o que tem lá (nos logs) para entender o erro
     if (!data.records || data.records.length === 0) {
-      console.log(`[AUTH] Número não encontrado no Airtable: ${phone}`)
-      return res.status(404).json({ error: 'Número não encontrado. Verifique se você já é cliente ZettaBots.' })
+      const allRes = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?maxRecords=3`, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } })
+      const allData = await allRes.json()
+      console.log('[AUTH DEBUG] Amostra de registros na tabela:', JSON.stringify(allData.records?.map(r => r.fields)))
+      
+      return res.status(404).json({ error: 'Número não encontrado no sistema. Verifique o preenchimento no Airtable.' })
     }
 
     const record = data.records[0]
