@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [pixData, setPixData] = useState(null)
   const [selectedChat, setSelectedChat] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
-  const [knowledgeLinks, setKnowledgeLinks] = useState(['https://atlasdafe.com.br'])
+  const [knowledgeLinks, setKnowledgeLinks] = useState(['https://zettabots.ia.br'])
   const [webhookUrl, setWebhookUrl] = useState('')
   const [allClients, setAllClients] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
@@ -38,13 +38,11 @@ export default function Dashboard() {
     
     const parsed = JSON.parse(savedSession)
     setSession(parsed)
+    // Admin check simple logic
     if (parsed.email === 'richardrovigati@gmail.com' || parsed.phone === '5511999999999') {
       setIsAdmin(true)
     }
     setPrompt(parsed.systemPrompt || '')
-    
-    // Se for admin, poderíamos buscar todas as instâncias. 
-    // Para o cliente, a "lista" é apenas a dele por enquanto.
     setInstances([{ name: parsed.instanceName || parsed.phone, label: 'Instância Principal' }])
     setSelectedInstance(parsed.instanceName || parsed.phone)
 
@@ -82,7 +80,6 @@ export default function Dashboard() {
 
       if (isConnected) {
         setQrStatus('CONNECTED')
-        // Tenta buscar stats reais
         const statsRes = await fetch(`${EVOLUTION_URL}/instance/fetchInstances?instanceName=${instanceName}`, { headers })
         const statsData = await statsRes.json()
         const s = Array.isArray(statsData) ? statsData[0]?.instance : (statsData.instance || statsData)
@@ -101,13 +98,12 @@ export default function Dashboard() {
           setQrCode(connectData.base64)
           setQrStatus('QRCODE')
         } else {
-          // Se não gerar QR imediato, tenta novamente em 2s
           setTimeout(() => fetchQrCode(instanceName), 2000)
         }
       }
     } catch (err) {
       console.error('ERRO CONEXAO:', err)
-      setQrStatus('CONNECTED') // Fallback para não travar a UI
+      setQrStatus('CONNECTED')
     }
   }
 
@@ -130,6 +126,7 @@ export default function Dashboard() {
         const id = chat.id || chat.remoteJid || ''
         const phone = id.split('@')[0]
         return {
+          remoteJid: id,
           user: chat.name || chat.pushName || (phone.length > 5 ? phone : 'Cliente WhatsApp'),
           lastMsg: chat.message?.conversation || chat.message || 'Conversa ativa',
           time: chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'
@@ -258,35 +255,10 @@ export default function Dashboard() {
     }
   }
 
-  const handleGeneratePix = async () => {
-    setSaving(true)
-    try {
-      const res = await fetch('/api/create-pix', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recordId: session.recordId,
-          email: session.email
-        })
-      })
-      const data = await res.json()
-      if (data.qr_code) {
-        setPixData(data)
-      } else {
-        throw new Error(data.error || 'Erro ao gerar PIX')
-      }
-    } catch (err) {
-      alert('Erro ao gerar PIX: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const handleAddLink = () => {
     const url = prompt('Digite a URL do site para a IA ler:');
     if (url && url.startsWith('http')) {
       setKnowledgeLinks([...knowledgeLinks, url]);
-      alert('Link adicionado à base de conhecimento!');
     }
   }
 
@@ -310,19 +282,13 @@ export default function Dashboard() {
     }
   }
 
-  useEffect(() => {
-    if (activeTab === 'admin' && isAdmin) {
-      fetchAllClients()
-    }
-  }, [activeTab, isAdmin])
-
   if (!session) return null
 
   const msgLimit = 5000
   const msgPercent = Math.min((stats.messages / msgLimit) * 100, 100)
 
   return (
-    <div className={`dashboard-layout ${showSubModal ? 'blur-bg' : ''} ${mobileMenuOpen ? 'menu-open' : ''}`}>
+    <div className={`dashboard-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
       
       <header className="mobile-header">
         <div className="premium-logo-container mini"><img src="/images/logo.png" alt="ZettaBots" /></div>
@@ -331,516 +297,269 @@ export default function Dashboard() {
         </button>
       </header>
 
-      {mobileMenuOpen && <div className="sidebar-overlay" onClick={() => setMobileMenuOpen(false)}></div>}
-
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
-          <div className="premium-logo-container" style={{ background: 'transparent !important', borderRadius: 0, boxShadow: 'none', border: 'none' }}>
-            <img src="/images/logo.png" alt="ZettaBots" style={{ filter: 'none !important', width: '52px', height: '52px', objectFit: 'contain' }} />
+          <div className="premium-logo-container">
+            <img src="/images/logo.png" alt="ZettaBots" />
           </div>
           <div className="brand-info">
-            <h2 style={{ color: 'white' }}>ZettaBots</h2>
-            <span className="brand-tagline">Vendas Inteligentes</span>
+            <h2>ZettaBots</h2>
+            <p>Vendas Inteligentes</p>
           </div>
         </div>
         <nav className="sidebar-nav">
-          <button className={`nav-item ${activeTab === 'status' ? 'active' : ''}`} onClick={() => setActiveTab('status')}>📊 Visão Geral</button>
-          <button className={`nav-item ${activeTab === 'leads' ? 'active' : ''}`} onClick={() => setActiveTab('leads')}>👤 Leads Capturados</button>
-          <button className={`nav-item ${activeTab === 'mensagens' ? 'active' : ''}`} onClick={() => setActiveTab('mensagens')}>💬 Monitorar Chat</button>
-          <button className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} onClick={() => setActiveTab('bot')}>🤖 Treinar IA</button>
-          <button className={`nav-item ${activeTab === 'integracoes' ? 'active' : ''}`} onClick={() => setActiveTab('integracoes')}>🔌 Integrações</button>
-          <button className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} onClick={() => setActiveTab('conexao')}>🔗 Conexão</button>
-          {isAdmin && <button className={`nav-item admin-nav ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>👑 Gerenciar Clientes</button>}
+          <button className={`nav-item ${activeTab === 'status' ? 'active' : ''}`} onClick={() => setActiveTab('status')}>
+            <span className="icon">📊</span> Visão Geral
+          </button>
+          <button className={`nav-item ${activeTab === 'leads' ? 'active' : ''}`} onClick={() => setActiveTab('leads')}>
+            <span className="icon">👤</span> Leads Capturados
+          </button>
+          <button className={`nav-item ${activeTab === 'mensagens' ? 'active' : ''}`} onClick={() => setActiveTab('mensagens')}>
+            <span className="icon">💬</span> Monitorar Chat
+          </button>
+          <button className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} onClick={() => setActiveTab('bot')}>
+            <span className="icon">🤖</span> Treinar IA
+          </button>
+          <button className={`nav-item ${activeTab === 'integracoes' ? 'active' : ''}`} onClick={() => setActiveTab('integracoes')}>
+            <span className="icon">🔌</span> Integrações
+          </button>
+          <button className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} onClick={() => setActiveTab('conexao')}>
+            <span className="icon">🔗</span> Conexão
+          </button>
+          {isAdmin && (
+            <button className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+              <span className="icon">👑</span> Gerenciar Clientes
+            </button>
+          )}
         </nav>
         <div className="sidebar-footer">
-          <div className="user-mini-profile">
-            <div className="user-avatar">{session.name?.charAt(0)}</div>
-            <div className="user-details"><span className="user-name">{session.name}</span><span className="user-status-dot online">Online</span></div>
-          </div>
-          <button className="btn-logout" onClick={handleLogout}>Sair</button>
+          <button className="logout-btn" onClick={handleLogout}>
+            <span className="icon">🚪</span> Sair
+          </button>
         </div>
       </aside>
 
       <main className="dashboard-main">
-        {/* Barra de Notificações Críticas */}
-        {qrStatus !== 'CONNECTED' && (
-          <div className="alert-bar warning slide-down">
-            <span className="alert-icon">⚠️</span>
-            <p><strong>WhatsApp Desconectado:</strong> Seu robô está pausado. Conecte seu telefone para voltar a vender.</p>
-            <button className="btn-alert-action" onClick={() => setActiveTab('conexao')}>Reconectar Agora</button>
+        <header className="main-header">
+          <div className="header-title">
+            <h1>Painel de Controle</h1>
+            <p className="breadcrumb">Início &gt; {activeTab}</p>
           </div>
-        )}
-
-        <header className="content-header desktop-only">
-          <div className="header-title"><h1>Painel de Controle</h1><p className="breadcrumb">Início &gt; {activeTab}</p></div>
-          <div className="header-actions">
-            {instances.length > 1 && (
-              <select className="instance-selector" value={selectedInstance} onChange={(e) => setSelectedInstance(e.target.value)}>
-                {instances.map(inst => (
-                  <option key={inst.name} value={inst.name}>{inst.label} ({inst.name})</option>
-                ))}
-              </select>
-            )}
-            <span className={`status-badge-chip pago`}>⭐ PLANO PRO</span>
-          </div>
+          <div className="plan-badge">⭐ Plano PRO</div>
         </header>
 
         {activeTab === 'status' && (
-          <div className="tab-panel fade-in">
-            {/* Onboarding Checklist - Somente aparece se não estiver 100% */}
+          <div className="tab-panel">
+            {/* Onboarding Card */}
             {(qrStatus !== 'CONNECTED' || prompt.length < 50 || stats.messages === 0) && (
-              <div className="card glass-card onboarding-card slide-down">
-                <div className="card-header">
-                  <h3>🚀 Comece por aqui</h3>
-                  <span className="onboarding-badge">Passo a Passo</span>
-                </div>
-                <div className="onboarding-steps">
-                  <div className={`onboarding-step ${qrStatus === 'CONNECTED' ? 'completed' : ''}`}>
-                    <div className="step-check"></div>
-                    <div className="step-info">
-                      <strong>Conectar WhatsApp</strong>
-                      <p>Sincronize seu telefone para o robô começar a atender.</p>
-                      {qrStatus !== 'CONNECTED' && <button className="btn-text-action" onClick={() => setActiveTab('conexao')}>Ir para Conexão →</button>}
-                    </div>
+              <div className="glass-card">
+                <h3>🚀 Comece por aqui</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: qrStatus === 'CONNECTED' ? '4px solid #10b981' : '4px solid #7c3aed' }}>
+                    <strong>1. Conectar WhatsApp</strong>
+                    <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{qrStatus === 'CONNECTED' ? '✅ Conectado' : '❌ Desconectado'}</p>
+                    {qrStatus !== 'CONNECTED' && <button onClick={() => setActiveTab('conexao')} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', marginTop: '0.5rem' }}>Configurar →</button>}
                   </div>
-                  <div className={`onboarding-step ${prompt.length >= 50 ? 'completed' : ''}`}>
-                    <div className="step-check"></div>
-                    <div className="step-info">
-                      <strong>Treinar sua IA</strong>
-                      <p>Defina as regras e o nome da sua assistente virtual.</p>
-                      {prompt.length < 50 && <button className="btn-text-action" onClick={() => setActiveTab('bot')}>Configurar Regras →</button>}
-                    </div>
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: prompt.length >= 50 ? '4px solid #10b981' : '4px solid #7c3aed' }}>
+                    <strong>2. Treinar IA</strong>
+                    <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{prompt.length >= 50 ? '✅ Configurado' : '❌ Aguardando regras'}</p>
+                    {prompt.length < 50 && <button onClick={() => setActiveTab('bot')} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', marginTop: '0.5rem' }}>Treinar →</button>}
                   </div>
-                  <div className={`onboarding-step ${stats.messages > 0 ? 'completed' : ''}`}>
-                    <div className="step-check"></div>
-                    <div className="step-info">
-                      <strong>Fazer o Primeiro Teste</strong>
-                      <p>Envie uma mensagem e veja a Sarah agindo em tempo real.</p>
-                      {stats.messages === 0 ? (
-                        <a 
-                          href={`https://wa.me/${session.phone}?text=Oi, Sarah! Quero fazer um teste.`} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="btn-text-action"
-                        >
-                          🚀 Abrir WhatsApp para Testar
-                        </a>
-                      ) : (
-                        <span className="step-completed-text">✨ IA operando com sucesso!</span>
-                      )}
-                    </div>
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: stats.messages > 0 ? '4px solid #10b981' : '4px solid #7c3aed' }}>
+                    <strong>3. Primeiro Teste</strong>
+                    <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{stats.messages > 0 ? '✅ IA operando' : '❌ Pendente'}</p>
+                    <a href={`https://wa.me/${session.phone}`} target="_blank" rel="noreferrer" style={{ color: '#7c3aed', fontSize: '0.8rem', textDecoration: 'none', display: 'block', marginTop: '0.5rem' }}>Testar IA →</a>
                   </div>
                 </div>
               </div>
             )}
 
             <div className="stats-grid">
-              <div className="stat-card glass-card">
+              <div className="stat-card">
                 <div className="stat-icon purple">👤</div>
                 <div className="stat-info">
                   <span className="stat-label">Leads Capturados</span>
-                  <h3 className="stat-value">{stats.contacts}</h3>
+                  <span className="stat-value">{stats.contacts}</span>
                 </div>
               </div>
-              <div className="stat-card glass-card">
-                <div className="stat-icon green">⚡</div>
+              <div className="stat-card">
+                <div className="stat-icon blue">💬</div>
                 <div className="stat-info">
-                  <span className="stat-label">Leads Qualificados</span>
-                  <h3 className="stat-value">{Math.floor(stats.chats * 0.8)}</h3>
+                  <span className="stat-label">Conversas Ativas</span>
+                  <span className="stat-value">{stats.chats}</span>
                 </div>
               </div>
-              <div className="stat-card glass-card">
-                <div className="stat-icon blue">🕒</div>
+              <div className="stat-card">
+                <div className="stat-icon green">🕒</div>
                 <div className="stat-info">
                   <span className="stat-label">Tempo Economizado</span>
-                  <h3 className="stat-value">{Math.floor((stats.messages * 2) / 60)}h</h3>
+                  <span className="stat-value">{Math.floor((stats.messages * 2) / 60)}h</span>
                 </div>
               </div>
-              <div className="stat-card glass-card roi-card">
+              <div className="stat-card">
                 <div className="stat-icon orange">💰</div>
                 <div className="stat-info">
                   <span className="stat-label">ROI Estimado (Mês)</span>
-                  <h3 className="stat-value">R$ {Math.floor(stats.messages * 1.5).toLocaleString('pt-BR')}</h3>
+                  <span className="stat-value">R$ {Math.floor(stats.messages * 1.5).toLocaleString('pt-BR')}</span>
                 </div>
               </div>
             </div>
-            
-            <div className="dashboard-main-grid">
-              <div className="card glass-card main-chart-box">
-                <div className="card-header"><h3>Atividade do Agente</h3></div>
-                <div className="activity-chart">
-                  {[40, 70, 45, 90, 65, 80, 95].map((h, i) => (
-                    <div key={i} className="chart-bar-wrapper">
-                      <div className="chart-bar" style={{ height: `${h}%` }}>
-                        <div className="bar-value">{Math.floor(h * 1.5)}</div>
-                      </div>
-                      <span className="bar-label">{['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'][i]}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="card glass-card subscription-box">
-                <div className="card-header"><h3>Assinatura Ativa</h3></div>
-                <div className="sub-details">
-                  <div className="sub-row"><span className="sub-label">Plano:</span><span className="sub-value">ZettaBots Pro</span></div>
-                  <div className="sub-row"><span className="sub-label">Status:</span><span className="sub-value status-active">Ativo</span></div>
-                  <div className="sub-row"><span className="sub-label">Renovação:</span><span className="sub-value">{session.expiryDate || 'Mensal'}</span></div>
-                  <div className="sub-row"><span className="sub-label">WhatsApp:</span><span className="sub-value phone-truncate">{session.phone}</span></div>
-                </div>
-                <button className="btn-outline-sub" onClick={() => { setShowSubModal(true); setModalView('manage'); }}>Gerenciar Assinatura</button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {activeTab === 'leads' && (
-          <div className="tab-panel fade-in">
-            <div className="card glass-card">
-              <h3>Leads Capturados (Sarah)</h3>
-              <div className="leads-table-container mobile-scroll">
-                <table className="leads-table">
-                  <thead><tr><th>Nome</th><th>WhatsApp</th><th>Status</th></tr></thead>
-                  <tbody>
-                    {leads.length === 0 ? <tr><td colSpan="3">Buscando contatos...</td></tr> : 
-                      leads.map((lead, i) => (
-                        <tr key={i}><td>{lead.name}</td><td>{lead.phone}</td><td><span className="badge-status">{lead.status}</span></td></tr>
-                      ))
-                    }
-                  </tbody>
-                </table>
+            <div className="glass-card">
+              <h3>Atividade da IA</h3>
+              <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '10px', paddingTop: '20px' }}>
+                {[30, 45, 60, 20, 85, 40, 95].map((h, i) => (
+                  <div key={i} style={{ flex: 1, background: 'linear-gradient(to top, #7c3aed, #06b6d4)', height: `${h}%`, borderRadius: '6px 6px 0 0', position: 'relative' }}>
+                    <span style={{ position: 'absolute', bottom: '-25px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.7rem', color: '#a1a1aa' }}>
+                      {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'][i]}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'mensagens' && (
-          <div className="tab-panel fade-in">
-            <div className="chat-monitor-layout">
-              <div className="card glass-card chat-list-box">
-                <div className="card-header">
-                  <h3>Conversas Recentes</h3>
-                  <button className="btn-refresh-mini" onClick={() => fetchChats(selectedInstance)}>🔄</button>
-                </div>
-                <div className="chat-history-list">
-                  {chats.length === 0 ? <div className="empty-chat-state"><p>Buscando mensagens...</p></div> : 
-                    chats.map((chat, i) => (
-                      <div className={`chat-item ${selectedChat?.remoteJid === chat.remoteJid ? 'active' : ''}`} key={i} onClick={() => handleSelectChat(chat)}>
-                        <div className="chat-info"><strong>{chat.user}</strong><p>{chat.lastMsg}</p></div>
+          <div className="chat-monitor-container">
+            <div className="chat-list-panel">
+              <div className="panel-header">
+                <h3>Conversas</h3>
+                <button className="refresh-btn" onClick={() => fetchChats(selectedInstance)}>🔄</button>
+              </div>
+              <div className="conversations-scroll">
+                {chats.length === 0 ? <p style={{ padding: '1rem', textAlign: 'center', color: '#a1a1aa' }}>Nenhuma conversa...</p> : 
+                  chats.map((chat, i) => (
+                    <div className={`chat-item ${selectedChat?.remoteJid === chat.remoteJid ? 'active' : ''}`} key={i} onClick={() => handleSelectChat(chat)}>
+                      <div className="chat-item-header">
+                        <span className="chat-name">{chat.user}</span>
                         <span className="chat-time">{chat.time}</span>
                       </div>
-                    ))
-                  }
-                </div>
+                      <p className="chat-status">{chat.lastMsg.substring(0, 40)}...</p>
+                    </div>
+                  ))
+                }
               </div>
+            </div>
 
-              <div className="card glass-card chat-detail-box">
-                {selectedChat ? (
-                  <>
-                    <div className="chat-detail-header">
-                      <div className="user-avatar mini">{selectedChat.user.charAt(0)}</div>
-                      <div className="chat-detail-info">
-                        <h4>{selectedChat.user}</h4>
-                        <span className="chat-detail-status">Agente IA Ativo</span>
-                      </div>
-                    </div>
-                    <div className="chat-messages-viewer">
-                      {chatMessages.length === 0 ? <p className="msg-loading">Carregando histórico...</p> : 
-                        chatMessages.map((msg, i) => (
-                          <div key={i} className={`msg-bubble ${msg.fromMe ? 'sent' : 'received'}`}>
-                            <div className="msg-content">{msg.text}</div>
-                            <span className="msg-time">{msg.time}</span>
-                          </div>
-                        ))
-                      }
-                    </div>
-                  </>
-                ) : (
-                  <div className="chat-detail-empty">
-                    <div className="empty-icon">💬</div>
-                    <p>Selecione uma conversa para monitorar o agente em tempo real.</p>
+            <div className="chat-window-panel">
+              {selectedChat ? (
+                <>
+                  <div className="chat-header">
+                    <h4>{selectedChat.user}</h4>
+                    <span style={{ fontSize: '0.8rem', color: '#10b981' }}>● Agente Ativo</span>
                   </div>
-                )}
-              </div>
+                  <div className="messages-container">
+                    {chatMessages.map((msg, i) => (
+                      <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'}`}>
+                        {msg.text}
+                        <span className="message-time">{msg.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="chat-empty-state">
+                  <div className="empty-icon">💬</div>
+                  <p>Selecione uma conversa para monitorar o agente em tempo real.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'bot' && (
-          <div className="tab-panel fade-in">
-            <div className="bot-editor-container">
-              <div className="card glass-card editor-main-card">
-                <div className="bot-editor-header">
-                  <div className="header-text">
-                    <h3>Personalidade da IA</h3>
-                    <p>Defina o tom de voz e as regras de negócio da sua assistente.</p>
-                  </div>
-                  <div className="bot-tabs-pills">
-                    <button className="tab-pill active">📜 Regras</button>
-                    <button className="tab-pill disabled" title="Em breve">📚 Conhecimento</button>
-                  </div>
-                </div>
-                
-                <textarea 
-                  className="prompt-editor" 
-                  value={prompt} 
-                  onChange={(e) => setPrompt(e.target.value)} 
-                  placeholder="Ex: Você é a Sara, uma assistente cristã acolhedora..."
-                  rows="12" 
-                />
-                
-                <div className="editor-footer">
-                  <span className="char-count">{prompt.length} caracteres</span>
-                  <button className="btn-primary" onClick={handleSavePrompt} disabled={saving}>
-                    {saving ? 'Salvando...' : 'Atualizar Inteligência'}
-                  </button>
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem' }}>
+            <div className="glass-card">
+              <h3>Personalidade da IA</h3>
+              <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Defina as regras de comportamento e o tom de voz do seu robô.</p>
+              <textarea 
+                className="prompt-editor" 
+                rows="15" 
+                value={prompt} 
+                onChange={(e) => setPrompt(e.target.value)}
+                style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '12px' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>{prompt.length} caracteres</span>
+                <button onClick={handleSavePrompt} disabled={saving} style={{ padding: '0.8rem 1.5rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}>
+                  {saving ? 'Salvando...' : 'Salvar Inteligência'}
+                </button>
               </div>
-
-              <div className="card glass-card knowledge-sidebar">
-                <div className="card-header">
-                  <h4>Fontes de Dados</h4>
-                </div>
-                <div className="knowledge-list">
-                  {knowledgeLinks.map((link, i) => (
-                    <div className="knowledge-pill" key={i}>
-                      <span className="pill-icon">🌐</span>
-                      <span className="pill-text" title={link}>{link}</span>
-                      <button className="pill-remove" onClick={() => handleRemoveLink(i)}>&times;</button>
-                    </div>
-                  ))}
-                  <button className="btn-add-source" onClick={handleAddLink}>
-                    <span className="add-icon">+</span> Adicionar Site
-                  </button>
-                  <div className="knowledge-item-coming">
-                    <span>📄 Documentos PDF</span>
-                    <span className="coming-soon">BREVE</span>
+            </div>
+            <div className="glass-card">
+              <h3>Conhecimento</h3>
+              <p style={{ color: '#a1a1aa', fontSize: '0.8rem', marginBottom: '1rem' }}>Sites que a IA deve ler para responder clientes.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {knowledgeLinks.map((link, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.75rem' }}>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{link}</span>
+                    <button onClick={() => handleRemoveLink(i)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>×</button>
                   </div>
-                </div>
+                ))}
+                <button onClick={handleAddLink} style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: 'white', borderRadius: '8px', cursor: 'pointer' }}>+ Adicionar Site</button>
               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'integracoes' && (
-          <div className="tab-panel fade-in">
-            <div className="card glass-card">
-              <div className="card-header">
-                <h3>🔌 Integrações e Webhooks</h3>
-                <span className="badge-beta">Premium</span>
+          <div className="glass-card">
+            <h3>🔌 Integrações</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(124, 58, 237, 0.3)', borderRadius: '20px' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#7c3aed', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚡</div>
+                  <div>
+                    <h4 style={{ color: 'white' }}>Custom Webhook</h4>
+                    <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>Envie leads para seu CRM em tempo real.</p>
+                  </div>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="https://sua-url.com/webhook" 
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  style={{ width: '100%', padding: '0.8rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '10px', marginBottom: '1rem' }} 
+                />
+                <button style={{ width: '100%', padding: '0.8rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>Salvar Configuração</button>
               </div>
-              <div className="integrations-grid">
-                <div className="integration-item active premium-border">
-                  <div className="integration-header">
-                    <div className="integration-logo-wrapper">
-                      <div className="integration-logo webhook"></div>
-                    </div>
-                    <div className="integration-info">
-                      <h4>Custom Webhook</h4>
-                      <p>Envie dados de leads para qualquer URL em tempo real.</p>
-                    </div>
-                  </div>
-                  <div className="webhook-config-box">
-                    <div className="input-group-stack">
-                      <label className="input-label">URL de Destino</label>
-                      <div className="webhook-input-group">
-                        <input 
-                          type="text" 
-                          className="premium-input"
-                          placeholder="https://sua-url-aqui.com/webhook" 
-                          value={webhookUrl} 
-                          onChange={(e) => setWebhookUrl(e.target.value)} 
-                        />
-                        <button className="btn-primary-mini" onClick={() => alert('Configurações salvas!')}>Salvar</button>
-                      </div>
-                    </div>
-                    <div className="webhook-actions">
-                      <button className="btn-secondary-outline" onClick={() => alert('Webhook de teste enviado!')}>
-                        <span className="icon">⚡</span> Enviar Teste
-                      </button>
-                    </div>
+              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', opacity: 0.6 }}>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', background: '#ff4f00', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Z</div>
+                  <div>
+                    <h4 style={{ color: 'white' }}>Zapier</h4>
+                    <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>Integre com +5.000 aplicativos.</p>
                   </div>
                 </div>
-
-                <div className="integration-item disabled">
-                  <div className="integration-header">
-                    <div className="integration-logo zapier"></div>
-                    <div className="integration-info">
-                      <h4>Zapier (Em breve)</h4>
-                      <p>Conecte com +5.000 apps automaticamente.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="integration-item disabled">
-                  <div className="integration-header">
-                    <div className="integration-logo n8n"></div>
-                    <div className="integration-info">
-                      <h4>n8n (Em breve)</h4>
-                      <p>Integração nativa para automações avançadas.</p>
-                    </div>
-                  </div>
-                </div>
+                <button disabled style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', color: '#a1a1aa', border: 'none', borderRadius: '10px', fontWeight: '600' }}>Em Breve</button>
               </div>
             </div>
           </div>
         )}
+
         {activeTab === 'conexao' && (
-          <div className="tab-panel fade-in">
-            <div className="card glass-card">
-              <h3>Conectar WhatsApp</h3>
-              <div className="qr-container">
-                {qrStatus === 'CONNECTED' ? <div className="qr-placeholder success">✅ Conectado e Operando!</div> : (
-                  qrStatus === 'QRCODE' && qrCode ? (
-                    <div className="qr-card">
-                      <img src={qrCode} alt="QR Code" className="qr-image" />
-                      <p className="qr-instruction">Escaneie para conectar a Sarah.</p>
-                    </div>
-                  ) : <div className="qr-placeholder loading"><div className="spinner"></div></div>
-                )}
-              </div>
+          <div className="glass-card" style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
+            <h3>🔗 Conectar WhatsApp</h3>
+            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '2rem' }}>Escaneie o QR Code abaixo com o seu WhatsApp para ativar a Sarah.</p>
+            <div style={{ background: 'white', padding: '1.5rem', borderRadius: '20px', display: 'inline-block', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+              {qrStatus === 'CONNECTED' ? (
+                <div style={{ width: '250px', height: '250px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
+                  <span style={{ fontSize: '4rem' }}>✅</span>
+                  <strong style={{ marginTop: '1rem' }}>Conectado</strong>
+                </div>
+              ) : qrCode ? (
+                <img src={qrCode} alt="QR Code" style={{ width: '250px', height: '250px' }} />
+              ) : (
+                <div style={{ width: '250px', height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="spinner"></div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-        {activeTab === 'admin' && isAdmin && (
-          <div className="tab-panel fade-in">
-            <div className="card glass-card">
-              <div className="card-header">
-                <h3>👑 Painel Administrativo</h3>
-                <button className="btn-refresh-mini" onClick={fetchAllClients}>🔄</button>
-              </div>
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Cliente</th>
-                      <th>Instância</th>
-                      <th>Plano</th>
-                      <th>Vencimento</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allClients.map((client, i) => (
-                      <tr key={i}>
-                        <td><strong>{client.fields.name || 'Sem Nome'}</strong><br/>{client.fields.email}</td>
-                        <td><code>{client.fields.instanceName}</code></td>
-                        <td><span className={`plan-badge-table ${client.fields.plan}`}>{client.fields.plan || 'Trial'}</span></td>
-                        <td>{client.fields.trialEndDate ? new Date(client.fields.trialEndDate).toLocaleDateString('pt-BR') : '-'}</td>
-                        <td><span className={`status-dot ${client.fields.status}`}></span> {client.fields.status || 'Ativo'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <p style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#a1a1aa' }}>Status: {qrStatus}</p>
           </div>
         )}
       </main>
-
-      {showSubModal && (
-        <div className="modal-overlay fade-in" onClick={() => setShowSubModal(false)}>
-          <div className="modal-content glass-card slide-up" onClick={e => e.stopPropagation()}>
-            {modalView === 'manage' && (
-              <div className="view-manage fade-in">
-                <div className="modal-header"><h2>Gerenciar Assinatura</h2><button className="close-modal" onClick={() => setShowSubModal(false)}>&times;</button></div>
-                <div className="modal-body">
-                  <div className="usage-section">
-                    <div className="usage-info"><span>Mensagens do Plano</span><span>{stats.messages} / {msgLimit}</span></div>
-                    <div className="usage-progress"><div className="usage-fill" style={{ width: `${msgPercent}%` }}></div></div>
-                  </div>
-                  <div className="payment-section">
-                    <h4>Método de Pagamento</h4>
-                    <div className="card-mini">
-                      <div className="card-brand">VISA</div>
-                      <div className="card-number">**** **** **** 4242</div>
-                      <button className="btn-text" onClick={() => setModalView('payment')}>Alterar</button>
-                    </div>
-                  </div>
-                  <div className="history-section">
-                    <h4>Últimas Faturas</h4>
-                    <div className="invoice-row"><span>21 Abr 2026</span><span className="invoice-price">R$ 97,00</span><span className="invoice-status">Paga</span></div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn-upgrade-modal" onClick={handleUpgrade} disabled={saving}>
-                    {saving ? 'Processando...' : 'Fazer Upgrade'}
-                  </button>
-                  <button className="btn-cancel-link">Cancelar Assinatura</button>
-                </div>
-              </div>
-            )}
-            {modalView === 'upgrade' && (
-              <div className="view-upgrade fade-in">
-                <div className="modal-header"><button className="btn-back" onClick={() => setModalView('manage')}>← Voltar</button><h2>Escolha seu Plano</h2></div>
-                <div className="plans-comparison mobile-stack">
-                  <div className="plan-option current">
-                    <div className="plan-badge">ATUAL</div>
-                    <h4>Individual</h4>
-                    <p>Ideal para iniciantes</p>
-                    <ul className="plan-features"><li>5.000 msgs/mês</li><li>1 Robô Sarah</li></ul>
-                  </div>
-                  <div className="plan-option highlight">
-                    <div className="plan-badge-new">RECOMENDADO</div>
-                    <h4>Agência</h4>
-                    <p>Para quem quer escala</p>
-                    <ul className="plan-features"><li>50.000 msgs/mês</li><li>5 Robôs Sarah</li><li>Suporte VIP</li></ul>
-                    <button className="btn-confirm-upgrade" onClick={() => alert('Upgrade processado!')}>Migrar para este</button>
-                  </div>
-                </div>
-              </div>
-            )}
-            {modalView === 'payment' && (
-              <div className="view-payment fade-in">
-                <div className="modal-header"><button className="btn-back" onClick={() => setModalView('manage')}>← Voltar</button><h2>Forma de Pagamento</h2></div>
-                <div className="payment-selector">
-                  <div className={`payment-method-item ${paymentMethod === 'card' ? 'active' : ''}`} onClick={() => setPaymentMethod('card')}>
-                    <div className="method-icon">💳</div>
-                    <div className="method-info"><strong>Cartão de Crédito</strong><p>Visa terminado em 4242</p></div>
-                    {paymentMethod === 'card' && <div className="selected-dot"></div>}
-                  </div>
-                  <div className={`payment-method-item ${paymentMethod === 'pix' ? 'active' : ''}`} onClick={() => setPaymentMethod('pix')}>
-                    <div className="method-icon">💎</div>
-                    <div className="method-info"><strong>PIX</strong><p>Pague com QR Code mensal</p></div>
-                    {paymentMethod === 'pix' && <div className="selected-dot"></div>}
-                  </div>
-                </div>
-                <div className="payment-details-box">
-                  {paymentMethod === 'card' ? (
-                    <>
-                      <p>Seu cartão atual será mantido. Para adicionar um novo cartão, entraremos em contato via WhatsApp no próximo faturamento.</p>
-                      <button className="btn-save-payment full-width-mobile" onClick={() => { alert('Preferência de cartão salva!'); setModalView('manage'); }}>Salvar Alteração</button>
-                    </>
-                  ) : (
-                    <div className="pix-payment-flow">
-                      {!pixData ? (
-                        <>
-                          <p>Gere um QR Code PIX agora para renovar sua assinatura instantaneamente.</p>
-                          <button className="btn-confirm-upgrade full-width-mobile" onClick={handleGeneratePix} disabled={saving}>
-                            {saving ? 'Gerando...' : 'Gerar QR Code PIX'}
-                          </button>
-                        </>
-                      ) : (
-                        <div className="pix-qr-container fade-in">
-                          <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="PIX QR Code" className="pix-qr-img" />
-                          <div className="pix-copy-box">
-                            <input type="text" readOnly value={pixData.qr_code} className="pix-input" id="pixCode" />
-                            <button className="btn-copy" onClick={() => {
-                              navigator.clipboard.writeText(pixData.qr_code);
-                              alert('Código Copiado!');
-                            }}>Copiar</button>
-                          </div>
-                          <p className="pix-hint">Após pagar, sua conta será ativada automaticamente em instantes.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
