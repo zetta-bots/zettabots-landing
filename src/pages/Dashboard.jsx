@@ -187,11 +187,11 @@ export default function Dashboard() {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-leads', instanceName })
+        body: JSON.stringify({ action: 'get-leads', instanceName, email: session.email })
       })
       const data = await res.json()
       if (data.success) setLeads(data.leads || [])
-    } catch (err) { console.error('ERRO LEADS:', err) }
+    } catch (err) { console.error('LEADS ERROR:', err) }
   }
 
   const handleToggleAI = async () => {
@@ -333,7 +333,20 @@ export default function Dashboard() {
         <header className="main-header">
           <div className="header-title">
             <h1>{isAdmin ? 'ZettaBots Master' : `Bem-vindo, ${session.instanceName || session.name || 'Atlas da Fé'}`}</h1>
-            <p>{activeTab.toUpperCase()}</p>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <p>{activeTab.toUpperCase()}</p>
+              {isAdmin && allInstances.length > 0 && (
+                <select 
+                  className="instance-selector-mini"
+                  value={selectedInstance}
+                  onChange={(e) => setSelectedInstance(e.target.value)}
+                >
+                  {allInstances.map(i => (
+                    <option key={i.id} value={i.instance_name}>{i.instance_name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
           <div className="plan-badge-v2">
             ⭐ PLANO {['pago', 'admin'].includes(session.status) ? 'PRO' : 'TRIAL'}

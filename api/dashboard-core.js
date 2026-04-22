@@ -62,39 +62,28 @@ export default async function handler(req, res) {
 
       case 'get-stats':
         try {
-          const realName = await getCorrectInstance(instanceName);
-          const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
-          const d = await r.json();
-          const chats = Array.isArray(d) ? d : (d.chats || d.data || []);
+          const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
+          const instances = await listRes.json();
+          const data = Array.isArray(instances) ? instances : (instances.data || []);
+          const found = data.find(i => i.instanceName.toLowerCase() === instanceName.toLowerCase() || i.instanceName.toLowerCase().includes(instanceName.toLowerCase()));
           
-          let totalLeads = 0;
-          try {
-            const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id`, {
-              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-            });
-            const instData = await instRes.json();
-            if (instData && instData.length > 0) {
-              const leadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&select=id`, {
-                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-              });
-              const leadsData = await leadsRes.json();
-              totalLeads = leadsData?.length || 0;
-            }
-          } catch(e) {}
-          
-          const totalChats = chats.length;
-          const totalContacts = chats.filter(c => c.id && !c.id.includes('@g.us')).length;
+          if (!found) throw new Error('Instance not found');
+
+          const statsData = found._count || { Message: 0, Contact: 0, Chat: 0 };
+          const contacts = statsData.Contact || 0;
+          const messages = statsData.Message || 0;
+          const chatsCount = statsData.Chat || 0;
           
           return res.status(200).json({ 
             success: true, 
-            status: 'CONNECTED',
+            status: found.connectionStatus === 'open' ? 'CONNECTED' : 'DISCONNECTED',
             stats: { 
-              contacts: totalLeads || totalContacts || 0, 
-              chats: totalChats || (totalLeads * 2),
-              messages: (totalLeads * 15) || (totalChats * 8), 
-              savedTime: `${Math.floor((totalLeads * 0.5) + (totalChats * 0.2))}h`,
-              roi: `R$ ${((totalLeads * 180) + (totalContacts * 45)).toLocaleString('pt-BR')}`,
-              activity: [2, 5, 1, 8, 4, totalLeads || totalChats || 2, 0]
+              contacts: contacts, 
+              chats: chatsCount || (contacts * 1.5),
+              messages: messages, 
+              savedTime: `${Math.floor((contacts * 0.5) + (chatsCount * 0.2))}h`,
+              roi: `R$ ${((contacts * 180) + (chatsCount * 45)).toLocaleString('pt-BR')}`,
+              activity: [2, 5, 1, 8, 4, contacts || 2, 0]
             } 
           });
         } catch (e) {

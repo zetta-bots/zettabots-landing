@@ -793,3 +793,17 @@ h1, h2, h3, h4, .brand-info h2 {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+
+.instance-selector-mini {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.instance-selector-mini:hover { background: rgba(255,255,255,0.1); border-color: var(--color-primary); }
+.instance-selector-mini option { background: #1a1a1a; color: #fff; }
