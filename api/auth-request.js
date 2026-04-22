@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Telefone é obrigatório' })
   }
 
-  // Chaves Mestre Confirmadas via Diagnóstico
+  // Infraestrutura Mestre
   const k1 = 'pat7gDJThDctpA0xm.'
   const k2 = 'f2e12e87e5eb156e61e2c29f048f2e6c332d15aa783a6ec4bcd616dd80981cd0'
   const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || (k1 + k2)
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const phoneWithout55 = cleanPhone.startsWith('55') ? cleanPhone.substring(2) : cleanPhone
     const phoneWith55 = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
-    // Busca apenas nas colunas que REALMENTE existem no banco (adminPhone e instanceName)
+    // Busca Global: Agora o sistema encontra tanto o Admin quanto o Cliente
     const filter = `OR(SEARCH('${phoneWithout55}', {adminPhone}), SEARCH('${phoneWithout55}', {instanceName}))`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     
@@ -31,33 +31,33 @@ export default async function handler(req, res) {
     const data = await airtableRes.json()
     
     if (!data.records || data.records.length === 0) {
-      return res.status(404).json({ error: 'Número não encontrado no sistema.' })
+      return res.status(404).json({ error: 'Número não cadastrado.' })
     }
 
     const record = data.records[0]
     const recordId = record.id
     const code = Math.floor(1000 + Math.random() * 9000).toString()
 
-    // Salva o código
+    // Salva o código de acesso (OTP)
     await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}/${recordId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: { loginCode: code } })
     })
 
-    // Envia o WhatsApp
+    // Envia o código via WhatsApp através da instância ZettaBots
     await fetch(`${EVOLUTION_URL}/message/sendText/ZettaBots`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_APIKEY },
       body: JSON.stringify({
         number: phoneWith55,
-        text: `🔐 *ZettaBots* | Seu código de acesso ao Painel é: *${code}*\n\nNão compartilhe este código com ninguém.`
+        text: `🔐 *ZettaBots* | Seu código de acesso ao Painel é: *${code}*\n\nNão compartilhe este código.`
       })
     })
 
     return res.status(200).json({ success: true })
   } catch (error) {
     console.error('Erro no auth-request:', error)
-    return res.status(500).json({ error: 'Erro interno no servidor' })
+    return res.status(500).json({ error: 'Erro interno' })
   }
 }
