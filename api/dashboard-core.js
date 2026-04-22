@@ -116,11 +116,16 @@ export default async function handler(req, res) {
               headers: { Authorization: `Bearer ${airtableToken}` }
             });
             const leadsData = await leadsRes.json();
-            raw = (leadsData.records || []).map(record => ({
-              id: record.fields.WhatsApp || record.fields.adminPhone || record.id,
-              name: record.fields.Nome || record.fields.businessName || 'Lead Ativo',
-              lastMsg: 'Lead Monitorado pela Sarah'
-            }));
+            raw = (leadsData.records || []).map(record => {
+              let phone = record.fields.WhatsApp || record.fields.adminPhone || '';
+              if (phone && !phone.includes('@')) phone = `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
+              
+              return {
+                id: phone || record.id,
+                name: record.fields.Nome || record.fields.businessName || 'Lead Ativo',
+                lastMsg: 'Lead Monitorado pela Sarah'
+              };
+            });
           }
 
           return res.status(200).json({ 
@@ -138,6 +143,11 @@ export default async function handler(req, res) {
 
       case 'get-messages':
         try {
+          let { remoteJid } = req.body;
+          if (remoteJid && !remoteJid.includes('@')) {
+            remoteJid = `${remoteJid.replace(/\D/g, '')}@s.whatsapp.net`;
+          }
+
           const r = await fetch(`${url}/chat/findMessages/${instanceName}`, {
             method: 'POST',
             headers: fetchOptions.headers,
