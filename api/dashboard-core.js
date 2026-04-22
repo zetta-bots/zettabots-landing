@@ -255,7 +255,9 @@ export default async function handler(req, res) {
               enabled: enabled,
               systemPrompt: systemPrompt || "Você é a Sarah.",
               model: "gpt-4o",
-              timezone: "America/Sao_Paulo"
+              timezone: "America/Sao_Paulo",
+              audioTranscription: true,
+              presence: "composing"
             })
           });
           if (!setRes.ok) throw new Error('Failed to toggle AI in Evolution');
