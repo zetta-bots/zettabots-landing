@@ -10,8 +10,13 @@ export default async function handler(req, res) {
   const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE || 'tblu2DjzxbgZ84PL6'
 
   try {
-    // 1. Buscar o cliente pelo telefone
-    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=OR({instanceName}='${phone}', {adminPhone}='${phone}')`
+    // Normalização Inteligente
+    const rawPhone = phone.replace(/\D/g, '')
+    const phoneWith55 = rawPhone.startsWith('55') ? rawPhone : `55${rawPhone}`
+    const phoneWithout55 = rawPhone.startsWith('55') ? rawPhone.substring(2) : rawPhone
+
+    // 1. Buscar o cliente por qualquer uma das variações
+    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=OR({phone}='${phoneWith55}', {phone}='${phoneWithout55}', {adminPhone}='${phoneWith55}', {adminPhone}='${phoneWithout55}')`
     const airtableRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
     })
@@ -25,8 +30,7 @@ export default async function handler(req, res) {
     const fields = record.fields
 
     // 2. Validar o código (Bypass para o número de teste do cliente)
-    const cleanPhone = phone.replace(/\D/g, '')
-    const isAtlasDaFe = cleanPhone === '1197737283' || cleanPhone === '551197737283'
+    const isAtlasDaFe = phoneWithout55 === '1197737283' || phoneWithout55 === '1197737283'
     const isCodeValid = fields.loginCode === code || (isAtlasDaFe && code === '1234')
 
     if (!isCodeValid) {
@@ -37,8 +41,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       recordId: record.id,
-      instanceName: fields.instanceName || phone,
-      phone: fields.adminPhone || phone,
+      instanceName: fields.instanceName || phoneWith55,
+      phone: fields.adminPhone || phoneWith55,
       status: fields.status || 'trial',
       name: fields.name || 'Cliente ZettaBots',
       systemPrompt: fields.systemPrompt || '',
