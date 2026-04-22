@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [notificationEmail, setNotificationEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showSubModal, setShowSubModal] = useState(false)
+  const [modalView, setModalView] = useState('manage') 
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function Dashboard() {
     }
     setPrompt(parsed.systemPrompt || '')
     setWebhookUrl(parsed.webhookUrl || '')
-    setNotificationEmail(parsed.email || parsed.notificationEmail || '')
+    setNotificationEmail(parsed.notificationEmail || parsed.email || '')
     setInstances([{ name: parsed.instanceName || parsed.phone, label: 'Instância Principal' }])
     setSelectedInstance(parsed.instanceName || parsed.phone)
 
@@ -63,7 +65,7 @@ export default function Dashboard() {
         body: JSON.stringify({ instanceName })
       })
       const data = await res.json()
-      if (data.success) {
+      if (data.success && data.stats) {
         setStats(data.stats)
       }
     } catch (err) {
@@ -86,10 +88,12 @@ export default function Dashboard() {
       } else if (data.qrcode) {
         setQrCode(data.qrcode)
         setQrStatus('QRCODE')
+      } else {
+        setQrStatus('DISCONNECTED')
       }
     } catch (err) {
       console.error('ERRO CONEXAO:', err)
-      setQrStatus('CONNECTED')
+      setQrStatus('DISCONNECTED')
     }
   }
 
@@ -102,7 +106,7 @@ export default function Dashboard() {
       })
       const data = await res.json()
       if (data.success) {
-        setChats(data.chats)
+        setChats(data.chats || [])
       }
     } catch (err) {
       console.error('ERRO CHATS:', err)
@@ -117,14 +121,10 @@ export default function Dashboard() {
       const headers = { 'apikey': apikey, 'Content-Type': 'application/json' }
       const EVOLUTION_URL = url.trim().replace(/\/$/, '')
 
-      // findMessages ainda pode precisar ser via Proxy se houver erro, mas por enquanto mantemos
       const response = await fetch(`${EVOLUTION_URL}/chat/findMessages/${selectedInstance}`, { 
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          where: { remoteJid: remoteJid },
-          take: 50
-        })
+        body: JSON.stringify({ where: { remoteJid }, take: 50 })
       })
       const data = await response.json()
       const rawMsgs = Array.isArray(data) ? data : (data.messages || [])
@@ -154,7 +154,7 @@ export default function Dashboard() {
       })
       const data = await res.json()
       if (data.success) {
-        setLeads(data.leads)
+        setLeads(data.leads || [])
       }
     } catch (err) {
       console.error('ERRO LEADS:', err)
@@ -209,7 +209,7 @@ export default function Dashboard() {
   if (!session) return null
 
   return (
-    <div className={`dashboard-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
+    <div className={`dashboard-layout ${mobileMenuOpen ? 'menu-open' : ''} ${showSubModal ? 'blur-bg' : ''}`}>
       <header className="mobile-header">
         <div className="premium-logo-container mini"><img src="/images/logo.png" alt="ZettaBots" /></div>
         <button className="hamburger-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -243,22 +243,21 @@ export default function Dashboard() {
 
         {activeTab === 'status' && (
           <div className="tab-panel">
-            {/* Onboarding Card */}
             {(qrStatus !== 'CONNECTED' || prompt.length < 50 || stats.messages === 0) && (
               <div className="glass-card">
                 <h3>🚀 Comece por aqui</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: qrStatus === 'CONNECTED' ? '4px solid #10b981' : '4px solid #7c3aed' }}>
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: qrStatus === 'CONNECTED' ? '4px solid #10b981' : '4px solid #ef4444' }}>
                     <strong>1. Conectar WhatsApp</strong>
                     <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{qrStatus === 'CONNECTED' ? '✅ Conectado' : '❌ Desconectado'}</p>
                     {qrStatus !== 'CONNECTED' && <button onClick={() => setActiveTab('conexao')} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', marginTop: '0.5rem' }}>Configurar →</button>}
                   </div>
-                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: prompt.length >= 50 ? '4px solid #10b981' : '4px solid #7c3aed' }}>
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: prompt.length >= 50 ? '4px solid #10b981' : '4px solid #ef4444' }}>
                     <strong>2. Treinar IA</strong>
                     <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{prompt.length >= 50 ? '✅ Configurado' : '❌ Aguardando regras'}</p>
                     {prompt.length < 50 && <button onClick={() => setActiveTab('bot')} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '0.8rem', marginTop: '0.5rem' }}>Treinar →</button>}
                   </div>
-                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: stats.messages > 0 ? '4px solid #10b981' : '4px solid #7c3aed' }}>
+                  <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', borderLeft: stats.messages > 0 ? '4px solid #10b981' : '4px solid #ef4444' }}>
                     <strong>3. Primeiro Teste</strong>
                     <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{stats.messages > 0 ? '✅ IA operando' : '❌ Pendente'}</p>
                     <a href={`https://wa.me/${session.phone}`} target="_blank" rel="noreferrer" style={{ color: '#7c3aed', fontSize: '0.8rem', textDecoration: 'none', display: 'block', marginTop: '0.5rem' }}>Testar IA →</a>
@@ -270,19 +269,19 @@ export default function Dashboard() {
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-icon purple">👤</div>
-                <div className="stat-info"><span className="stat-label">Leads Capturados</span><span className="stat-value">{stats.contacts}</span></div>
+                <div className="stat-info"><span className="stat-label">Leads Capturados</span><span className="stat-value">{stats.contacts || 0}</span></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon blue">💬</div>
-                <div className="stat-info"><span className="stat-label">Conversas Ativas</span><span className="stat-value">{stats.chats}</span></div>
+                <div className="stat-info"><span className="stat-label">Conversas Ativas</span><span className="stat-value">{stats.chats || 0}</span></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon green">🕒</div>
-                <div className="stat-info"><span className="stat-label">Tempo Economizado</span><span className="stat-value">{Math.floor((stats.messages * 2) / 60)}h</span></div>
+                <div className="stat-info"><span className="stat-label">Tempo Economizado</span><span className="stat-value">{Math.floor(((stats.messages || 0) * 2) / 60)}h</span></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon orange">💰</div>
-                <div className="stat-info"><span className="stat-label">ROI Estimado (Mês)</span><span className="stat-value">R$ {Math.floor(stats.messages * 1.5).toLocaleString('pt-BR')}</span></div>
+                <div className="stat-info"><span className="stat-label">ROI Estimado (Mês)</span><span className="stat-value">R$ {Math.floor((stats.messages || 0) * 1.5).toLocaleString('pt-BR')}</span></div>
               </div>
             </div>
 
@@ -309,7 +308,7 @@ export default function Dashboard() {
                     <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Próxima Cobrança</span>
                     <p style={{ fontWeight: '700' }}>{session.expiryDate || '21/05/2026'}</p>
                   </div>
-                  <button style={{ padding: '0.8rem', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem' }}>Gerenciar Assinatura</button>
+                  <button onClick={() => setShowSubModal(true)} style={{ width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', cursor: 'pointer', fontSize: '0.85rem' }}>Gerenciar Assinatura</button>
                 </div>
               </div>
             </div>
@@ -388,18 +387,6 @@ export default function Dashboard() {
                 <button onClick={handleSavePrompt} disabled={saving} style={{ padding: '0.8rem 1.5rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}>{saving ? 'Salvando...' : 'Salvar Inteligência'}</button>
               </div>
             </div>
-            <div className="glass-card">
-              <h3>Conhecimento</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.5rem' }}>
-                {knowledgeLinks.map((link, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.75rem' }}>
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{link}</span>
-                    <button onClick={() => handleRemoveLink(i)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>×</button>
-                  </div>
-                ))}
-                <button onClick={() => setKnowledgeLinks([...knowledgeLinks, prompt('URL:')])} style={{ marginTop: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', color: 'white', borderRadius: '8px', cursor: 'pointer' }}>+ Adicionar Site</button>
-              </div>
-            </div>
           </div>
         )}
 
@@ -433,6 +420,30 @@ export default function Dashboard() {
           </div>
         )}
       </main>
+
+      {/* MODAL DE ASSINATURA */}
+      {showSubModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyCenter: 'center', padding: '2rem' }} onClick={() => setShowSubModal(false)}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2>Gerenciar Assinatura</h2>
+              <button onClick={() => setShowSubModal(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+            </div>
+            <div style={{ marginBottom: '2rem' }}>
+              <p style={{ color: '#a1a1aa', marginBottom: '0.5rem' }}>Plano Atual: <strong>PRO (R$ 97,00/mês)</strong></p>
+              <p style={{ color: '#a1a1aa' }}>Vencimento: <strong>21/05/2026</strong></p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '15px', marginBottom: '2rem' }}>
+              <h4>Histórico de Faturas</h4>
+              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                <span>Fatura Abril 2026</span>
+                <span style={{ color: '#10b981' }}>Paga ✅</span>
+              </div>
+            </div>
+            <button style={{ width: '100%', padding: '1rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>Upgrade para Plano Business</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
