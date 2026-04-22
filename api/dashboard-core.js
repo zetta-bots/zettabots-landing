@@ -30,20 +30,21 @@ export default async function handler(req, res) {
             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
           });
           const instData = await instRes.json();
+          let record = {};
           if (instData && instData.length > 0) {
-            const record = instData[0];
-            return res.status(200).json({
-              success: true,
-              plan: record.plan || 'ZettaBots Pro',
-              status: record.status || 'trial',
-              nextBilling: record.next_billing ? new Date(record.next_billing).toLocaleDateString('pt-BR') : 'Sem Vencimento',
-              value: 'R$ 97,00',
-              invoices: [
-                { id: 'FAT-202604', date: '21/04/2026', value: 'R$ 97,00', status: 'Pago' }
-              ]
-            });
+            record = instData[0];
           }
-          throw new Error('Not found');
+          
+          return res.status(200).json({
+            success: true,
+            plan: record.plan || 'ZettaBots Pro',
+            status: record.status || 'trial',
+            nextBilling: record.next_billing ? new Date(record.next_billing).toLocaleDateString('pt-BR') : 'Sem Vencimento',
+            value: 'R$ 97,00',
+            invoices: [
+              { id: 'FAT-202604', date: '21/04/2026', value: 'R$ 97,00', status: 'Pago' }
+            ]
+          });
         } catch (e) {
           return res.status(500).json({ error: 'Finance fetch error' });
         }
