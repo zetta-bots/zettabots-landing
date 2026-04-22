@@ -423,24 +423,33 @@ export default function Dashboard() {
 
       {/* MODAL DE ASSINATURA */}
       {showSubModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyCenter: 'center', padding: '2rem' }} onClick={() => setShowSubModal(false)}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(8px)' }} onClick={() => setShowSubModal(false)}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '500px', margin: '0 auto', border: '1px solid rgba(124, 58, 237, 0.5)', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <h2>Gerenciar Assinatura</h2>
-              <button onClick={() => setShowSubModal(false)} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+              <h2 style={{ color: 'white', margin: 0 }}>Gerenciar Assinatura</h2>
+              <button onClick={() => setShowSubModal(false)} style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '1.8rem', cursor: 'pointer', transition: 'color 0.2s' }}>&times;</button>
             </div>
-            <div style={{ marginBottom: '2rem' }}>
-              <p style={{ color: '#a1a1aa', marginBottom: '0.5rem' }}>Plano Atual: <strong>PRO (R$ 97,00/mês)</strong></p>
-              <p style={{ color: '#a1a1aa' }}>Vencimento: <strong>21/05/2026</strong></p>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '15px', marginBottom: '2rem' }}>
-              <h4>Histórico de Faturas</h4>
-              <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                <span>Fatura Abril 2026</span>
-                <span style={{ color: '#10b981' }}>Paga ✅</span>
+            <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                <p style={{ color: '#a1a1aa', fontSize: '0.9rem', margin: 0 }}>Plano Atual</p>
+                <p style={{ color: 'white', fontSize: '1.2rem', fontWeight: '700', margin: '0.2rem 0' }}>ZettaBots PRO</p>
+                <p style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: '600', margin: 0 }}>R$ 97,00 / mês</p>
+              </div>
+              <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                <p style={{ color: '#a1a1aa', fontSize: '0.9rem', margin: 0 }}>Próximo Vencimento</p>
+                <p style={{ color: 'white', fontSize: '1.1rem', fontWeight: '600', margin: '0.2rem 0' }}>{session.expiryDate || '21/05/2026'}</p>
               </div>
             </div>
-            <button style={{ width: '100%', padding: '1rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>Upgrade para Plano Business</button>
+            <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: '1.2rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+              <h4 style={{ color: 'white', marginTop: 0, marginBottom: '0.8rem' }}>Histórico</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                <span style={{ color: '#a1a1aa' }}>Fatura #2834 (Abril)</span>
+                <span style={{ color: '#10b981', fontWeight: '600' }}>Paga ✅</span>
+              </div>
+            </div>
+            <button className="btn-primary" style={{ width: '100%', padding: '1.2rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '700', cursor: 'pointer', fontSize: '1rem', boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.4)' }}>
+              Fazer Upgrade para Business
+            </button>
           </div>
         </div>
       )}
