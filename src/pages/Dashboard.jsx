@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [toasts, setToasts] = useState([])
   const [showSubModal, setShowSubModal] = useState(false)
+  const [isAIPaused, setIsAIPaused] = useState(false)
   const navigate = useNavigate()
 
   const showToast = (message, type = 'info') => {
@@ -318,8 +319,15 @@ export default function Dashboard() {
                 <>
                 <div className="chat-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                   <h4>{selectedChat.user}</h4>
-                  <button className="btn-secondary" onClick={() => showToast('IA Sarah Pausada. Você está no controle.', 'info')} style={{fontSize: '0.7rem', padding: '0.4rem 0.8rem'}}>
-                    🤖 IA ATIVA (Pausar)
+                  <button 
+                    className={`btn-${isAIPaused ? 'danger' : 'secondary'}`} 
+                    onClick={() => {
+                      setIsAIPaused(!isAIPaused);
+                      showToast(isAIPaused ? 'IA Sarah Reativada!' : 'IA Sarah Pausada. Você está no controle.', isAIPaused ? 'success' : 'info');
+                    }} 
+                    style={{fontSize: '0.7rem', padding: '0.4rem 0.8rem'}}
+                  >
+                    {isAIPaused ? '🚫 IA PAUSADA' : '🤖 IA ATIVA'}
                   </button>
                 </div>
                 <div className="messages-container">
