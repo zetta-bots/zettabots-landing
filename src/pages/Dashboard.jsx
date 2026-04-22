@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [webhookUrl, setWebhookUrl] = useState('')
   const [notificationEmail, setNotificationEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [allInstances, setAllInstances] = useState([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [toasts, setToasts] = useState([])
   const [showSubModal, setShowSubModal] = useState(false)
@@ -89,9 +90,22 @@ export default function Dashboard() {
       if (activeTab === 'leads') fetchLeads(selectedInstance)
       if (activeTab === 'financeiro') fetchFinance(selectedInstance)
       if (activeTab === 'conexao' || activeTab === 'status') fetchQrCode(selectedInstance)
+      if (activeTab === 'admin' && isAdmin) fetchAllInstances()
     }
     setMobileMenuOpen(false)
   }, [activeTab, selectedInstance])
+
+  const fetchAllInstances = async () => {
+    try {
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get-all-instances', instanceName: selectedInstance, email: session.email })
+      })
+      const data = await res.json()
+      if (data.success) setAllInstances(data.instances)
+    } catch (err) { console.error('ERRO ADMIN:', err) }
+  }
 
   const fetchStats = async (instanceName) => {
     try {
@@ -305,7 +319,10 @@ export default function Dashboard() {
           <button className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} onClick={() => setActiveTab('bot')}><span className="icon">🤖</span> Personalidade IA</button>
           <button className={`nav-item ${activeTab === 'financeiro' ? 'active' : ''}`} onClick={() => setActiveTab('financeiro')}><span className="icon">💰</span> Financeiro</button>
           <button className={`nav-item ${activeTab === 'integracoes' ? 'active' : ''}`} onClick={() => setActiveTab('integracoes')}><span className="icon">🔌</span> Integrações</button>
-          <button className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} onClick={() => setActiveTab('conexao')}><span className="icon">🔗</span> Conexão</button>
+           <button className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} onClick={() => setActiveTab('conexao')}><span className="icon">🔗</span> Conexão</button>
+           {isAdmin && (
+             <button className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')} style={{marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', color: '#fbbf24'}}><span className="icon">👑</span> Painel Admin</button>
+           )}
         </nav>
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}><span className="icon">🚪</span> Sair</button>
@@ -314,7 +331,10 @@ export default function Dashboard() {
 
       <main className="dashboard-main">
         <header className="main-header">
-          <div className="header-title"><h1>Bem-vindo, {session.instanceName || session.name || 'Atlas da Fé'}</h1><p>{activeTab.toUpperCase()}</p></div>
+          <div className="header-title">
+            <h1>{isAdmin ? 'ZettaBots Master' : `Bem-vindo, ${session.instanceName || session.name || 'Atlas da Fé'}`}</h1>
+            <p>{activeTab.toUpperCase()}</p>
+          </div>
           <div className="plan-badge-v2">
             ⭐ PLANO {['pago', 'admin'].includes(session.status) ? 'PRO' : 'TRIAL'}
           </div>
@@ -528,6 +548,45 @@ export default function Dashboard() {
                 <button onClick={() => alert('Recurso em desenvolvimento: Reset de Instância')} className="btn-danger">Resetar WhatsApp</button>
               </div>
               <p style={{marginTop: '2rem', color: '#a1a1aa', fontSize: '0.85rem'}}>Aponte o WhatsApp para o QR Code acima para conectar sua instância.</p>
+            </div>
+          </div>
+        )}
+        {activeTab === 'admin' && isAdmin && (
+          <div className="tab-panel">
+            <div className="premium-card">
+              <h3 style={{fontSize: '1.4rem'}}>👑 Gerenciamento Global</h3>
+              <p style={{color: 'var(--color-text-muted)', marginBottom: '2rem'}}>Administre todos os clientes e instâncias do ecossistema ZettaBots.</p>
+              
+              <div style={{overflowX: 'auto'}}>
+                <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                  <thead>
+                    <tr style={{borderBottom: '1px solid var(--color-border)', textAlign: 'left'}}>
+                      <th style={{padding: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>INSTÂNCIA</th>
+                      <th style={{padding: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>WHATSAPP</th>
+                      <th style={{padding: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>PLANO</th>
+                      <th style={{padding: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>STATUS</th>
+                      <th style={{padding: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)'}}>AÇÕES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allInstances.map((inst, i) => (
+                      <tr key={i} style={{borderBottom: '1px solid rgba(255,255,255,0.02)'}}>
+                        <td style={{padding: '1rem', fontWeight: 'bold'}}>{inst.instance_name}</td>
+                        <td style={{padding: '1rem'}}>{inst.phone}</td>
+                        <td style={{padding: '1rem'}}>{inst.plan || 'PRO'}</td>
+                        <td style={{padding: '1rem'}}>
+                          <span className={`finance-badge ${inst.status === 'pago' ? 'pago' : 'trial'}`} style={{fontSize: '0.6rem'}}>
+                            {inst.status === 'pago' ? 'PAGO' : 'TRIAL'}
+                          </span>
+                        </td>
+                        <td style={{padding: '1rem'}}>
+                           <button className="btn-secondary" style={{padding: '4px 10px', fontSize: '0.7rem'}} onClick={() => alert('Recurso: Gerenciar Cliente')}>Abrir</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

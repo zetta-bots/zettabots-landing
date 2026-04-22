@@ -229,6 +229,22 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: 'Error fetching media' });
         }
 
+      case 'get-all-instances':
+        try {
+          const { email } = req.body;
+          if (email !== 'richardrovigati@gmail.com' && instanceName !== '5521969875522') {
+            return res.status(403).json({ error: 'Acesso negado' });
+          }
+
+          const allRes = await fetch(`${sbUrl}/rest/v1/instances?select=*&order=created_at.desc`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          });
+          const allData = await allRes.json();
+          return res.status(200).json({ success: true, instances: allData || [] });
+        } catch (e) {
+          return res.status(500).json({ error: 'Admin fetch error' });
+        }
+
       case 'toggle-ai':
         try {
           const { enabled, systemPrompt } = req.body;
