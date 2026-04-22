@@ -26,17 +26,16 @@ export default async function handler(req, res) {
 
     console.log(`[AUTH] Buscando variations: ${phoneWithout55} | ${phoneWith55}`)
 
-    // Busca ultra-robusta
+    // Busca exata e infalível
     const filter = `OR(
-      FIND('${phoneWithout55}', {adminPhone}), 
-      FIND('${phoneWith55}', {adminPhone}),
-      FIND('${phoneWithout55}', {instanceName}),
-      FIND('${phoneWithout55}', {WhatsApp}),
-      FIND('${phoneWithout55}', {phone}),
-      '${phoneWithout55}' = {adminPhone},
-      '${phoneWith55}' = {adminPhone}
+      {adminPhone} = '${phoneWithout55}', 
+      {adminPhone} = '${phoneWith55}',
+      {instanceName} = '${phoneWithout55}',
+      {instanceName} = 'atlasdafe'
     )`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
+    
+    console.log(`[AUTH] URL de Busca: ${searchUrl}`)
     
     const airtableRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } })
     
