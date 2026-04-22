@@ -66,21 +66,54 @@ export default function Dashboard() {
 
   const fetchStats = async (instanceName) => {
     try {
-      const res = await fetch('/api/get-stats', {
+      const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName })
+        body: JSON.stringify({ action: 'get-stats', instanceName })
       })
       const data = await res.json()
       if (data.success) {
-        setStats(data.stats || { contacts: 0, chats: 0, messages: 0 })
-        if (data.status === 'open' || data.status === 'CONNECTED') {
-          setQrStatus('CONNECTED')
-        }
+        setStats(data.stats)
+        if (data.status === 'open' || data.status === 'CONNECTED') setQrStatus('CONNECTED')
       }
-    } catch (err) {
-      console.error('ERRO STATS:', err)
-    }
+    } catch (err) { console.error('ERRO STATS:', err) }
+  }
+
+  const fetchChats = async (instanceName) => {
+    try {
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get-chats', instanceName })
+      })
+      const data = await res.json()
+      if (data.success) setChats(data.chats || [])
+    } catch (err) { console.error('ERRO CHATS:', err) }
+  }
+
+  const fetchChatMessages = async (remoteJid) => {
+    if (!remoteJid) return
+    try {
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get-messages', instanceName: selectedInstance, remoteJid })
+      })
+      const data = await res.json()
+      if (data.success) setChatMessages(data.messages || [])
+    } catch (err) { console.error('ERRO MSG:', err) }
+  }
+
+  const fetchLeads = async (instanceName) => {
+    try {
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get-leads', instanceName })
+      })
+      const data = await res.json()
+      if (data.success) setLeads(data.leads || [])
+    } catch (err) { console.error('ERRO LEADS:', err) }
   }
 
   const fetchQrCode = async (instanceName) => {
@@ -107,59 +140,10 @@ export default function Dashboard() {
     }
   }
 
-  const fetchChats = async (instanceName) => {
-    try {
-      const res = await fetch('/api/get-chats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName })
-      })
-      const data = await res.json()
-      if (data.success) {
-        setChats(data.chats || [])
-      }
-    } catch (err) {
-      console.error('ERRO CHATS:', err)
-    }
-  }
-
-  const fetchChatMessages = async (remoteJid) => {
-    if (!remoteJid) return
-    try {
-      const response = await fetch('/api/get-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName: selectedInstance, remoteJid })
-      })
-      const data = await response.json()
-      if (data.success) {
-        setChatMessages(data.messages || [])
-      }
-    } catch (err) {
-      console.error('ERRO MSG:', err)
-    }
-  }
-
   const handleSelectChat = (chat) => {
     setSelectedChat(chat)
     setChatMessages([])
     fetchChatMessages(chat.remoteJid || chat.id)
-  }
-
-  const fetchLeads = async (instanceName) => {
-    try {
-      const res = await fetch('/api/get-leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName })
-      })
-      const data = await res.json()
-      if (data.success) {
-        setLeads(data.leads || [])
-      }
-    } catch (err) {
-      console.error('ERRO LEADS:', err)
-    }
   }
 
   const handleLogout = () => {
