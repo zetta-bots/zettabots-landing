@@ -108,12 +108,28 @@ export default async function handler(req, res) {
         try {
           const r = await fetch(`${url}/chat/fetchChats?instanceName=${instanceName}`, fetchOptions);
           const d = await r.json();
-          const raw = Array.isArray(d) ? d : (d.chats || d.data || []);
+          let raw = Array.isArray(d) ? d : (d.chats || d.data || []);
+          
+          // Fallback Sênior: Se não há chats na Evolution, busca os Leads do Airtable
+          if (raw.length === 0) {
+            const leadsRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?maxRecords=20&sort[0][field]=instanceName&sort[0][direction]=desc`, {
+              headers: { Authorization: `Bearer ${airtableToken}` }
+            });
+            const leadsData = await leadsRes.json();
+            raw = (leadsData.records || []).map(record => ({
+              id: record.fields.WhatsApp || record.fields.adminPhone || record.id,
+              name: record.fields.Nome || record.fields.instanceName || 'Lead do Sistema',
+              lastMsg: 'Capturado via Airtable'
+            }));
+          }
+
           return res.status(200).json({ 
             success: true, 
             chats: raw.slice(0, 20).map(c => ({
-              id: c.id, user: c.name || c.pushName || c.id.split('@')[0], 
-              lastMsg: 'Monitorado via IA', time: 'Ativo'
+              id: c.id || c.remoteJid, 
+              user: c.name || c.pushName || (c.id ? c.id.split('@')[0] : 'Cliente'), 
+              lastMsg: c.lastMsg || 'Monitorado via IA', 
+              time: 'Ativo'
             }))
           });
         } catch (e) {
