@@ -214,27 +214,32 @@ export default function Dashboard() {
     navigate('/login')
   }
 
-  const handleGeneratePix = async () => {
-    setCheckoutLoading(true)
+  const handleGeneratePix = async (method = 'pix') => {
     try {
+      setCheckoutLoading(true)
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recordId: session.recordId,
-          email: session.email,
-          name: session.name
+        body: JSON.stringify({ 
+          recordId: session.id, 
+          email: session.email, 
+          name: session.name,
+          payment_method: method
         })
       })
       const data = await res.json()
       if (data.success) {
-        setCheckoutPix(data)
-        showToast('PIX gerado com sucesso! Escaneie o QR Code.', 'success')
+        if (method === 'pix') {
+          setCheckoutPix(data)
+        } else if (data.init_point) {
+          window.open(data.init_point, '_blank')
+          setShowSubModal(false)
+        }
       } else {
-        showToast('Erro ao gerar PIX', 'error')
+        showToast('Erro ao gerar cobrança', 'error')
       }
     } catch (err) {
-      showToast('Falha na comunicação com o gateway', 'error')
+      showToast('Erro de conexão com Mercado Pago', 'error')
     } finally {
       setCheckoutLoading(false)
     }
@@ -432,46 +437,64 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'financeiro' && (
-          <div className="tab-panel">
-            <div className="finance-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-              <div className="glass-card finance-card">
-                <h3>Sua Assinatura</h3>
+          <div className="tab-panel finance-container">
+            <div className="finance-top-row">
+              <div className="premium-card">
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                  <div>
+                    <h3 style={{margin: 0, fontSize: '1.4rem'}}>Sua Assinatura</h3>
+                    <p style={{color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '4px'}}>Gestão de plano e faturamento</p>
+                  </div>
+                  <span className={`finance-badge ${financeData?.status || 'trial'}`}>
+                    {financeData?.status === 'pago' ? 'PRO Ativo' : 'Trial'}
+                  </span>
+                </div>
+
                 {financeData ? (
-                  <div style={{ marginTop: '1.5rem' }}>
-                    <div style={{ padding: '1rem', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '15px', marginBottom: '1rem', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
-                      <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>Plano Atual</p>
-                      <h4 style={{ fontSize: '1.4rem', color: 'white' }}>{financeData.plan}</h4>
-                      <span style={{ display: 'inline-block', padding: '4px 12px', background: '#10b981', color: 'white', borderRadius: '20px', fontSize: '0.7rem', marginTop: '10px' }}>{financeData.status}</span>
+                  <div style={{ marginTop: '2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                      <div className="stat-info">
+                        <span className="stat-label">Plano Atual</span>
+                        <span style={{fontSize: '1.1rem', fontWeight: '700'}}>{financeData.plan}</span>
+                      </div>
+                      <div className="stat-info">
+                        <span className="stat-label">Valor Mensal</span>
+                        <span style={{fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-primary)'}}>{financeData.value}</span>
+                      </div>
+                      <div className="stat-info">
+                        <span className="stat-label">Próxima Cobrança</span>
+                        <span style={{fontSize: '0.9rem', fontWeight: '600'}}>{financeData.nextBilling}</span>
+                      </div>
+                      <div className="stat-info">
+                        <span className="stat-label">ID do Cliente</span>
+                        <span style={{fontSize: '0.9rem', fontWeight: '600', opacity: 0.5}}>{session.phone}</span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
-                      <span style={{ color: '#a1a1aa' }}>Próxima Cobrança:</span>
-                      <span style={{ fontWeight: 'bold' }}>{financeData.nextBilling}</span>
+                    
+                    <div style={{display: 'flex', gap: '12px'}}>
+                      <button className="btn-primary" style={{flex: 1}} onClick={() => setShowSubModal(true)}>🚀 Renovar / Mudar Plano</button>
+                      <button className="btn-secondary" style={{padding: '0.8rem'}} onClick={() => window.open('https://wa.me/5521969875522', '_blank')}>💬 Suporte</button>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#a1a1aa' }}>Valor:</span>
-                      <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>{financeData.value}</span>
-                    </div>
-                    <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem', marginBottom: '10px' }} onClick={() => setShowSubModal(true)}>Renovar / Mudar Plano</button>
-                    <button className="btn-secondary" style={{ width: '100%' }} onClick={() => window.open('https://wa.me/5521969875522', '_blank')}>Falar com Suporte</button>
                   </div>
                 ) : <div className="spinner"></div>}
               </div>
 
-              <div className="glass-card finance-card">
-                <h3>Faturas Recentes</h3>
-                <div style={{ marginTop: '1rem' }}>
+              <div className="premium-card">
+                <h3 style={{fontSize: '1.1rem', marginBottom: '1.5rem'}}>Faturas Recentes</h3>
+                <div className="invoice-list">
                   {financeData?.invoices.map((inv, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1.2rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <div>
-                        <p style={{ fontWeight: 'bold', margin: 0 }}>{inv.id}</p>
-                        <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: 0 }}>{inv.date}</p>
+                        <p style={{ fontWeight: '700', margin: 0, fontSize: '0.95rem' }}>{inv.id}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>{inv.date}</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontWeight: 'bold', color: '#10b981', margin: 0 }}>{inv.value}</p>
-                        <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: 0 }}>{inv.status}</p>
+                        <p style={{ fontWeight: '800', color: '#10b981', margin: 0 }}>{inv.value}</p>
+                        <span style={{ fontSize: '0.65rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>{inv.status.toUpperCase()}</span>
                       </div>
                     </div>
                   ))}
+                  {!financeData?.invoices.length && <p style={{color: 'var(--color-text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '2rem'}}>Nenhuma fatura encontrada.</p>}
                 </div>
               </div>
             </div>
@@ -510,34 +533,48 @@ export default function Dashboard() {
       </main>
 
       {showSubModal && (
-        <div className="modal-overlay" onClick={() => setShowSubModal(false)}>
-          <div className="glass-card modal-content" onClick={e => e.stopPropagation()}>
-            <h3>💎 Gestão de Assinatura</h3>
-            <div style={{marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-              <div style={{padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px'}}>
-                <p style={{fontSize: '0.8rem', color: '#a1a1aa'}}>Plano Atual</p>
-                <p style={{fontSize: '1.2rem', fontWeight: 'bold'}}>ZettaBots {session.status === 'pago' ? 'PRO' : 'TRIAL'}</p>
-              </div>
-              <div style={{padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px'}}>
-                <p style={{fontSize: '0.8rem', color: '#a1a1aa'}}>Próximo Vencimento</p>
-                <p style={{fontSize: '1.1rem'}}>{financeData?.nextBilling || session.expiryDate || 'N/A'}</p>
-              </div>
-              
-              {checkoutPix ? (
-                <div style={{textAlign: 'center', background: 'white', padding: '1rem', borderRadius: '12px'}}>
-                  <img src={`data:image/jpeg;base64,${checkoutPix.qr_code_base64}`} alt="PIX QR Code" style={{width: '200px', height: '200px', display: 'inline-block'}} />
-                  <p style={{color: '#18181b', fontSize: '0.9rem', marginTop: '10px', fontWeight: 'bold'}}>Escaneie o QR Code</p>
-                  <button onClick={() => {navigator.clipboard.writeText(checkoutPix.qr_code); showToast('Código Copiado!', 'success')}} className="btn-secondary" style={{width: '100%', fontSize: '0.8rem', marginTop: '10px', color: 'black', border: '1px solid #ccc'}}>Copiar Código PIX</button>
-                </div>
-              ) : (
-                <button className="btn-primary" onClick={handleGeneratePix} disabled={checkoutLoading}>
-                  {checkoutLoading ? 'Gerando PIX...' : 'Assinar ZettaBots PRO (R$ 97)'}
-                </button>
-              )}
+        <div className="modal-overlay" onClick={() => {setShowSubModal(false); setCheckoutPix(null)}}>
+          <div className="premium-card" style={{ width: '90%', maxWidth: '450px', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{fontSize: '1.3rem', textAlign: 'center', marginBottom: '0.5rem'}}>💎 Escolha seu Plano</h3>
+            <p style={{color: 'var(--color-text-muted)', fontSize: '0.85rem', textAlign: 'center', marginBottom: '1.5rem'}}>Assine o ZettaBots PRO e libere todo o poder da IA.</p>
+            
+            <div style={{padding: '1rem', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '16px', border: '1px solid rgba(124, 58, 237, 0.2)', textAlign: 'center', marginBottom: '1.5rem'}}>
+               <p style={{fontSize: '0.7rem', color: 'var(--color-primary)', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px'}}>Oferta Especial</p>
+               <h4 style={{fontSize: '2rem', margin: 0}}>R$ 247<span style={{fontSize: '0.9rem', opacity: 0.6}}>/mês</span></h4>
             </div>
+
+            <div className="payment-options">
+               <button className={`method-btn ${!checkoutPix ? '' : 'selected'}`} onClick={() => handleGeneratePix('pix')}>
+                  <span style={{fontSize: '1.5rem'}}>⚡</span>
+                  <span style={{fontSize: '0.8rem', fontWeight: '700'}}>Pix Instantâneo</span>
+               </button>
+               <button className="method-btn" onClick={() => handleGeneratePix('card')}>
+                  <span style={{fontSize: '1.5rem'}}>💳</span>
+                  <span style={{fontSize: '0.8rem', fontWeight: '700'}}>Cartão / Outros</span>
+               </button>
+            </div>
+
+            {checkoutLoading && <div className="spinner" style={{marginTop: '2rem'}}></div>}
+
+            {checkoutPix && (
+              <div className="pix-display-area">
+                <img src={`data:image/jpeg;base64,${checkoutPix.qr_code_base64}`} alt="PIX QR Code" style={{width: '200px', height: '200px'}} />
+                <p style={{color: '#18181b', fontSize: '0.8rem', marginTop: '10px', textAlign: 'center'}}>Aponte a câmera do seu banco para o QR Code acima</p>
+                <button 
+                  onClick={() => {navigator.clipboard.writeText(checkoutPix.qr_code); showToast('Código Copiado!', 'success')}} 
+                  className="btn-primary" 
+                  style={{width: '100%', marginTop: '15px', padding: '0.6rem'}}
+                >
+                  📋 Copiar Código PIX
+                </button>
+              </div>
+            )}
+            
+            <button className="btn-secondary" style={{width: '100%', marginTop: '1rem', fontSize: '0.8rem'}} onClick={() => {setShowSubModal(false); setCheckoutPix(null)}}>Cancelar</button>
           </div>
         </div>
       )}
+
 
       <div className="toast-container">
         {toasts.map(t => (

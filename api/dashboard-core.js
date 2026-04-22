@@ -40,9 +40,9 @@ export default async function handler(req, res) {
             plan: record.plan || 'ZettaBots Pro',
             status: record.status || 'trial',
             nextBilling: record.next_billing ? new Date(record.next_billing).toLocaleDateString('pt-BR') : 'Sem Vencimento',
-            value: 'R$ 97,00',
+            value: 'R$ 247,00',
             invoices: [
-              { id: 'FAT-202604', date: '21/04/2026', value: 'R$ 97,00', status: 'Pago' }
+              { id: 'FAT-202604', date: '21/04/2026', value: 'R$ 247,00', status: 'Pago' }
             ]
           });
         } catch (e) {
