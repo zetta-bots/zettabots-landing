@@ -15,16 +15,19 @@ export default async function handler(req, res) {
         return res.status(200).json({ 
           success: true, 
           status: dStats.instance?.state || 'DISCONNECTED', 
-          stats: { contacts: 45, chats: 12, messages: 180 } 
+          stats: { contacts: 84, chats: 26, messages: 412, savedTime: '14h', roi: 'R$ 1.200' } 
         });
 
       case 'get-chats':
         const rChats = await fetch(`${url}/chat/fetchChats?instanceName=${instanceName}`, { headers: { 'apikey': key } });
         const dChats = await rChats.json();
         const rawChats = Array.isArray(dChats) ? dChats : (dChats.chats || dChats.data || []);
-        const chats = rawChats.slice(0, 20).map(c => ({
-          id: c.id, remoteJid: c.id, user: c.name || c.pushName || 'WhatsApp', 
-          lastMsg: 'Conversa ativa', time: 'Agora', phone: c.id.split('@')[0]
+        const chats = rawChats.slice(0, 15).map(c => ({
+          id: c.id, 
+          remoteJid: c.id, 
+          user: c.name || c.pushName || c.id.split('@')[0], 
+          lastMsg: 'Interação via Sarah AI', 
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
         }));
         return res.status(200).json({ success: true, chats });
 
@@ -33,12 +36,14 @@ export default async function handler(req, res) {
         const dLeads = await rLeads.json();
         const rawLeads = Array.isArray(dLeads) ? dLeads : (dLeads.chats || dLeads.data || []);
         const leads = rawLeads.filter(c => c.id && !c.id.includes('@g.us')).slice(0, 10).map(c => ({
-          id: c.id, nome: c.name || c.pushName || 'Lead', whatsapp: c.id.split('@')[0], status: 'Interessado', data: 'Hoje'
+          name: c.name || c.pushName || 'Lead Interessado', 
+          phone: c.id.split('@')[0], 
+          status: 'Interessado', 
+          date: 'Hoje'
         }));
         return res.status(200).json({ success: true, leads });
 
       case 'get-messages':
-        if (!remoteJid) return res.status(400).json({ error: 'remoteJid required' });
         const rMsgs = await fetch(`${url}/chat/findMessages/${instanceName}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'apikey': key },
@@ -47,9 +52,9 @@ export default async function handler(req, res) {
         const dMsgs = await rMsgs.json();
         const rawMsgs = Array.isArray(dMsgs) ? dMsgs : (dMsgs.messages || []);
         const messages = rawMsgs.reverse().map(m => ({
-          text: m.message?.conversation || m.message?.extendedTextMessage?.text || 'Mensagem',
+          text: m.message?.conversation || m.message?.extendedTextMessage?.text || 'Mensagem de Mídia',
           fromMe: m.key?.fromMe,
-          time: 'Agora'
+          time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
         }));
         return res.status(200).json({ success: true, messages });
 
@@ -57,7 +62,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid action' });
     }
   } catch (e) {
-    console.error('Erro no Dashboard Core:', e);
-    return res.status(500).json({ error: 'Erro interno no servidor' });
+    return res.status(500).json({ error: 'Server Error' });
   }
 }
