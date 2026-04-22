@@ -35,7 +35,6 @@ export default async function handler(req, res) {
 
     const record = data.records[0]
     const recordId = record.id
-    const instanceName = record.fields.instanceName || 'ZettaBots'
     const code = Math.floor(1000 + Math.random() * 9000).toString()
 
     await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}/${recordId}`, {
@@ -44,17 +43,15 @@ export default async function handler(req, res) {
       body: JSON.stringify({ fields: { loginCode: code } })
     })
 
-    // TÉCNICA DE AUTO-AUTENTICAÇÃO:
-    // O código é enviado PELA instância do cliente PARA o próprio cliente.
-    // Isso evita loops porque o n8n ignora mensagens enviadas pelo próprio robô (fromMe: true).
-    const selfAuthMessage = `🔐 *CÓDIGO DE ACESSO:* ${code}`
+    // MENSAGEM MESTRE: Enviada pela ZettaBots (Autoridade)
+    const masterMessage = `🔐 *CÓDIGO ZETTABOTS:* ${code}\n\nEste é o seu acesso seguro ao painel.`
 
-    await fetch(`${EVOLUTION_URL}/message/sendText/${instanceName}`, {
+    await fetch(`${EVOLUTION_URL}/message/sendText/ZettaBots`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_APIKEY },
       body: JSON.stringify({
         number: phoneWith55,
-        text: selfAuthMessage
+        text: masterMessage
       })
     })
 
