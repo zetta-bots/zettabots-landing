@@ -17,12 +17,13 @@ export default async function handler(req, res) {
     const phoneWithout55 = cleanInput.startsWith('55') ? cleanInput.substring(2) : cleanInput
     const phoneWith55 = cleanInput.startsWith('55') ? cleanInput : `55${cleanInput}`
     
-    // Busca o usuário com inteligência flexível
+    // Busca o usuário com inteligência flexível e robusta
     const filter = `OR(
-      SEARCH('${phoneWithout55}', {adminPhone}), 
-      SEARCH('${phoneWith55}', {adminPhone}),
-      SEARCH('${phoneWithout55}', {instanceName}),
-      SEARCH('${phoneWithout55}', {WhatsApp})
+      FIND('${phoneWithout55}', {adminPhone}), 
+      FIND('${phoneWith55}', {adminPhone}),
+      FIND('${phoneWithout55}', {instanceName}),
+      FIND('${phoneWithout55}', {WhatsApp}),
+      FIND('${phoneWithout55}', {phone})
     )`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     

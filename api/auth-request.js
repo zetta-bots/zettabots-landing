@@ -26,16 +26,24 @@ export default async function handler(req, res) {
 
     console.log(`[AUTH] Buscando: ${phoneWithout55} | ${phoneWith55}`)
 
-    // Busca ultra-flexível em múltiplas colunas possíveis
+    // Busca ultra-robusta: Ignora formatação no Airtable
     const filter = `OR(
-      SEARCH('${phoneWithout55}', {adminPhone}), 
-      SEARCH('${phoneWith55}', {adminPhone}),
-      SEARCH('${phoneWithout55}', {instanceName}),
-      SEARCH('${phoneWithout55}', {WhatsApp})
+      FIND('${phoneWithout55}', {adminPhone}), 
+      FIND('${phoneWith55}', {adminPhone}),
+      FIND('${phoneWithout55}', {instanceName}),
+      FIND('${phoneWithout55}', {WhatsApp}),
+      FIND('${phoneWithout55}', {phone})
     )`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     
     const airtableRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } })
+    
+    if (!airtableRes.ok) {
+      const errorData = await airtableRes.json()
+      console.error('[AUTH ERROR]', errorData)
+      return res.status(500).json({ error: 'Erro na conexão com Airtable. Verifique o Token PAT.' })
+    }
+
     const data = await airtableRes.json()
     
     if (!data.records || data.records.length === 0) {
