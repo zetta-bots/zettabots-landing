@@ -24,9 +24,10 @@ export default async function handler(req, res) {
     const record = data.records[0]
     const fields = record.fields
 
-    // 2. Validar o código (Bypass para o número de teste do cliente se necessário, mas validando o real para os outros)
-    const isMock = (phone === '1197737283' || phone === '551197737283') && code === '1234'
-    const isCodeValid = fields.loginCode === code || isMock
+    // 2. Validar o código (Bypass para o número de teste do cliente)
+    const cleanPhone = phone.replace(/\D/g, '')
+    const isAtlasDaFe = cleanPhone === '1197737283' || cleanPhone === '551197737283'
+    const isCodeValid = fields.loginCode === code || (isAtlasDaFe && code === '1234')
 
     if (!isCodeValid) {
       return res.status(401).json({ error: 'Código de acesso incorreto' })
