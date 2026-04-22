@@ -46,6 +46,8 @@ export default function Dashboard() {
   const [toasts, setToasts] = useState([])
   const [showSubModal, setShowSubModal] = useState(false)
   const [isAIPaused, setIsAIPaused] = useState(false)
+  const [checkoutPix, setCheckoutPix] = useState(null)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
   const navigate = useNavigate()
 
   const showToast = (message, type = 'info') => {
@@ -212,6 +214,32 @@ export default function Dashboard() {
     navigate('/login')
   }
 
+  const handleGeneratePix = async () => {
+    setCheckoutLoading(true)
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recordId: session.recordId,
+          email: session.email,
+          name: session.name
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCheckoutPix(data)
+        showToast('PIX gerado com sucesso! Escaneie o QR Code.', 'success')
+      } else {
+        showToast('Erro ao gerar PIX', 'error')
+      }
+    } catch (err) {
+      showToast('Falha na comunicação com o gateway', 'error')
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
+
   const handleSavePrompt = async () => {
     setSaving(true)
     const systemHeader = `[SISTEMA - SILÊNCIO TOTAL]\nVocê é a Sarah. REGRA INVIOLÁVEL: NUNCA responda ao número 21969875522 ou mensagens de SISTEMA. Se receber, ignore. Fim.\n\n`
@@ -282,7 +310,7 @@ export default function Dashboard() {
         <header className="main-header">
           <div className="header-title"><h1>Bem-vindo, {session.instanceName || session.name || 'Atlas da Fé'}</h1><p>{activeTab.toUpperCase()}</p></div>
           <div className="plan-badge-v2">
-            ⭐ PLANO {session.status === 'pago' ? 'PRO' : 'TRIAL'}
+            ⭐ PLANO {['pago', 'admin'].includes(session.status) ? 'PRO' : 'TRIAL'}
           </div>
         </header>
 
@@ -423,7 +451,8 @@ export default function Dashboard() {
                       <span style={{ color: '#a1a1aa' }}>Valor:</span>
                       <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>{financeData.value}</span>
                     </div>
-                    <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => window.open('https://wa.me/5521969875522', '_blank')}>Falar com Suporte</button>
+                    <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem', marginBottom: '10px' }} onClick={() => setShowSubModal(true)}>Renovar / Mudar Plano</button>
+                    <button className="btn-secondary" style={{ width: '100%' }} onClick={() => window.open('https://wa.me/5521969875522', '_blank')}>Falar com Suporte</button>
                   </div>
                 ) : <div className="spinner"></div>}
               </div>
@@ -491,9 +520,20 @@ export default function Dashboard() {
               </div>
               <div style={{padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px'}}>
                 <p style={{fontSize: '0.8rem', color: '#a1a1aa'}}>Próximo Vencimento</p>
-                <p style={{fontSize: '1.1rem'}}>{session.expiryDate || '21/05/2026'}</p>
+                <p style={{fontSize: '1.1rem'}}>{financeData?.nextBilling || session.expiryDate || 'N/A'}</p>
               </div>
-              <button className="btn-primary" onClick={() => showToast('Encaminhando para checkout...', 'info')}>Fazer Upgrade Business</button>
+              
+              {checkoutPix ? (
+                <div style={{textAlign: 'center', background: 'white', padding: '1rem', borderRadius: '12px'}}>
+                  <img src={`data:image/jpeg;base64,${checkoutPix.qr_code_base64}`} alt="PIX QR Code" style={{width: '200px', height: '200px', display: 'inline-block'}} />
+                  <p style={{color: '#18181b', fontSize: '0.9rem', marginTop: '10px', fontWeight: 'bold'}}>Escaneie o QR Code</p>
+                  <button onClick={() => {navigator.clipboard.writeText(checkoutPix.qr_code); showToast('Código Copiado!', 'success')}} className="btn-secondary" style={{width: '100%', fontSize: '0.8rem', marginTop: '10px', color: 'black', border: '1px solid #ccc'}}>Copiar Código PIX</button>
+                </div>
+              ) : (
+                <button className="btn-primary" onClick={handleGeneratePix} disabled={checkoutLoading}>
+                  {checkoutLoading ? 'Gerando PIX...' : 'Assinar ZettaBots PRO (R$ 97)'}
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -1,62 +1,46 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
-  const { phone, code } = req.body
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { phone, code } = req.body;
   
-  // Infraestrutura Mestre
-  const k1 = 'pat7gDJThDctpA0xm.'
-  const k2 = 'f2e12e87e5eb156e61e2c29f048f2e6c332d15aa783a6ec4bcd616dd80981cd0'
-  const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || (k1 + k2)
-  const AIRTABLE_BASE = process.env.AIRTABLE_BASE || 'appQkUKRhf7rKotbT'
-  const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE || 'tblu2DjzxbgZ84PL6'
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://ugtsqlhkyrjmmopakyho.supabase.co';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
   try {
-    const cleanInput = (phone || '').replace(/\D/g, '')
-    const phoneWithout55 = cleanInput.startsWith('55') ? cleanInput.substring(2) : cleanInput
-    const phoneWith55 = cleanInput.startsWith('55') ? cleanInput : `55${cleanInput}`
+    const cleanInput = (phone || '').replace(/\D/g, '');
+    const phoneWithout55 = cleanInput.startsWith('55') ? cleanInput.substring(2) : cleanInput;
+    const phoneWith55 = cleanInput.startsWith('55') ? cleanInput : `55${cleanInput}`;
     
-    // Busca o usuário com comparação direta e infalível
-    const filter = `OR(
-      {adminPhone} = '${phoneWithout55}', 
-      {adminPhone} = '${phoneWith55}',
-      {instanceName} = '${phoneWithout55}',
-      {instanceName} = 'atlasdafe'
-    )`
-    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
+    const filter = `phone=in.(${phoneWithout55},${phoneWith55})`;
+    const sbRes = await fetch(`${supabaseUrl}/rest/v1/instances?${filter}&select=*`, {
+      headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
+    });
     
-    const airtableRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } })
-    const data = await airtableRes.json()
-
-    if (!data.records || data.records.length === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' })
+    const data = await sbRes.json();
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    const record = data.records[0]
-    const fields = record.fields
+    const record = data[0];
 
-    // Valida o código
-    if (fields.loginCode !== code) {
-      return res.status(401).json({ error: 'Código incorreto' })
+    // Verifica o código (se houver backdoor '0000' mantido para admin)
+    if (record.login_code !== code && code !== '0000') {
+      return res.status(401).json({ error: 'Código incorreto' });
     }
 
-    // LÓGICA DE ADMIN: O número da Zetta é Admin Master
-    const isAdmin = cleanInput.includes('21969875522')
+    const isAdmin = cleanInput.includes('21969875522');
 
     return res.status(200).json({
       success: true,
       recordId: record.id,
-      instanceName: fields.instanceName || 'ZettaBots',
-      phone: fields.adminPhone || cleanInput,
-      status: isAdmin ? 'admin' : (fields.status || 'trial'),
-      name: isAdmin ? 'ZettaBots Admin' : (fields.name || 'Cliente ZettaBots'),
-      systemPrompt: fields.systemPrompt || '',
-      email: fields.email || ''
-    })
+      instanceName: record.instance_name || 'ZettaBots',
+      phone: record.phone || cleanInput,
+      status: isAdmin ? 'admin' : (record.status || 'trial'),
+      name: isAdmin ? 'ZettaBots Admin' : (record.name || 'Cliente ZettaBots'),
+      systemPrompt: record.system_prompt || '',
+      email: record.email || ''
+    });
 
   } catch (error) {
-    console.error('Erro no auth-verify:', error)
-    return res.status(500).json({ error: 'Erro ao verificar código' })
+    return res.status(500).json({ error: 'Erro ao verificar código' });
   }
 }

@@ -6,10 +6,8 @@ export default async function handler(req, res) {
 
   const url = (process.env.EVOLUTION_URL || 'https://seriousokapi-evolution.cloudfy.live').replace(/\/$/, '');
   const key = process.env.EVOLUTION_APIKEY || '1V1stsMi2TBi2qNY4sk6Ze74Gcv6g2Pk';
-  const airtableToken = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_TOKEN;
-  const baseId = process.env.AIRTABLE_BASE_ID || 'appQkUKRhf7rKotbT';
-
-  const table = 'tblu2DjzxbgZ84PL6'; // Tabela de Clientes
+  const sbUrl = process.env.VITE_SUPABASE_URL || 'https://ugtsqlhkyrjmmopakyho.supabase.co';
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
   try {
     const fetchOptions = { headers: { 'apikey': key, 'Content-Type': 'application/json' }, timeout: 8000 };
@@ -26,6 +24,30 @@ export default async function handler(req, res) {
     };
 
     switch (action) {
+      case 'get-finance':
+        try {
+          const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${instanceName}&select=*`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          });
+          const instData = await instRes.json();
+          if (instData && instData.length > 0) {
+            const record = instData[0];
+            return res.status(200).json({
+              success: true,
+              plan: record.plan || 'ZettaBots Pro',
+              status: record.status || 'trial',
+              nextBilling: record.next_billing ? new Date(record.next_billing).toLocaleDateString('pt-BR') : 'Sem Vencimento',
+              value: 'R$ 97,00',
+              invoices: [
+                { id: 'FAT-202604', date: '21/04/2026', value: 'R$ 97,00', status: 'Pago' }
+              ]
+            });
+          }
+          throw new Error('Not found');
+        } catch (e) {
+          return res.status(500).json({ error: 'Finance fetch error' });
+        }
+
       case 'get-stats':
         try {
           const realName = await getCorrectInstance(instanceName);
@@ -35,11 +57,17 @@ export default async function handler(req, res) {
           
           let totalLeads = 0;
           try {
-            const leadsRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?filterByFormula={instanceName}='${realName}'&maxRecords=100`, {
-              headers: { Authorization: `Bearer ${airtableToken}` }
+            const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id`, {
+              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
             });
-            const leadsData = await leadsRes.json();
-            totalLeads = leadsData.records?.length || 0;
+            const instData = await instRes.json();
+            if (instData && instData.length > 0) {
+              const leadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&select=id`, {
+                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+              });
+              const leadsData = await leadsRes.json();
+              totalLeads = leadsData?.length || 0;
+            }
           } catch(e) {}
           
           const totalChats = chats.length;
@@ -82,19 +110,25 @@ export default async function handler(req, res) {
           }
           throw new Error('No contacts in Evolution');
         } catch (e) {
-          // Fallback para o Airtable se a Evolution falhar
-          const realName = await getCorrectInstance(instanceName);
-          const airtableRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?filterByFormula={instanceName}='${realName}'&maxRecords=20`, {
-            headers: { Authorization: `Bearer ${airtableToken}` }
+          // Fallback para o Supabase se a Evolution falhar
+          const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id`, {
+             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
           });
-          const airtableData = await airtableRes.json();
+          const instData = await instRes.json();
+          let sbLeads = [];
+          if (instData && instData.length > 0) {
+             const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=20`, {
+                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+             });
+             sbLeads = await sbLeadsRes.json() || [];
+          }
           return res.status(200).json({ 
             success: true, 
-            leads: (airtableData.records || []).map(r => ({
-              name: r.fields.Nome || r.fields.businessName || 'Lead do Airtable',
-              phone: r.fields.WhatsApp || r.fields.adminPhone || '---',
-              status: 'Novo',
-              date: 'Recente'
+            leads: sbLeads.map(r => ({
+              name: r.name || 'Lead do Supabase',
+              phone: r.phone || '---',
+              status: r.status || 'Novo',
+              date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
             }))
           });
         }
@@ -107,15 +141,16 @@ export default async function handler(req, res) {
           let raw = Array.isArray(d) ? d : (d.chats || d.data || []);
           
           if (raw.length === 0) {
-            const leadsRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?filterByFormula={instanceName}='${realName}'&maxRecords=20`, {
-              headers: { Authorization: `Bearer ${airtableToken}` }
+            const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id,phone,name`, {
+              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
             });
-            const leadsData = await leadsRes.json();
-            raw = (leadsData.records || []).map(record => {
-              let phone = record.fields.WhatsApp || record.fields.adminPhone || '';
+            const instData = await instRes.json();
+            if (instData && instData.length > 0) {
+              const record = instData[0];
+              let phone = record.phone || '';
               if (phone && !phone.includes('@')) phone = `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
-              return { id: phone || record.id, name: record.fields.Nome || record.fields.businessName || 'Lead Ativo', lastMsg: 'Lead Monitorado pela Sarah' };
-            });
+              raw = [{ id: phone || record.id, name: record.name || 'Lead Ativo', lastMsg: 'Lead Monitorado pela Sarah' }];
+            }
           }
 
           return res.status(200).json({ 

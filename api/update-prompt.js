@@ -1,46 +1,39 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { recordId, systemPrompt, instanceName, webhookUrl, notificationEmail } = req.body
-  if (!recordId) {
-    return res.status(400).json({ error: 'ID do cliente é obrigatório' })
-  }
+  const { recordId, systemPrompt, instanceName, webhookUrl, notificationEmail } = req.body;
+  if (!recordId) return res.status(400).json({ error: 'ID do cliente é obrigatório' });
 
-  const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
-  const AIRTABLE_BASE = process.env.AIRTABLE_BASE
-  const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE || 'tblu2DjzxbgZ84PL6' 
-  
-  const EVOLUTION_URL = process.env.EVOLUTION_URL
-  const EVOLUTION_APIKEY = process.env.EVOLUTION_APIKEY
+  const sbUrl = process.env.VITE_SUPABASE_URL || 'https://ugtsqlhkyrjmmopakyho.supabase.co';
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const EVOLUTION_URL = process.env.EVOLUTION_URL;
+  const EVOLUTION_APIKEY = process.env.EVOLUTION_APIKEY;
 
-  if (recordId === 'mock-id') {
-    return res.status(200).json({ success: true })
-  }
+  if (recordId === 'mock-id') return res.status(200).json({ success: true });
 
   try {
-    // 1. Atualizar no Airtable (Persistência)
-    await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}/${recordId}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fields: {
-          systemPrompt: systemPrompt,
-          webhookUrl: webhookUrl || '',
-          email: notificationEmail || ''
-        }
-      })
-    })
+    // 1. Atualizar no Supabase (Persistência)
+    const updateData = {};
+    if (systemPrompt !== undefined) updateData.system_prompt = systemPrompt;
+    if (webhookUrl !== undefined) updateData.webhook_url = webhookUrl;
+    if (notificationEmail !== undefined) updateData.email = notificationEmail;
+
+    if (Object.keys(updateData).length > 0) {
+      await fetch(`${sbUrl}/rest/v1/instances?id=eq.${recordId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': sbKey,
+          'Authorization': `Bearer ${sbKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(updateData)
+      });
+    }
 
     // 2. Sincronizar com Evolution API (Live Bot)
-    if (instanceName && EVOLUTION_URL && EVOLUTION_APIKEY) {
-      const evolutionBaseUrl = EVOLUTION_URL.trim().replace(/\/$/, '')
-      
-      // Tenta atualizar a configuração de Chat GPT da instância
+    if (instanceName && EVOLUTION_URL && EVOLUTION_APIKEY && systemPrompt) {
+      const evolutionBaseUrl = EVOLUTION_URL.trim().replace(/\/$/, '');
       await fetch(`${evolutionBaseUrl}/chatgpt/setSettings/${instanceName}`, {
         method: 'POST',
         headers: {
@@ -50,15 +43,14 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           enabled: true,
           systemPrompt: systemPrompt,
-          model: "gpt-4o", // Modelo de alta performance
+          model: "gpt-4o",
           timezone: "America/Sao_Paulo"
         })
-      })
+      });
     }
 
-    return res.status(200).json({ success: true })
+    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Erro no update-prompt:', error)
-    return res.status(500).json({ error: 'Erro ao salvar no banco de dados ou sincronizar bot' })
+    return res.status(500).json({ error: 'Erro ao salvar no Supabase ou sincronizar bot' });
   }
 }
