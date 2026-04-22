@@ -29,10 +29,10 @@ export default async function handler(req, res) {
             stats: { 
               contacts: totalContacts || 0, 
               chats: totalChats || 0, 
-              messages: totalChats * 12, 
-              savedTime: `${Math.floor(totalChats * 0.3)}h`,
+              messages: totalChats * 8, 
+              savedTime: `${Math.floor(totalChats * 0.2)}h`,
               roi: `R$ ${(totalContacts * 150).toLocaleString('pt-BR')}`,
-              activity: [12, 45, totalChats || 10, 55, 60, 48, 70]
+              activity: [0, 0, 0, 0, 0, totalChats || 0, 0] // Mostra atividade real no dia atual (ex: Sábado)
             } 
           });
         } catch (e) {

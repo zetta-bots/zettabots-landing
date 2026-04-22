@@ -229,8 +229,11 @@ export default function Dashboard() {
 
       <main className="dashboard-main">
         <header className="main-header">
-          <div className="header-title"><h1>Bem-vindo, {session.name || 'Usuário'}</h1><p>{activeTab.toUpperCase()}</p></div>
-          <div className="plan-badge" onClick={() => setShowSubModal(true)} style={{cursor: 'pointer'}}>⭐ Plano {session.status === 'pago' ? 'PRO' : 'TRIAL'}</div>
+          <div className="header-title"><h1>Bem-vindo, {session.instanceName || session.name || 'Atlas da Fé'}</h1><p>{activeTab.toUpperCase()}</p></div>
+          <div className="status-indicator">
+            <span className={`status-dot ${qrStatus === 'CONNECTED' ? 'online' : 'offline'}`}></span>
+            {qrStatus === 'CONNECTED' ? 'Sistema Ativo' : 'Aguardando Conexão'}
+          </div>
         </header>
 
         {activeTab === 'status' && (
@@ -238,7 +241,7 @@ export default function Dashboard() {
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-icon purple">👤</div>
-                <div className="stat-info"><span className="stat-label">Leads Capturados</span><span className="stat-value">{stats.contacts}</span></div>
+                <div className="stat-info"><span className="stat-label">Leads Capturados</span><span className="stat-value">{leads.length || stats.contacts}</span></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon blue">💬</div>
