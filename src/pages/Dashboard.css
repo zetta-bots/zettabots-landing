@@ -505,6 +505,23 @@ h1, h2, h3, h4, .brand-info h2 {
   opacity: 0.6;
   margin-top: 0.5rem;
   display: block;
+  text-align: right;
+}
+
+.message.image, .message.video, .message.audio {
+  background: rgba(124, 58, 237, 0.15) !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important;
+  color: #c4b5fd !important;
+}
+
+.message.audio::before {
+  content: '🎤';
+  margin-right: 8px;
+}
+
+.message.image::before {
+  content: '📷';
+  margin-right: 8px;
 }
 
 /* Glass Card Global */

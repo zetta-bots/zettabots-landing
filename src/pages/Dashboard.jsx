@@ -316,12 +316,21 @@ export default function Dashboard() {
             <div className="chat-window-panel">
               {selectedChat ? (
                 <>
-                  <div className="chat-header"><h4>{selectedChat.user}</h4></div>
-                  <div className="messages-container">
-                    {chatMessages.map((msg, i) => (
-                      <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'}`}>{msg.text}</div>
-                    ))}
-                  </div>
+                <div className="chat-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <h4>{selectedChat.user}</h4>
+                  <button className="btn-secondary" onClick={() => showToast('IA Sarah Pausada. Você está no controle.', 'info')} style={{fontSize: '0.7rem', padding: '0.4rem 0.8rem'}}>
+                    🤖 IA ATIVA (Pausar)
+                  </button>
+                </div>
+                <div className="messages-container">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
+                      {msg.text}
+                      <span className="message-time">{msg.time}</span>
+                    </div>
+                  ))}
+                  {chatMessages.length === 0 && <div className="chat-empty-state">Carregando histórico...</div>}
+                </div>
                 </>
               ) : <div className="chat-empty-state"><p>Selecione uma conversa para monitorar a IA.</p></div>}
             </div>

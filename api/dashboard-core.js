@@ -131,11 +131,25 @@ export default async function handler(req, res) {
           const raw = Array.isArray(d) ? d : (d.messages || []);
           return res.status(200).json({ 
             success: true, 
-            messages: raw.reverse().map(m => ({
-              text: m.message?.conversation || m.message?.extendedTextMessage?.text || 'Mídia Recebida',
-              fromMe: m.key?.fromMe,
-              time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR') : ''
-            }))
+            messages: raw.reverse().map(m => {
+              const msg = m.message || {};
+              let text = msg.conversation || msg.extendedTextMessage?.text || '';
+              let type = 'text';
+
+              if (msg.imageMessage) { text = '📷 Foto'; type = 'image'; }
+              else if (msg.audioMessage) { text = '🎤 Áudio'; type = 'audio'; }
+              else if (msg.videoMessage) { text = '🎥 Vídeo'; type = 'video'; }
+              else if (msg.documentMessage) { text = '📄 Documento'; type = 'document'; }
+              else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; }
+              else if (!text) text = 'Mensagem de mídia/sistema';
+
+              return {
+                text,
+                type,
+                fromMe: m.key?.fromMe,
+                time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
+              }
+            })
           });
         } catch (e) {
           return res.status(200).json({ success: true, messages: [] });
