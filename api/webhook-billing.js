@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const body = req.body;
   console.log('💰 Webhook Mercado Pago Recebido:', JSON.stringify(body));
 
-  const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+  const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
   const sbUrl = process.env.VITE_SUPABASE_URL || 'https://ugtsqlhkyrjmmopakyho.supabase.co';
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 

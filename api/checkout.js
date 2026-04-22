@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { recordId, email, name } = req.body;
   if (!recordId) return res.status(400).json({ error: 'Missing recordId' });
 
-  const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+  const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
   if (!mpToken) return res.status(500).json({ error: 'Mercado Pago token not configured in .env' });
 
   try {
