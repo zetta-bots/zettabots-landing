@@ -23,7 +23,6 @@ export default async function handler(req, res) {
     const phoneWithout55 = cleanPhone.startsWith('55') ? cleanPhone.substring(2) : cleanPhone
     const phoneWith55 = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
-    // Busca Global: Agora o sistema encontra tanto o Admin quanto o Cliente
     const filter = `OR(SEARCH('${phoneWithout55}', {adminPhone}), SEARCH('${phoneWithout55}', {instanceName}))`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     
@@ -38,20 +37,21 @@ export default async function handler(req, res) {
     const recordId = record.id
     const code = Math.floor(1000 + Math.random() * 9000).toString()
 
-    // Salva o código de acesso (OTP)
     await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}/${recordId}`, {
       method: 'PATCH',
       headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ fields: { loginCode: code } })
     })
 
-    // Envia o código via WhatsApp através da instância ZettaBots
+    // MENSAGEM LIMPA E PROFISSIONAL (Estilo iToken)
+    const professionalMessage = `🔐 *Código ZettaBots:* ${code}\n\n_Válido por 5 minutos._`
+
     await fetch(`${EVOLUTION_URL}/message/sendText/ZettaBots`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_APIKEY },
       body: JSON.stringify({
         number: phoneWith55,
-        text: `🔐 *ZettaBots* | Seu código de acesso ao Painel é: *${code}*\n\nNão compartilhe este código.`
+        text: professionalMessage
       })
     })
 
