@@ -221,10 +221,11 @@ export default function Dashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          recordId: session.id, 
+          recordId: session.recordId || session.id, 
           email: session.email, 
           name: session.name,
-          payment_method: method
+          payment_method: method,
+          instanceName: selectedInstance
         })
       })
       const data = await res.json()

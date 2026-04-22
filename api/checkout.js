@@ -1,13 +1,29 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
-  const { recordId, email, name, payment_method = 'pix' } = req.body;
-  if (!recordId) return res.status(400).json({ error: 'Missing recordId' });
-
+  let { recordId, email, name, payment_method = 'pix', instanceName } = req.body;
+  
   const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
-  if (!mpToken) return res.status(500).json({ error: 'Mercado Pago token not configured in .env' });
+  const sbUrl = process.env.VITE_SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!mpToken) return res.status(500).json({ error: 'Mercado Pago token not configured' });
 
   try {
+    // Busca o recordId no Supabase se ele não veio no body (para sessões antigas)
+    if (!recordId && (email || instanceName)) {
+      const filter = email ? `email=eq.${email}` : `instance_name=eq.${instanceName}`;
+      const sbRes = await fetch(`${sbUrl}/rest/v1/instances?${filter}&select=id`, {
+        headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+      });
+      const sbData = await sbRes.json();
+      if (sbData && sbData.length > 0) {
+        recordId = sbData[0].id;
+      }
+    }
+
+    if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado. Por favor, faça login novamente.' });
+
     if (payment_method === 'pix') {
       const response = await fetch('https://api.mercadopago.com/v1/payments', {
         method: 'POST',

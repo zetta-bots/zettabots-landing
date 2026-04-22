@@ -26,10 +26,21 @@ export default async function handler(req, res) {
     switch (action) {
       case 'get-finance':
         try {
-          const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${instanceName}&select=*`, {
+          const { email } = req.body;
+          let filter = `instance_name=eq.${instanceName}`;
+          let instRes = await fetch(`${sbUrl}/rest/v1/instances?${filter}&select=*`, {
             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
           });
-          const instData = await instRes.json();
+          let instData = await instRes.json();
+          
+          // Fallback sênior: Busca por email se o nome da instância não retornar nada
+          if ((!instData || instData.length === 0) && email) {
+            instRes = await fetch(`${sbUrl}/rest/v1/instances?email=eq.${email}&select=*`, {
+              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+            });
+            instData = await instRes.json();
+          }
+
           let record = {};
           if (instData && instData.length > 0) {
             record = instData[0];
