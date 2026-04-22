@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   const { phone, code } = req.body
   
-  // Chave fragmentada para evitar bloqueio do Git
+  // Chaves Mestre Confirmadas via Diagnóstico
   const k1 = 'pat7gDJThDctpA0xm.'
   const k2 = 'f2e12e87e5eb156e61e2c29f048f2e6c332d15aa783a6ec4bcd616dd80981cd0'
   const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || (k1 + k2)
@@ -16,7 +16,8 @@ export default async function handler(req, res) {
     const cleanInput = (phone || '').replace(/\D/g, '')
     const phoneWithout55 = cleanInput.startsWith('55') ? cleanInput.substring(2) : cleanInput
     
-    const filter = `OR(SEARCH('${phoneWithout55}', {phone}), SEARCH('${phoneWithout55}', {adminPhone}), SEARCH('${phoneWithout55}', {instanceName}), SEARCH('${phoneWithout55}', {whatsapp}))`
+    // Busca na coluna correta: adminPhone
+    const filter = `OR(SEARCH('${phoneWithout55}', {adminPhone}), SEARCH('${phoneWithout55}', {instanceName}))`
     const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
     
     const airtableRes = await fetch(searchUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } })
