@@ -14,7 +14,8 @@ export default function Dashboard() {
   const [chats, setChats] = useState([])
   const [leads, setLeads] = useState([])
   const [loadingData, setLoadingData] = useState(true)
-  const [stats, setStats] = useState({ chats: 0, contacts: 0, messages: 0, savedTime: '0h', roi: 'R$ 0' })
+  const [stats, setStats] = useState({ chats: 0, contacts: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] })
+  const [financeData, setFinanceData] = useState(null)
   const [selectedChat, setSelectedChat] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
   const [webhookUrl, setWebhookUrl] = useState('')
@@ -38,9 +39,8 @@ export default function Dashboard() {
       setIsAdmin(true)
     }
 
-    // Limpeza de Prompt Definitiva (Garante que o cliente não veja o sistema)
     let p = parsed.systemPrompt || ''
-    const cleanP = p.split('\n\n').slice(2).join('\n\n') // Pula o cabeçalho técnico [SISTEMA]
+    const cleanP = p.split('\n\n').slice(2).join('\n\n')
     setPrompt(cleanP || p)
     
     setWebhookUrl(parsed.webhookUrl || '')
@@ -55,6 +55,7 @@ export default function Dashboard() {
       fetchStats(selectedInstance)
       if (activeTab === 'mensagens') fetchChats(selectedInstance)
       if (activeTab === 'leads') fetchLeads(selectedInstance)
+      if (activeTab === 'financeiro') fetchFinance(selectedInstance)
       if (activeTab === 'conexao' || activeTab === 'status') fetchQrCode(selectedInstance)
     }
     setMobileMenuOpen(false)
@@ -73,6 +74,18 @@ export default function Dashboard() {
         if (data.status === 'open' || data.status === 'CONNECTED') setQrStatus('CONNECTED')
       }
     } catch (err) { console.error('ERRO STATS:', err) }
+  }
+
+  const fetchFinance = async (instanceName) => {
+    try {
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get-finance', instanceName })
+      })
+      const data = await res.json()
+      if (data.success) setFinanceData(data)
+    } catch (err) { console.error('ERRO FINANCE:', err) }
   }
 
   const fetchQrCode = async (instanceName) => {
@@ -197,6 +210,7 @@ export default function Dashboard() {
           <button className={`nav-item ${activeTab === 'leads' ? 'active' : ''}`} onClick={() => setActiveTab('leads')}><span className="icon">👤</span> Meus Leads</button>
           <button className={`nav-item ${activeTab === 'mensagens' ? 'active' : ''}`} onClick={() => setActiveTab('mensagens')}><span className="icon">💬</span> Monitor de Chat</button>
           <button className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} onClick={() => setActiveTab('bot')}><span className="icon">🤖</span> Personalidade IA</button>
+          <button className={`nav-item ${activeTab === 'financeiro' ? 'active' : ''}`} onClick={() => setActiveTab('financeiro')}><span className="icon">💰</span> Financeiro</button>
           <button className={`nav-item ${activeTab === 'integracoes' ? 'active' : ''}`} onClick={() => setActiveTab('integracoes')}><span className="icon">🔌</span> Integrações</button>
           <button className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} onClick={() => setActiveTab('conexao')}><span className="icon">🔗</span> Conexão</button>
         </nav>
@@ -235,10 +249,10 @@ export default function Dashboard() {
             <div className="glass-card activity-section">
               <h3>Atividade da Sarah (Mensagens/Dia)</h3>
               <div className="chart-container" style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '15px', paddingTop: '30px' }}>
-                {[32, 48, 65, 28, 92, 44, 105].map((val, i) => (
+                {(stats.activity || [10, 20, 30, 40, 50, 60, 70]).map((val, i) => (
                   <div key={i} className="chart-bar-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
                     <span style={{ fontSize: '0.7rem', color: '#7c3aed', marginBottom: '5px', fontWeight: 'bold' }}>{val}</span>
-                    <div style={{ width: '100%', background: 'linear-gradient(to top, #7c3aed, #06b6d4)', height: `${(val/105)*100}%`, borderRadius: '8px 8px 0 0' }}></div>
+                    <div className="chart-bar" style={{ width: '100%', background: 'linear-gradient(to top, #7c3aed, #06b6d4)', height: `${(val / Math.max(...stats.activity, 1)) * 100}%`, borderRadius: '8px 8px 0 0', transition: 'height 0.5s ease' }}></div>
                     <span style={{ marginTop: '8px', fontSize: '0.65rem', color: '#a1a1aa' }}>{['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i]}</span>
                   </div>
                 ))}
@@ -311,6 +325,52 @@ export default function Dashboard() {
               <p style={{fontSize: '0.8rem', color: '#a1a1aa', marginBottom: '1rem'}}>Defina como a Sarah deve se comportar e quais produtos ela deve vender.</p>
               <textarea className="prompt-editor" rows="12" value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '12px' }} />
               <button onClick={handleSavePrompt} disabled={saving} className="btn-primary" style={{marginTop: '1rem'}}>{saving ? 'Salvando...' : 'Salvar Personalidade'}</button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'financeiro' && (
+          <div className="tab-panel">
+            <div className="finance-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+              <div className="glass-card finance-card">
+                <h3>Sua Assinatura</h3>
+                {financeData ? (
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <div style={{ padding: '1rem', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '15px', marginBottom: '1rem', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                      <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>Plano Atual</p>
+                      <h4 style={{ fontSize: '1.4rem', color: 'white' }}>{financeData.plan}</h4>
+                      <span style={{ display: 'inline-block', padding: '4px 12px', background: '#10b981', color: 'white', borderRadius: '20px', fontSize: '0.7rem', marginTop: '10px' }}>{financeData.status}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.8rem' }}>
+                      <span style={{ color: '#a1a1aa' }}>Próxima Cobrança:</span>
+                      <span style={{ fontWeight: 'bold' }}>{financeData.nextBilling}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#a1a1aa' }}>Valor:</span>
+                      <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>{financeData.value}</span>
+                    </div>
+                    <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }}>Gerenciar na Hotmart</button>
+                  </div>
+                ) : <div className="spinner"></div>}
+              </div>
+
+              <div className="glass-card finance-card">
+                <h3>Faturas Recentes</h3>
+                <div style={{ marginTop: '1rem' }}>
+                  {financeData?.invoices.map((inv, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div>
+                        <p style={{ fontWeight: 'bold', margin: 0 }}>{inv.id}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: 0 }}>{inv.date}</p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontWeight: 'bold', color: '#10b981', margin: 0 }}>{inv.value}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: 0 }}>{inv.status}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
