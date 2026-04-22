@@ -230,9 +230,8 @@ export default function Dashboard() {
       <main className="dashboard-main">
         <header className="main-header">
           <div className="header-title"><h1>Bem-vindo, {session.instanceName || session.name || 'Atlas da Fé'}</h1><p>{activeTab.toUpperCase()}</p></div>
-          <div className="status-indicator">
-            <span className={`status-dot ${qrStatus === 'CONNECTED' ? 'online' : 'offline'}`}></span>
-            {qrStatus === 'CONNECTED' ? 'Sistema Ativo' : 'Aguardando Conexão'}
+          <div className="plan-badge-v2">
+            ⭐ PLANO {session.status === 'pago' ? 'PRO' : 'TRIAL'}
           </div>
         </header>
 
