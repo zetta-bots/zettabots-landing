@@ -64,35 +64,37 @@ export default async function handler(req, res) {
       case 'get-leads':
         try {
           const realName = await getCorrectInstance(instanceName);
-          const airtableRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?filterByFormula={instanceName}='${realName}'&maxRecords=20&sort[0][field]=instanceName&sort[0][direction]=desc`, {
-            headers: { Authorization: `Bearer ${airtableToken}` }
-          });
-          const airtableData = await airtableRes.json();
-          
-          if (airtableData.records && airtableData.records.length > 0) {
+          // Tenta buscar contatos reais da Evolution primeiro (Alta Fidelidade)
+          const contactRes = await fetch(`${url}/contact/fetchContacts?instanceName=${realName}`, fetchOptions);
+          const contactData = await contactRes.json();
+          const contacts = Array.isArray(contactData) ? contactData : (contactData.data || []);
+
+          if (contacts.length > 0) {
             return res.status(200).json({ 
               success: true, 
-              leads: airtableData.records.map(r => ({
-                name: r.fields.Nome || r.fields.businessName || r.fields.instanceName || 'Lead Ativo',
-                phone: r.fields.WhatsApp || r.fields.adminPhone || r.fields.phone || 'Sem número',
-                status: r.fields.status || r.fields.Status || 'Novo',
-                date: r.createdTime ? new Date(r.createdTime).toLocaleDateString('pt-BR') : 'Hoje'
+              leads: contacts.slice(0, 50).map(c => ({
+                name: c.name || c.pushName || 'Lead Ativo',
+                phone: c.id ? c.id.split('@')[0] : 'Sem número',
+                status: 'Interagindo',
+                date: 'Hoje'
               }))
             });
           }
-          throw new Error('No records');
+          throw new Error('No contacts in Evolution');
         } catch (e) {
+          // Fallback para o Airtable se a Evolution falhar
           const realName = await getCorrectInstance(instanceName);
-          const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
-          const d = await r.json();
-          const raw = Array.isArray(d) ? d : (d.chats || d.data || []);
+          const airtableRes = await fetch(`https://api.airtable.com/v0/${baseId}/${table}?filterByFormula={instanceName}='${realName}'&maxRecords=20`, {
+            headers: { Authorization: `Bearer ${airtableToken}` }
+          });
+          const airtableData = await airtableRes.json();
           return res.status(200).json({ 
             success: true, 
-            leads: raw.filter(c => c.id && !c.id.includes('@g.us')).slice(0, 15).map(c => ({
-              name: c.name || c.pushName || 'Novo Contato', 
-              phone: c.id.split('@')[0], 
-              status: 'Identificado', 
-              date: 'Hoje'
+            leads: (airtableData.records || []).map(r => ({
+              name: r.fields.Nome || r.fields.businessName || 'Lead do Airtable',
+              phone: r.fields.WhatsApp || r.fields.adminPhone || '---',
+              status: 'Novo',
+              date: 'Recente'
             }))
           });
         }
@@ -149,14 +151,15 @@ export default async function handler(req, res) {
               let text = msg.conversation || msg.extendedTextMessage?.text || '';
               let type = 'text';
 
-              if (msg.imageMessage) { text = '📷 Foto'; type = 'image'; }
-              else if (msg.audioMessage) { text = '🎤 Áudio'; type = 'audio'; }
-              else if (msg.videoMessage) { text = '🎥 Vídeo'; type = 'video'; }
-              else if (msg.documentMessage) { text = '📄 Documento'; type = 'document'; }
-              else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; }
+              let mimetype = '';
+              if (msg.imageMessage) { text = '📷 Foto'; type = 'image'; mimetype = msg.imageMessage.mimetype; }
+              else if (msg.audioMessage) { text = '🎤 Áudio'; type = 'audio'; mimetype = msg.audioMessage.mimetype; }
+              else if (msg.videoMessage) { text = '🎥 Vídeo'; type = 'video'; mimetype = msg.videoMessage.mimetype; }
+              else if (msg.documentMessage) { text = '📄 Documento'; type = 'document'; mimetype = msg.documentMessage.mimetype; }
+              else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; mimetype = msg.stickerMessage.mimetype; }
               else if (!text) text = 'Mensagem de mídia/sistema';
 
-              return { text, type, fromMe: m.key?.fromMe, time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '' }
+              return { id: m.key?.id, text, type, mimetype, fromMe: m.key?.fromMe, time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '' }
             })
           });
         } catch (e) {

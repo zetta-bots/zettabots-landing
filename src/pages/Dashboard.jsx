@@ -2,6 +2,27 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
+const MediaMessage = ({ msg, instanceName }) => {
+  const [media, setMedia] = useState(null);
+  useEffect(() => {
+    if (msg.id && (msg.type === 'image' || msg.type === 'audio')) {
+      fetch('/api/get-media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName, messageId: msg.id })
+      }).then(r => r.json()).then(data => {
+        if(data.success) setMedia(`data:${data.mimetype};base64,${data.base64}`);
+      }).catch(e => console.error(e));
+    }
+  }, [msg.id, msg.type, instanceName]);
+
+  if (!media) return <span>{msg.text} <small style={{opacity: 0.6}}>(Carregando mídia...)</small></span>;
+  
+  if (msg.type === 'image') return <img src={media} alt="Mídia" style={{maxWidth: '100%', borderRadius: '8px', marginTop: '5px'}} />;
+  if (msg.type === 'audio') return <audio controls src={media} style={{maxWidth: '240px', height: '40px', marginTop: '5px'}} />;
+  return <span>{msg.text}</span>;
+}
+
 export default function Dashboard() {
   const [instances, setInstances] = useState([])
   const [selectedInstance, setSelectedInstance] = useState(null)
@@ -155,6 +176,34 @@ export default function Dashboard() {
       const data = await res.json()
       if (data.success) setLeads(data.leads || [])
     } catch (err) { console.error('ERRO LEADS:', err) }
+  }
+
+  const handleToggleAI = async () => {
+    const nextState = !isAIPaused;
+    setIsAIPaused(nextState);
+    showToast(nextState ? 'Pausando IA...' : 'Reativando IA...', 'info');
+    
+    try {
+      const res = await fetch('/api/toggle-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          instanceName: selectedInstance, 
+          enabled: !nextState,
+          systemPrompt: session.systemPrompt || prompt 
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(nextState ? 'IA Sarah Pausada. Você está no controle.' : 'IA Sarah Reativada!', 'success');
+      } else {
+        setIsAIPaused(!nextState);
+        showToast('Erro ao alterar status da IA', 'error');
+      }
+    } catch (err) {
+      setIsAIPaused(!nextState);
+      showToast('Erro de conexão ao alterar IA', 'error');
+    }
   }
 
   const handleLogout = () => {
@@ -321,10 +370,7 @@ export default function Dashboard() {
                   <h4>{selectedChat.user}</h4>
                   <button 
                     className={`btn-${isAIPaused ? 'danger' : 'secondary'}`} 
-                    onClick={() => {
-                      setIsAIPaused(!isAIPaused);
-                      showToast(isAIPaused ? 'IA Sarah Reativada!' : 'IA Sarah Pausada. Você está no controle.', isAIPaused ? 'success' : 'info');
-                    }} 
+                    onClick={handleToggleAI} 
                     style={{fontSize: '0.7rem', padding: '0.4rem 0.8rem'}}
                   >
                     {isAIPaused ? '🚫 IA PAUSADA' : '🤖 IA ATIVA'}
@@ -333,7 +379,7 @@ export default function Dashboard() {
                 <div className="messages-container">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
-                      {msg.text}
+                      {['image', 'audio'].includes(msg.type) ? <MediaMessage msg={msg} instanceName={selectedInstance} /> : msg.text}
                       <span className="message-time">{msg.time}</span>
                     </div>
                   ))}
