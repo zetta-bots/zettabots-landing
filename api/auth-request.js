@@ -18,8 +18,10 @@ export default async function handler(req, res) {
     const phoneWith55 = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
     const phoneWithout55 = cleanPhone.startsWith('55') ? cleanPhone.substring(2) : cleanPhone
 
-    // 1. Buscar o cliente no Airtable
-    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=OR({phone}='${phoneWith55}', {phone}='${phoneWithout55}', {adminPhone}='${phoneWith55}', {adminPhone}='${phoneWithout55}')`
+    // 1. Buscar o cliente no Airtable (Busca Global em múltiplas colunas)
+    const filter = `OR(SEARCH('${phoneWithout55}', {phone}), SEARCH('${phoneWithout55}', {adminPhone}), SEARCH('${phoneWithout55}', {instanceName}), SEARCH('${phoneWithout55}', {whatsapp}))`
+    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=${encodeURIComponent(filter)}`
+    
     const airtableRes = await fetch(searchUrl, {
       headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
     })
