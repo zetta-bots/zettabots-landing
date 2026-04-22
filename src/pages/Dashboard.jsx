@@ -40,7 +40,8 @@ export default function Dashboard() {
     }
 
     let p = parsed.systemPrompt || ''
-    const cleanP = p.split('\n\n').slice(2).join('\n\n')
+    // Lógica robusta para esconder cabeçalhos [SISTEMA]
+    const cleanP = p.replace(/\[SISTEMA.*?\][\s\S]*?Fim\./g, '').trim()
     setPrompt(cleanP || p)
     
     setWebhookUrl(parsed.webhookUrl || '')
@@ -247,12 +248,12 @@ export default function Dashboard() {
             </div>
 
             <div className="glass-card activity-section">
-              <h3>Atividade da Sarah (Mensagens/Dia)</h3>
+              <h3>Atividade da IA (Mensagens/Dia)</h3>
               <div className="chart-container" style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '15px', paddingTop: '30px' }}>
                 {(stats.activity || [10, 20, 30, 40, 50, 60, 70]).map((val, i) => (
                   <div key={i} className="chart-bar-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
                     <span style={{ fontSize: '0.7rem', color: '#7c3aed', marginBottom: '5px', fontWeight: 'bold' }}>{val}</span>
-                    <div className="chart-bar" style={{ width: '100%', background: 'linear-gradient(to top, #7c3aed, #06b6d4)', height: `${(val / Math.max(...stats.activity, 1)) * 100}%`, borderRadius: '8px 8px 0 0', transition: 'height 0.5s ease' }}></div>
+                    <div className="chart-bar" style={{ width: '100%', background: 'linear-gradient(to top, #7c3aed, #06b6d4)', height: `${(val / (Math.max(...stats.activity, 1) || 1)) * 100}%`, borderRadius: '8px 8px 0 0', transition: 'height 0.5s ease' }}></div>
                     <span style={{ marginTop: '8px', fontSize: '0.65rem', color: '#a1a1aa' }}>{['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i]}</span>
                   </div>
                 ))}
@@ -313,7 +314,7 @@ export default function Dashboard() {
                     ))}
                   </div>
                 </>
-              ) : <div className="chat-empty-state"><p>Selecione uma conversa para monitorar a Sarah.</p></div>}
+              ) : <div className="chat-empty-state"><p>Selecione uma conversa para monitorar a IA.</p></div>}
             </div>
           </div>
         )}
@@ -321,8 +322,8 @@ export default function Dashboard() {
         {activeTab === 'bot' && (
           <div className="tab-panel">
             <div className="glass-card">
-              <h3>Treinar Personalidade da Sarah</h3>
-              <p style={{fontSize: '0.8rem', color: '#a1a1aa', marginBottom: '1rem'}}>Defina como a Sarah deve se comportar e quais produtos ela deve vender.</p>
+              <h3>Treinar Personalidade da IA</h3>
+              <p style={{fontSize: '0.8rem', color: '#a1a1aa', marginBottom: '1rem'}}>Defina como sua IA deve se comportar e quais produtos ela deve vender.</p>
               <textarea className="prompt-editor" rows="12" value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '12px' }} />
               <button onClick={handleSavePrompt} disabled={saving} className="btn-primary" style={{marginTop: '1rem'}}>{saving ? 'Salvando...' : 'Salvar Personalidade'}</button>
             </div>
@@ -349,7 +350,7 @@ export default function Dashboard() {
                       <span style={{ color: '#a1a1aa' }}>Valor:</span>
                       <span style={{ fontWeight: 'bold', color: '#7c3aed' }}>{financeData.value}</span>
                     </div>
-                    <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }}>Gerenciar na Hotmart</button>
+                    <button className="btn-primary" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => window.open('https://wa.me/5521969875522', '_blank')}>Falar com Suporte</button>
                   </div>
                 ) : <div className="spinner"></div>}
               </div>

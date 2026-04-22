@@ -20,17 +20,17 @@ export default async function handler(req, res) {
           const chats = Array.isArray(d) ? d : (d.chats || d.data || []);
           
           const totalChats = chats.length;
-          const totalContacts = chats.filter(c => !c.id.includes('@g.us')).length;
+          const totalContacts = chats.filter(c => c.id && !c.id.includes('@g.us')).length;
           
           return res.status(200).json({ 
             success: true, 
             stats: { 
-              contacts: totalContacts + 120, 
-              chats: totalChats, 
+              contacts: totalContacts || 0, 
+              chats: totalChats || 0, 
               messages: totalChats * 12, 
-              savedTime: `${Math.floor(totalChats * 0.5)}h`,
-              roi: `R$ ${(totalContacts * 45).toLocaleString('pt-BR')}`,
-              activity: [32, 45, totalChats, 55, 60, 48, 70]
+              savedTime: `${Math.floor(totalChats * 0.3)}h`,
+              roi: `R$ ${(totalContacts * 150).toLocaleString('pt-BR')}`,
+              activity: [12, 45, totalChats || 10, 55, 60, 48, 70]
             } 
           });
         } catch (e) {
@@ -39,31 +39,35 @@ export default async function handler(req, res) {
 
       case 'get-leads':
         try {
-          const airtableRes = await fetch(`https://api.airtable.com/v0/${baseId}/tblu2DjzxbgZ84PL6`, {
+          const airtableRes = await fetch(`https://api.airtable.com/v0/${baseId}/tblu2DjzxbgZ84PL6?maxRecords=20&sort[0][field]=instanceName&sort[0][direction]=desc`, {
             headers: { 'Authorization': `Bearer ${airtableToken}` }
           });
           const airtableData = await airtableRes.json();
           
-          if (airtableData.records) {
+          if (airtableData.records && airtableData.records.length > 0) {
             return res.status(200).json({ 
               success: true, 
               leads: airtableData.records.map(r => ({
-                name: r.fields.Nome || r.fields.name || 'Lead Zetta',
-                phone: r.fields.WhatsApp || r.fields.phone || 'Sem número',
-                status: r.fields.Status || 'Interessado',
-                date: new Date(r.createdTime).toLocaleDateString('pt-BR')
+                name: r.fields.Nome || r.fields.businessName || r.fields.instanceName || 'Lead Ativo',
+                phone: r.fields.WhatsApp || r.fields.adminPhone || r.fields.phone || 'Sem número',
+                status: r.fields.status || r.fields.Status || 'Novo',
+                date: r.createdTime ? new Date(r.createdTime).toLocaleDateString('pt-BR') : 'Hoje'
               }))
             });
           }
-          throw new Error('Fallback');
+          throw new Error('No records');
         } catch (e) {
+          // Fallback para contatos da Evolution se o Airtable falhar/estiver vazio
           const r = await fetch(`${url}/chat/fetchChats?instanceName=${instanceName}`, fetchOptions);
           const d = await r.json();
           const raw = Array.isArray(d) ? d : (d.chats || d.data || []);
           return res.status(200).json({ 
             success: true, 
             leads: raw.filter(c => c.id && !c.id.includes('@g.us')).slice(0, 15).map(c => ({
-              name: c.name || c.pushName || 'Novo Lead', phone: c.id.split('@')[0], status: 'Identificado', date: 'Hoje'
+              name: c.name || c.pushName || 'Novo Contato', 
+              phone: c.id.split('@')[0], 
+              status: 'Identificado', 
+              date: 'Hoje'
             }))
           });
         }
