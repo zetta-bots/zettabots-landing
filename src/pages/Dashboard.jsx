@@ -106,7 +106,7 @@ export default function Dashboard() {
         body: JSON.stringify({ instanceName })
       })
       const data = await res.json()
-      if (data.isConnected) {
+      if (data.status === 'CONNECTED') {
         setQrStatus('CONNECTED')
       } else if (data.qrcode) {
         setQrCode(data.qrcode)
