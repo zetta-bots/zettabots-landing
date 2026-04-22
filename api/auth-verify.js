@@ -5,18 +5,48 @@ export default async function handler(req, res) {
 
   const { phone, code } = req.body
   
-  // BYPASS PARA TESTE DO ATLAS DA FÉ
-  if ((phone === '1197737283' || phone === '551197737283') && code === '1234') {
+  const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
+  const AIRTABLE_BASE = process.env.AIRTABLE_BASE
+  const AIRTABLE_TABLE = process.env.AIRTABLE_TABLE || 'tblu2DjzxbgZ84PL6'
+
+  try {
+    // 1. Buscar o cliente pelo telefone
+    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE}/${AIRTABLE_TABLE}?filterByFormula=OR({instanceName}='${phone}', {adminPhone}='${phone}')`
+    const airtableRes = await fetch(searchUrl, {
+      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }
+    })
+    const data = await airtableRes.json()
+
+    if (!data.records || data.records.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' })
+    }
+
+    const record = data.records[0]
+    const fields = record.fields
+
+    // 2. Validar o código (Bypass para o número de teste do cliente se necessário, mas validando o real para os outros)
+    const isMock = (phone === '1197737283' || phone === '551197737283') && code === '1234'
+    const isCodeValid = fields.loginCode === code || isMock
+
+    if (!isCodeValid) {
+      return res.status(401).json({ error: 'Código de acesso incorreto' })
+    }
+
+    // 3. Retornar dados reais para o Dashboard
     return res.status(200).json({
       success: true,
-      recordId: 'mock-id',
-      instanceName: 'atlasdafe', // NOME EXATO QUE APARECE NO SEU PRINT
-      phone: '551197737283',
-      status: 'pago',
-      name: 'Atlas da Fé',
-      systemPrompt: 'Você é a Sarah, especialista em vendas...'
+      recordId: record.id,
+      instanceName: fields.instanceName || phone,
+      phone: fields.adminPhone || phone,
+      status: fields.status || 'trial',
+      name: fields.name || 'Cliente ZettaBots',
+      systemPrompt: fields.systemPrompt || '',
+      email: fields.email || '',
+      expiryDate: fields.trialEndDate || ''
     })
-  }
 
-  return res.status(401).json({ error: 'Código inválido' })
+  } catch (error) {
+    console.error('Erro no auth-verify:', error)
+    return res.status(500).json({ error: 'Erro ao verificar código' })
+  }
 }

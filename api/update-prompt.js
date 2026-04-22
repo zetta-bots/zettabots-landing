@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { recordId, systemPrompt, instanceName } = req.body
+  const { recordId, systemPrompt, instanceName, webhookUrl, notificationEmail } = req.body
   if (!recordId) {
     return res.status(400).json({ error: 'ID do cliente é obrigatório' })
   }
@@ -29,7 +29,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         fields: {
-          systemPrompt: systemPrompt
+          systemPrompt: systemPrompt,
+          webhookUrl: webhookUrl || '',
+          email: notificationEmail || ''
         }
       })
     })
