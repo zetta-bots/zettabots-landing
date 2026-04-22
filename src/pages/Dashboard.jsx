@@ -6,10 +6,10 @@ const MediaMessage = ({ msg, instanceName }) => {
   const [media, setMedia] = useState(null);
   useEffect(() => {
     if (msg.id && (msg.type === 'image' || msg.type === 'audio')) {
-      fetch('/api/get-media', {
+      fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName, messageId: msg.id })
+        body: JSON.stringify({ action: 'get-media', instanceName, messageId: msg.id })
       }).then(r => r.json()).then(data => {
         if(data.success) setMedia(`data:${data.mimetype};base64,${data.base64}`);
       }).catch(e => console.error(e));
@@ -184,10 +184,11 @@ export default function Dashboard() {
     showToast(nextState ? 'Pausando IA...' : 'Reativando IA...', 'info');
     
     try {
-      const res = await fetch('/api/toggle-ai', {
+      const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+          action: 'toggle-ai',
           instanceName: selectedInstance, 
           enabled: !nextState,
           systemPrompt: session.systemPrompt || prompt 

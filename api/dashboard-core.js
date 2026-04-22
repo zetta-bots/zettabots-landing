@@ -166,6 +166,41 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, messages: [] });
         }
 
+      case 'get-media':
+        try {
+          const { messageId } = req.body;
+          if (!messageId) return res.status(400).json({ error: 'Missing params' });
+          const resMedia = await fetch(`${url}/chat/getBase64FromMediaMessage/${instanceName}`, {
+            method: 'POST',
+            headers: fetchOptions.headers,
+            body: JSON.stringify({ message: { key: { id: messageId } } })
+          });
+          if (!resMedia.ok) throw new Error('Failed to fetch from Evolution');
+          const data = await resMedia.json();
+          return res.status(200).json({ success: true, base64: data.base64, mimetype: data.mimetype });
+        } catch (error) {
+          return res.status(500).json({ error: 'Error fetching media' });
+        }
+
+      case 'toggle-ai':
+        try {
+          const { enabled, systemPrompt } = req.body;
+          const setRes = await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
+            method: 'POST',
+            headers: fetchOptions.headers,
+            body: JSON.stringify({
+              enabled: enabled,
+              systemPrompt: systemPrompt || "Você é a Sarah.",
+              model: "gpt-4o",
+              timezone: "America/Sao_Paulo"
+            })
+          });
+          if (!setRes.ok) throw new Error('Failed to toggle AI in Evolution');
+          return res.status(200).json({ success: true, enabled });
+        } catch (error) {
+          return res.status(500).json({ error: 'Error toggling AI' });
+        }
+
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
