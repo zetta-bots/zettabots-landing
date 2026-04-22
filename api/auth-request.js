@@ -43,15 +43,16 @@ export default async function handler(req, res) {
       body: JSON.stringify({ fields: { loginCode: code } })
     })
 
-    // MENSAGEM LIMPA E PROFISSIONAL (Estilo iToken)
-    const professionalMessage = `🔐 *Código ZettaBots:* ${code}\n\n_Válido por 5 minutos._`
+    // MENSAGEM ULTRA-LIMPA PARA EVITAR DISPARO DA IA
+    // Usando um formato que parece um log de sistema
+    const systemCodeMessage = `[ZettaBots-Auth-System]\nCODE: ${code}\nEXPIRE: 5min`
 
     await fetch(`${EVOLUTION_URL}/message/sendText/ZettaBots`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_APIKEY },
       body: JSON.stringify({
         number: phoneWith55,
-        text: professionalMessage
+        text: systemCodeMessage
       })
     })
 
