@@ -50,7 +50,7 @@ export default async function handler(req, res) {
 
         if (authRes.ok) {
           const userData = JSON.parse(authText)
-          userId = userData.user.id
+          userId = userData.id || userData.user?.id
           console.log('✅ Usuário criado em Auth:', userId)
 
           // Criar profile
