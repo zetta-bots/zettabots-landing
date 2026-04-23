@@ -26,8 +26,11 @@ export default async function handler(req, res) {
 
     // Criar usuário em Supabase (Auth + Profile)
     let userId = null
+    console.log('📝 SB_URL:', !!SB_URL, 'SB_KEY:', !!SB_KEY)
+
     if (SB_URL && SB_KEY) {
       try {
+        console.log('🔐 Criando usuário em Supabase Auth para:', email)
         const authRes = await fetch(`${SB_URL}/auth/v1/admin/users`, {
           method: 'POST',
           headers: {
@@ -42,11 +45,16 @@ export default async function handler(req, res) {
           }),
         })
 
+        const authText = await authRes.text()
+        console.log('Auth response status:', authRes.status, 'body:', authText.substring(0, 200))
+
         if (authRes.ok) {
-          const userData = await authRes.json()
+          const userData = JSON.parse(authText)
           userId = userData.user.id
+          console.log('✅ Usuário criado em Auth:', userId)
 
           // Criar profile
+          console.log('📝 Criando profile...')
           const profileRes = await fetch(`${SB_URL}/rest/v1/profiles`, {
             method: 'POST',
             headers: {
@@ -69,19 +77,20 @@ export default async function handler(req, res) {
           })
 
           if (profileRes.ok) {
-            console.log('✅ Usuário criado em Supabase:', userId)
+            console.log('✅ Profile criado:', userId)
           } else {
             console.error('❌ Erro ao criar profile:', profileRes.status, await profileRes.text())
           }
         } else if (authRes.status === 422) {
-          // Email já existe
-          console.log('⚠️ Email já cadastrado em Supabase')
+          console.log('⚠️ Email já cadastrado:', email)
         } else {
-          console.error('Erro ao criar usuário Supabase:', authRes.status)
+          console.error('❌ Erro ao criar usuário Supabase:', authRes.status, authText.substring(0, 300))
         }
       } catch (sbErr) {
-        console.error('Erro Supabase:', sbErr.message)
+        console.error('❌ Erro Supabase:', sbErr.message)
       }
+    } else {
+      console.error('⚠️ Supabase não configurado: SB_URL=' + !!SB_URL + ', SB_KEY=' + !!SB_KEY)
     }
 
     const contactRes = await fetch('https://api.brevo.com/v3/contacts', {
