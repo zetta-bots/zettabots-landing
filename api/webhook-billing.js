@@ -53,11 +53,12 @@ export default async function handler(req, res) {
       if (sub.status === 'authorized') {
         // Trial iniciado — vincula subscription_id ao perfil pelo e-mail
         // plan_type continua 'trial' até o primeiro pagamento processar
-        await updateProfileByEmail(sbUrl, sbKey, sub.payer_email, {
+        const userId = await updateProfileByEmail(sbUrl, sbKey, sub.payer_email, {
           mercadopago_subscription_id: subId,
           mercadopago_payer_id: String(sub.payer_id || ''),
         });
         console.log(`✅ Trial iniciado: ${sub.payer_email} → plano ${planType}`);
+        if (userId) triggerOnboarding({ userId, email: sub.payer_email, planType });
       } else if (sub.status === 'cancelled') {
         await updateProfileBySubscriptionId(sbUrl, sbKey, subId, {
           plan_type: 'blocked',
@@ -141,7 +142,7 @@ function supabaseHeaders(key) {
 }
 
 async function updateProfileByEmail(sbUrl, sbKey, email, fields) {
-  if (!email) return;
+  if (!email) return null;
 
   // Supabase Admin API — busca usuário pelo e-mail
   const res = await fetch(
@@ -154,7 +155,7 @@ async function updateProfileByEmail(sbUrl, sbKey, email, fields) {
   if (!userId) {
     // Usuário ainda não cadastrou conta — o frontend vai vincular ao fazer login
     console.warn(`⚠️ Usuário sem conta ainda: ${email}. Será vinculado no login.`);
-    return;
+    return null;
   }
 
   await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}`, {
@@ -162,6 +163,18 @@ async function updateProfileByEmail(sbUrl, sbKey, email, fields) {
     headers: supabaseHeaders(sbKey),
     body: JSON.stringify(fields),
   });
+
+  return userId;
+}
+
+function triggerOnboarding(data) {
+  const url = process.env.N8N_ONBOARDING_WEBHOOK
+    || 'https://seriousokapi-n8n.cloudfy.live/webhook/zettabots-onboarding';
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(e => console.warn('⚠️ Onboarding trigger error:', e.message));
 }
 
 async function updateProfileBySubscriptionId(sbUrl, sbKey, subId, fields) {
