@@ -47,7 +47,7 @@ export default async function handler(req, res) {
           userId = userData.user.id
 
           // Criar profile
-          await fetch(`${SB_URL}/rest/v1/profiles`, {
+          const profileRes = await fetch(`${SB_URL}/rest/v1/profiles`, {
             method: 'POST',
             headers: {
               'apikey': SB_KEY,
@@ -58,6 +58,7 @@ export default async function handler(req, res) {
             body: JSON.stringify({
               id: userId,
               full_name: name,
+              email: email,
               whatsapp_number: phone,
               segment: segment,
               business_name: businessName,
@@ -66,7 +67,12 @@ export default async function handler(req, res) {
               created_at: new Date().toISOString(),
             }),
           })
-          console.log('✅ Usuário criado em Supabase:', userId)
+
+          if (profileRes.ok) {
+            console.log('✅ Usuário criado em Supabase:', userId)
+          } else {
+            console.error('❌ Erro ao criar profile:', profileRes.status, await profileRes.text())
+          }
         } else if (authRes.status === 422) {
           // Email já existe
           console.log('⚠️ Email já cadastrado em Supabase')
