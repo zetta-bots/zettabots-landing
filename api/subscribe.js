@@ -69,7 +69,7 @@ export default async function handler(req, res) {
               email: email,
               whatsapp_number: phone,
               segment: segment,
-              business_name: businessName,
+              company_name: businessName,
               plan_type: 'trial',
               is_active: true,
               created_at: new Date().toISOString(),
