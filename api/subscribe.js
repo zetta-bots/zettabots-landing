@@ -7,12 +7,13 @@ export default async function handler(req, res) {
   const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || '2')
   const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL
   const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL
+  const SB_URL = process.env.VITE_SUPABASE_URL
+  const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!BREVO_API_KEY) {
     console.error('BREVO_API_KEY not configured')
     return res.status(500).json({ error: 'Configuração incompleta' })
   }
-
 
   const { name, email, phone, segment, businessName } = req.body
   if (!name || !email || !phone || !segment || !businessName) {
@@ -22,6 +23,60 @@ export default async function handler(req, res) {
   try {
     const [firstName, ...rest] = name.trim().split(' ')
     const lastName = rest.join(' ')
+
+    // Criar usuário em Supabase (Auth + Profile)
+    let userId = null
+    if (SB_URL && SB_KEY) {
+      try {
+        const authRes = await fetch(`${SB_URL}/auth/v1/admin/users`, {
+          method: 'POST',
+          headers: {
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${SB_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            password: Math.random().toString(36).slice(-12),
+            email_confirm: true,
+          }),
+        })
+
+        if (authRes.ok) {
+          const userData = await authRes.json()
+          userId = userData.user.id
+
+          // Criar profile
+          await fetch(`${SB_URL}/rest/v1/profiles`, {
+            method: 'POST',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({
+              id: userId,
+              full_name: name,
+              whatsapp_number: phone,
+              segment: segment,
+              business_name: businessName,
+              plan_type: 'trial',
+              is_active: true,
+              created_at: new Date().toISOString(),
+            }),
+          })
+          console.log('✅ Usuário criado em Supabase:', userId)
+        } else if (authRes.status === 422) {
+          // Email já existe
+          console.log('⚠️ Email já cadastrado em Supabase')
+        } else {
+          console.error('Erro ao criar usuário Supabase:', authRes.status)
+        }
+      } catch (sbErr) {
+        console.error('Erro Supabase:', sbErr.message)
+      }
+    }
 
     const contactRes = await fetch('https://api.brevo.com/v3/contacts', {
       method: 'POST',
@@ -84,15 +139,16 @@ export default async function handler(req, res) {
       }).catch((err) => console.error('Notification email failed:', err))
     }
 
-    if (N8N_WEBHOOK_URL) {
+    // Disparar workflow n8n de boas-vindas (email + onboarding)
+    if (N8N_WEBHOOK_URL && userId) {
       await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, segment, businessName }),
+        body: JSON.stringify({ userId, name, email, phone, segment, businessName, planType: 'trial' }),
       }).catch((err) => console.error('N8N webhook failed:', err))
     }
 
-    return res.status(200).json({ success: true })
+    return res.status(200).json({ success: true, userId })
   } catch (err) {
     console.error('Subscribe function error:', err.message)
     return res.status(500).json({ error: 'Erro ao processar cadastro. Tente novamente.' })
