@@ -153,6 +153,8 @@ export default function Dashboard() {
         setQrCode(data.qrcode)
         setQrStatus('QRCODE')
         setQrTimer(40)
+      } else if (data.status === 'NOT_FOUND') {
+        setQrStatus('NOT_FOUND')
       } else {
         setQrStatus('DISCONNECTED')
       }
@@ -571,6 +573,7 @@ export default function Dashboard() {
                 {qrStatus === 'CONNECTED' && 'WhatsApp conectado e funcionando'}
                 {qrStatus === 'QRCODE' && 'Abra o WhatsApp do seu negócio → Configurações → Aparelhos Conectados → Escanear QR'}
                 {qrStatus === 'DISCONNECTED' && 'Instância desconectada. Gere um novo QR para conectar.'}
+                {qrStatus === 'NOT_FOUND' && 'Instância não encontrada. Entre em contato com o suporte.'}
                 {qrStatus === 'loading' && 'Verificando status da conexão...'}
               </p>
 
@@ -594,10 +597,12 @@ export default function Dashboard() {
                     <div className="spinner" style={{width: '60px', height: '60px'}}></div>
                   </div>
                 )}
-                {qrStatus === 'DISCONNECTED' && (
-                  <div style={{width: '240px', height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#ef4444', gap: '1rem'}}>
+                {(qrStatus === 'DISCONNECTED' || qrStatus === 'NOT_FOUND') && (
+                  <div style={{width: '240px', height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem'}}>
                     <div style={{fontSize: '3.5rem'}}>📵</div>
-                    <div style={{fontSize: '0.9rem', fontWeight: 600, color: '#a1a1aa'}}>Desconectado</div>
+                    <div style={{fontSize: '0.9rem', fontWeight: 600, color: '#a1a1aa'}}>
+                      {qrStatus === 'NOT_FOUND' ? 'Instância não encontrada' : 'Desconectado'}
+                    </div>
                   </div>
                 )}
               </div>
