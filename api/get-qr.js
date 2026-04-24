@@ -48,17 +48,13 @@ export default async function handler(req, res) {
 
     const data = await fetchRes.json()
 
-    // Evolution pode retornar array ou objeto direto dependendo da versão
-    let instance
-    if (Array.isArray(data)) {
-      instance = data.find(i => i.instance?.instanceName === instanceName)
-    } else if (data?.instance?.instanceName === instanceName) {
-      instance = data
-    } else if (data?.instanceName === instanceName) {
-      instance = { instance: data }
-    }
+    // Evolution pode retornar estrutura aninhada {instance:{instanceName}} ou flat {instanceName/name}
+    const normalize = (i) => i.instance?.instanceName || i.instanceName || i.name || ''
+    const found = Array.isArray(data)
+      ? data.some(i => normalize(i) === instanceName)
+      : (normalize(data) === instanceName || data?.id != null)
 
-    if (!instance) {
+    if (!found) {
       return res.status(200).json({
         status: 'ERROR',
         message: `Instância '${instanceName}' não encontrada.`,
@@ -74,14 +70,7 @@ export default async function handler(req, res) {
     const isConnected = stateData.instance?.state === 'open' || stateData.status === 'open' || stateData.state === 'open'
 
     if (isConnected) {
-      return res.status(200).json({
-        status: 'CONNECTED',
-        stats: {
-          chats: instance.instance?.chatCount || 0,
-          contacts: instance.instance?.contactCount || 0,
-          messages: instance.instance?.messageCount || 0
-        }
-      })
+      return res.status(200).json({ status: 'CONNECTED' })
     } else {
       const connectRes = await fetch(`${EVOLUTION_URL}/instance/connect/${instanceName}`, {
         method: 'GET',
