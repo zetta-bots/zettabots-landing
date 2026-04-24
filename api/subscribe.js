@@ -82,7 +82,23 @@ export default async function handler(req, res) {
             console.error('❌ Erro ao criar profile:', profileRes.status, await profileRes.text())
           }
         } else if (authRes.status === 422) {
-          console.log('⚠️ Email já cadastrado:', email)
+          // Email já existe — busca o userId para poder re-triggar o onboarding se necessário
+          console.log('⚠️ Email já cadastrado, buscando userId existente:', email)
+          try {
+            const listRes = await fetch(`${SB_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`, {
+              headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+            })
+            if (listRes.ok) {
+              const listData = await listRes.json()
+              const existingUser = listData.users?.[0]
+              if (existingUser) {
+                userId = existingUser.id
+                console.log('✅ UserId existente encontrado:', userId)
+              }
+            }
+          } catch (lookupErr) {
+            console.error('Erro ao buscar usuário existente:', lookupErr.message)
+          }
         } else {
           console.error('❌ Erro ao criar usuário Supabase:', authRes.status, authText.substring(0, 300))
         }
@@ -156,11 +172,27 @@ export default async function handler(req, res) {
 
     // Disparar workflow n8n de boas-vindas (email + onboarding)
     if (N8N_WEBHOOK_URL && userId) {
-      await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, name, email, phone, segment, businessName, planType: 'trial' }),
-      }).catch((err) => console.error('N8N webhook failed:', err))
+      // Verifica se já tem instância ativa para não re-provisionar
+      let hasInstance = false
+      if (SB_URL && SB_KEY) {
+        try {
+          const profileCheck = await fetch(`${SB_URL}/rest/v1/profiles?id=eq.${userId}&select=instance_name`, {
+            headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+          })
+          const profileData = await profileCheck.json()
+          hasInstance = !!(profileData?.[0]?.instance_name)
+        } catch {}
+      }
+      if (!hasInstance) {
+        await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, name, email, phone, segment, businessName, planType: 'trial' }),
+        }).catch((err) => console.error('N8N webhook failed:', err))
+      } else {
+        console.log('⚠️ Usuário já tem instância, n8n não re-trigado:', userId)
+        return res.status(409).json({ error: 'Este email já está cadastrado. Acesse o painel para fazer login.', redirect: '/login' })
+      }
     }
 
     return res.status(200).json({ success: true, userId })

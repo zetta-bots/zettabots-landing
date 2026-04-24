@@ -67,6 +67,8 @@ export default function LeadForm() {
         trackFormSubmit(form)
         setSubmitted(true)
         setForm({ name: '', email: '', phone: '', segment: '', businessName: '' })
+      } else if (res.status === 409) {
+        setError('Este email já está cadastrado. Acesse o painel para fazer login.')
       } else {
         const errorData = await res.json().catch(() => ({}))
         console.error('Subscribe error:', res.status, errorData)
