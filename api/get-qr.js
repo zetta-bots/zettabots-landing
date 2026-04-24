@@ -78,10 +78,9 @@ export default async function handler(req, res) {
       })
       const connectData = await connectRes.json()
       
-      return res.status(200).json({ 
-        status: 'QRCODE', 
-        qrcode: connectData.base64 || connectData.qrcode?.base64 
-      })
+      const rawQr = connectData.base64 || connectData.qrcode?.base64 || ''
+      const qrcode = rawQr && !rawQr.startsWith('data:') ? `data:image/png;base64,${rawQr}` : rawQr
+      return res.status(200).json({ status: 'QRCODE', qrcode: qrcode || null })
     }
 
   } catch (error) {
