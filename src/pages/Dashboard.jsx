@@ -146,6 +146,7 @@ export default function Dashboard() {
         body: JSON.stringify({ instanceName })
       })
       const data = await res.json()
+      if (data._debug) console.warn('[get-qr debug]', data._debug)
       if (data.status === 'CONNECTED') {
         setQrStatus('CONNECTED')
       } else if (data.qrcode) {
@@ -156,6 +157,7 @@ export default function Dashboard() {
         setQrStatus('DISCONNECTED')
       }
     } catch (err) {
+      console.error('[get-qr error]', err)
       setQrStatus('DISCONNECTED')
     }
   }

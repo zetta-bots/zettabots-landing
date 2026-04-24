@@ -47,12 +47,22 @@ export default async function handler(req, res) {
     }
 
     const data = await fetchRes.json()
-    const instance = Array.isArray(data) ? data.find(i => i.instance.instanceName === instanceName) : null
+
+    // Evolution pode retornar array ou objeto direto dependendo da versão
+    let instance
+    if (Array.isArray(data)) {
+      instance = data.find(i => i.instance?.instanceName === instanceName)
+    } else if (data?.instance?.instanceName === instanceName) {
+      instance = data
+    } else if (data?.instanceName === instanceName) {
+      instance = { instance: data }
+    }
 
     if (!instance) {
-      return res.status(200).json({ 
-        status: 'ERROR', 
-        message: `Instância '${instanceName}' não encontrada na Evolution.` 
+      return res.status(200).json({
+        status: 'ERROR',
+        message: `Instância '${instanceName}' não encontrada.`,
+        _debug: { fetchInstancesResponse: JSON.stringify(data).substring(0, 300) }
       })
     }
 
@@ -64,23 +74,28 @@ export default async function handler(req, res) {
     const isConnected = stateData.instance?.state === 'open' || stateData.status === 'open' || stateData.state === 'open'
 
     if (isConnected) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         status: 'CONNECTED',
         stats: {
-          chats: instance.instance.chatCount || 0,
-          contacts: instance.instance.contactCount || 0,
-          messages: instance.instance.messageCount || 0
+          chats: instance.instance?.chatCount || 0,
+          contacts: instance.instance?.contactCount || 0,
+          messages: instance.instance?.messageCount || 0
         }
       })
     } else {
       const connectRes = await fetch(`${EVOLUTION_URL}/instance/connect/${instanceName}`, {
-        headers: { 'apikey': EVOLUTION_APIKEY }
+        method: 'GET',
+        headers: { 'apikey': EVOLUTION_APIKEY, 'Content-Type': 'application/json' }
       })
       const connectData = await connectRes.json()
-      
-      const rawQr = connectData.base64 || connectData.qrcode?.base64 || ''
+
+      const rawQr = connectData.base64 || connectData.qrcode?.base64 || connectData.code || ''
       const qrcode = rawQr && !rawQr.startsWith('data:') ? `data:image/png;base64,${rawQr}` : rawQr
-      return res.status(200).json({ status: 'QRCODE', qrcode: qrcode || null })
+      return res.status(200).json({
+        status: qrcode ? 'QRCODE' : 'DISCONNECTED',
+        qrcode: qrcode || null,
+        _debug: !qrcode ? { connectResponse: JSON.stringify(connectData).substring(0, 300), stateResponse: JSON.stringify(stateData).substring(0, 200) } : undefined
+      })
     }
 
   } catch (error) {
