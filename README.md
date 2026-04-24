@@ -1,110 +1,119 @@
-# ZettaBots — Landing Page
+# ZettaBots — Plataforma SaaS de IA para WhatsApp
 
-Landing page do [ZettaBots](https://zettabots.ia.br) — agente de IA para automação de vendas no WhatsApp.
+Site e painel do cliente de [zettabots.ia.br](https://zettabots.ia.br) — agente de IA para automação de vendas no WhatsApp.
 
 ## Stack
 
-- **Frontend:** React 18 + Vite 5
-- **Estilização:** CSS com variáveis (sem framework)
-- **Captura de leads:** Netlify Functions → Brevo API
-- **Analytics:** Google Analytics 4
-- **Proteção de formulário:** reCAPTCHA v3
-- **Deploy:** Netlify (domínio: zettabots.ia.br)
+| Camada | Tecnologia |
+|---|---|
+| Frontend | React 18 + Vite 5 |
+| Deploy | Vercel (Serverless Functions em `api/`) |
+| Banco de dados | Supabase (PostgreSQL + Auth + RLS) |
+| WhatsApp | Evolution API (instâncias por cliente) |
+| Automações | n8n (onboarding, billing, bot master) |
+| Pagamentos | Mercado Pago (assinaturas recorrentes) |
+| E-mail transacional | Brevo (SMTP API) |
 
 ## Estrutura
 
 ```
-├── netlify/
-│   └── functions/
-│       └── subscribe.js      # Serverless function — integração Brevo
-├── public/
-│   ├── images/               # Logo, favicon, og-image
-│   ├── privacidade.html      # Política de privacidade (LGPD)
-│   ├── termos.html           # Termos de uso
-│   ├── robots.txt
-│   └── sitemap.xml
+├── api/                      # Vercel Serverless Functions
+│   ├── subscribe.js          # Cadastro → cria usuário Supabase + dispara onboarding
+│   ├── auth-request.js       # Login: gera OTP e envia via WhatsApp
+│   ├── auth-verify.js        # Login: valida OTP e retorna sessão
+│   ├── get-qr.js             # Busca QR code da instância no Evolution API
+│   ├── dashboard-core.js     # Dados do painel (leads, chats, stats)
+│   ├── get-config.js         # Configurações da instância (prompt, webhook)
+│   ├── update-prompt.js      # Salva system prompt personalizado
+│   ├── checkout.js           # Inicia checkout Mercado Pago
+│   ├── create-payment.js     # Cria pagamento/assinatura
+│   ├── create-pix.js         # Gera PIX para pagamento
+│   ├── link-subscription.js  # Vincula assinatura MP ao perfil
+│   └── webhook-billing.js    # Recebe webhooks do Mercado Pago
 ├── src/
-│   ├── components/           # Seções da página
-│   │   ├── Navbar.jsx/css
-│   │   ├── Hero.jsx/css
-│   │   ├── Problems.jsx/css
-│   │   ├── Features.jsx/css
-│   │   ├── HowItWorks.jsx/css
-│   │   ├── Results.jsx/css
-│   │   ├── Pricing.jsx/css
-│   │   ├── LeadForm.jsx/css
-│   │   └── Footer.jsx/css
-│   └── utils/
-│       ├── analytics.js      # Google Analytics 4
-│       └── validation.js     # Validação + reCAPTCHA
-├── index.html                # Meta tags, OG, JSON-LD
-├── netlify.toml              # Config de build e functions
+│   ├── components/           # Seções da landing page
+│   ├── pages/
+│   │   ├── LandingPage.jsx   # Página principal
+│   │   ├── Login.jsx         # Login via OTP WhatsApp
+│   │   └── Dashboard.jsx     # Painel do cliente
+│   └── lib/
+│       └── supabase.js       # Client Supabase
+├── public/
+│   ├── images/               # Assets públicos
+│   ├── privacidade.html      # Política de privacidade (LGPD)
+│   └── termos.html           # Termos de uso
+├── supabase/                 # Migrations SQL
+├── vercel.json               # Config de rotas Vercel
 └── vite.config.js
 ```
 
-## Configuração local
+## Fluxo principal
+
+```
+1. Cadastro   → subscribe.js → Supabase Auth + profile → n8n zetta-welcome → n8n zetta-onboarding
+2. Onboarding → Evolution API cria instância → registro em instances → WhatsApp com link do painel
+3. Login      → /login → auth-request.js envia OTP → auth-verify.js valida → sessão localStorage
+4. Painel     → Dashboard.jsx → get-qr.js → QR code com timer 40s para conectar WhatsApp do negócio
+5. Bot ativo  → Evolution API recebe mensagens → n8n zetta-bot-master → resposta com IA (Gemini/Groq)
+```
+
+## Planos
+
+| Plano | Valor | Recursos |
+|---|---|---|
+| Trial | Grátis 7 dias | Funcionalidades completas |
+| Start | R$ 127/mês | Bot + CRM básico |
+| Pro | R$ 247/mês | Start + relatórios + follow-up |
+| Enterprise | R$ 997/mês | Pro + múltiplos atendentes + white-label |
+
+## Variáveis de ambiente (Vercel)
+
+```env
+# Supabase
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Evolution API
+EVOLUTION_URL=
+EVOLUTION_APIKEY=
+
+# Mercado Pago
+MERCADOPAGO_ACCESS_TOKEN=
+MP_PLAN_START_ID=
+MP_PLAN_PRO_ID=
+MP_PLAN_ENTERPRISE_ID=
+
+# n8n
+N8N_WEBHOOK_BASE=
+
+# Brevo (e-mail)
+BREVO_API_KEY=
+```
+
+## Desenvolvimento local
 
 ```bash
 git clone git@github.com:zetta-bots/zettabots-landing.git
 cd zettabots-landing
 npm install
+cp .env.example .env.local   # preencher as variáveis
+npm run dev                  # http://localhost:5173
 ```
 
-Crie `.env.local` na raiz:
-
-```env
-VITE_WHATSAPP_NUMBER=5561993956378
-VITE_GA_ID=G-XXXXXXXXXX
-VITE_RECAPTCHA_SITE_KEY=           # opcional
-```
-
-```bash
-npm run dev
-# http://localhost:5173
-```
-
-> As variáveis `BREVO_API_KEY`, `BREVO_LIST_ID` e `NOTIFY_EMAIL` ficam **somente no servidor** (Netlify env vars) — nunca no `.env.local`.
-
-## Variáveis de ambiente (Netlify)
-
-| Variável | Onde configurar | Descrição |
-|---|---|---|
-| `VITE_WHATSAPP_NUMBER` | Netlify → Environment | Número do WhatsApp (DDI+DDD+número) |
-| `VITE_GA_ID` | Netlify → Environment | ID do Google Analytics 4 |
-| `VITE_RECAPTCHA_SITE_KEY` | Netlify → Environment | Site key do reCAPTCHA v3 (opcional) |
-| `BREVO_API_KEY` | Netlify → Environment | Chave de API da Brevo (servidor) |
-| `BREVO_LIST_ID` | Netlify → Environment | ID da lista de contatos no Brevo |
-| `NOTIFY_EMAIL` | Netlify → Environment | E-mail que recebe notificação de novo lead |
-
-## Como funciona o formulário
-
-1. Usuário preenche o formulário na landing page
-2. Frontend chama `/.netlify/functions/subscribe`
-3. A função serverless (Node.js) usa a `BREVO_API_KEY` para:
-   - Adicionar o contato à lista no Brevo
-   - Enviar e-mail de notificação para o admin
-4. Usuário vê mensagem de sucesso com botão para o WhatsApp
+> As funções `api/` rodam via Vercel CLI localmente (`vercel dev`).
 
 ## Deploy
 
-O deploy é automático via Netlify ao fazer push para `main`.
-
-Build manual:
+Push para `main` dispara deploy automático na Vercel.
 
 ```bash
-npm run build   # gera dist/
+npm run build   # gera dist/ para validação local
 ```
-
-## SEO
-
-- Meta tags Open Graph e Twitter Card em `index.html`
-- JSON-LD (SoftwareApplication) em `index.html`
-- `public/robots.txt` e `public/sitemap.xml` configurados para `zettabots.ia.br`
-- Após mudanças no sitemap: submeter no [Google Search Console](https://search.google.com/search-console)
 
 ## Links
 
 - **Site:** https://zettabots.ia.br
-- **Instagram:** https://instagram.com/zettabots
-- **LinkedIn:** https://linkedin.com/company/zettabots
-- **WhatsApp:** https://wa.me/5561993956378
+- **Painel:** https://zettabots.ia.br/login
+- **n8n:** https://seriousokapi-n8n.cloudfy.live
+- **Evolution API:** https://seriousokapi-evolution.cloudfy.live

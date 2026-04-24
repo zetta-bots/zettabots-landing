@@ -23,5 +23,9 @@ dist/
 # N8N workflows (contém chaves de API)
 n8n/
 
+# Notas locais e scripts de teste
+.obsidian/
+scratch/
+
 # Logs
 *.log
