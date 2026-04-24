@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     const phoneWith55 = cleanInput.startsWith('55') ? cleanInput : `55${cleanInput}`;
     
     const filter = `phone=in.(${phoneWithout55},${phoneWith55})`;
-    const sbRes = await fetch(`${supabaseUrl}/rest/v1/instances?${filter}&select=*`, {
+    const sbRes = await fetch(`${supabaseUrl}/rest/v1/instances?${filter}&select=*&order=created_at.desc&limit=1`, {
       headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
     });
     
