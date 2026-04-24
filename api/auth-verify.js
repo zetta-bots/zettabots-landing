@@ -31,18 +31,23 @@ export default async function handler(req, res) {
 
     // Busca company_name do profile para usar como nome de exibição
     let companyName = record.name || ''
-    if (!isAdmin && record.email && supabaseKey) {
+    console.log('🔍 auth-verify record.name:', record.name, '| record.email:', record.email)
+    if (!isAdmin && supabaseKey) {
       try {
-        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(record.email)}&select=company_name,full_name&limit=1`, {
+        const lookupFilter = record.email
+          ? `email=eq.${encodeURIComponent(record.email)}`
+          : `whatsapp_number=ilike.*${phoneWithout55.slice(-11)}`
+        console.log('🔍 profile lookup filter:', lookupFilter)
+        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?${lookupFilter}&select=company_name,full_name&limit=1`, {
           headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
         })
-        if (profileRes.ok) {
-          const profileData = await profileRes.json()
-          const p = profileData?.[0]
-          companyName = p?.company_name || p?.full_name || companyName
-        }
-      } catch {}
+        const profileData = await profileRes.json()
+        console.log('🔍 profile result:', JSON.stringify(profileData))
+        const p = profileData?.[0]
+        companyName = p?.company_name || p?.full_name || companyName
+      } catch (e) { console.error('profile lookup error:', e.message) }
     }
+    console.log('🔍 final companyName:', companyName)
 
     return res.status(200).json({
       success: true,
