@@ -29,13 +29,28 @@ export default async function handler(req, res) {
 
     const isAdmin = cleanInput.includes('21969875522');
 
+    // Busca company_name do profile para usar como nome de exibição
+    let companyName = record.name || ''
+    if (!isAdmin && record.email && supabaseKey) {
+      try {
+        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(record.email)}&select=company_name,full_name&limit=1`, {
+          headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
+        })
+        if (profileRes.ok) {
+          const profileData = await profileRes.json()
+          const p = profileData?.[0]
+          companyName = p?.company_name || p?.full_name || companyName
+        }
+      } catch {}
+    }
+
     return res.status(200).json({
       success: true,
       recordId: record.id,
       instanceName: record.instance_name || 'ZettaBots',
       phone: record.phone || cleanInput,
       status: isAdmin ? 'admin' : (record.status || 'trial'),
-      name: isAdmin ? 'ZettaBots Admin' : (record.name || 'Cliente ZettaBots'),
+      name: isAdmin ? 'ZettaBots Admin' : (companyName || 'Cliente ZettaBots'),
       systemPrompt: record.system_prompt || '',
       email: record.email || ''
     });

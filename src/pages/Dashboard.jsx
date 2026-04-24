@@ -349,9 +349,9 @@ export default function Dashboard() {
       <main className="dashboard-main">
         <header className="main-header">
           <div className="header-title">
-            <h1>{isAdmin ? 'ZettaBots Master' : `Bem-vindo, ${session.instanceName || session.name || 'Atlas da Fé'}`}</h1>
+            <h1>{isAdmin ? 'ZettaBots Master' : `Bem-vindo, ${session.name || session.instanceName || ''}`}</h1>
             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-              <p>{activeTab.toUpperCase()}</p>
+              <p>{activeTab === 'conexao' ? 'CONEXÃO' : activeTab.toUpperCase()}</p>
               {isAdmin && allInstances.length > 0 && (
                 <select 
                   className="instance-selector-mini"
