@@ -8,12 +8,11 @@ import Header from '../components/dashboard/Header'
 import StatsPanel from '../components/dashboard/StatsPanel'
 import LeadsPanel from '../components/dashboard/LeadsPanel'
 import ChatMonitorPanel from '../components/dashboard/ChatMonitorPanel'
-import PersonalityPanel from '../components/dashboard/PersonalityPanel'
 import FinancePanel from '../components/dashboard/FinancePanel'
 import IntegrationsPanel from '../components/dashboard/IntegrationsPanel'
 import ConnectionPanel from '../components/dashboard/ConnectionPanel'
 import AdminPanel from '../components/dashboard/AdminPanel'
-import FeedIAPanel from '../components/dashboard/FeedIAPanel'
+import AIConfigPanel from '../components/dashboard/AIConfigPanel'
 import SubModal from '../components/dashboard/SubModal'
 
 export default function Dashboard() {
@@ -47,6 +46,7 @@ export default function Dashboard() {
   const [adminSearch, setAdminSearch] = useState('')
   const [adminPlanFilter, setAdminPlanFilter] = useState('all')
   const [adminExtending, setAdminExtending] = useState(null)
+  const [knowledgeFiles, setKnowledgeFiles] = useState([])
   const navigate = useNavigate()
 
   const showToast = (message, type = 'info') => {
@@ -388,19 +388,16 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'bot' && (
-          <PersonalityPanel 
+          <AIConfigPanel 
             prompt={prompt} 
             setPrompt={setPrompt} 
             handleSavePrompt={handleSavePrompt} 
             saving={saving} 
-          />
-        )}
-
-        {activeTab === 'feed' && (
-          <FeedIAPanel 
             session={session} 
             showToast={showToast} 
-            selectedInstance={selectedInstance} 
+            selectedInstance={selectedInstance}
+            files={knowledgeFiles}
+            setFiles={setKnowledgeFiles}
           />
         )}
 

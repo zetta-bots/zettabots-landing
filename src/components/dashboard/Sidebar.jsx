@@ -35,13 +35,7 @@ const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout }) => {
           className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} 
           onClick={() => setActiveTab('bot')}
         >
-          <span className="icon">🤖</span> Personalidade IA
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'feed' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('feed')}
-        >
-          <span className="icon">📂</span> Alimentar IA
+          <span className="icon">🧠</span> Cérebro da IA
         </button>
         <button 
           className={`nav-item ${activeTab === 'financeiro' ? 'active' : ''}`} 
