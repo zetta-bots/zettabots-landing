@@ -2,7 +2,13 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const { action, instanceName, remoteJid } = req.body;
-  if (!action || !instanceName) return res.status(400).json({ error: 'Action and Instance required' });
+  
+  // Ações de Admin não precisam de instanceName obrigatoriamente
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status'].includes(action);
+  
+  if (!action || (!isAdminAction && !instanceName)) {
+    return res.status(400).json({ error: 'Action and Instance required' });
+  }
 
   const url = (process.env.EVOLUTION_URL || 'https://seriousokapi-evolution.cloudfy.live').replace(/\/$/, '');
   const key = process.env.EVOLUTION_APIKEY || '1V1stsMi2TBi2qNY4sk6Ze74Gcv6g2Pk';
