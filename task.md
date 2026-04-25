@@ -113,7 +113,7 @@
 | S2-04 | `[x]` | Buscar sessão no Redis (cache 30 min TTL=1800s) | ✅ |
 | S2-05 | `[x]` | Se não tem sessão → buscar perfil no Supabase | profiles + instances ✅ |
 | S2-06 | `[x]` | IF `is_active=false` → "Serviço suspenso" + STOP | ✅ |
-| S2-07 | `[ ]` | Switch por `plan_type` (limitar features por plano) | Próximo passo |
+| S2-07 | `[x]` | Switch por `plan_type` (limitar features por plano) | `zetta-bot-master-v4.json` — allowAudio, maxTokens, maxHistory por plano ✅ |
 | S2-08 | `[ ]` | Checar Safety Switch | Sprint 3 |
 | S2-09 | `[x]` | Salvar sessão no Redis (TTL 1800s, últimas 20 msgs) | ✅ |
 | S2-10 | `[x]` | Humanização: typing indicator + delay proporcional ao tamanho | `options.presence=composing` + delay 40ms/char ✅ |
