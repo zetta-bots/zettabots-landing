@@ -60,6 +60,16 @@ const AdminPanel = ({
           🔄 Sincronizar Dados
         </button>
       </div>
+
+      {/* BOTÃO DE TESTE NUCLEAR */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <button 
+          onClick={() => window.confirm('CLIQUE NO TOPO FUNCIONOU!')}
+          style={{ width: '100%', background: '#8b5cf6', color: '#fff', padding: '15px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer', border: 'none', fontSize: '1rem' }}
+        >
+          🚨 BOTÃO DE TESTE: CLIQUE AQUI PRIMEIRO
+        </button>
+      </div>
       
       {/* Resumo Financeiro e Distribuição */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
@@ -308,7 +318,6 @@ const AdminPanel = ({
                         <div style={{ display: 'flex', gap: '8px', position: 'relative', zIndex: 9999 }}>
                           <button
                             onClick={() => {
-                              window.alert('Botão Bloquear clicado para: ' + c.email);
                               handleAdminToggleStatus(c.email, c.is_active);
                             }}
                             disabled={adminExtending === c.email}
@@ -333,7 +342,6 @@ const AdminPanel = ({
                           </button>
                           <button
                             onClick={() => {
-                              window.alert('Botão Presente clicado para: ' + c.email);
                               handleAdminExtend(c.email, 7);
                             }}
                             disabled={adminExtending === c.email}
