@@ -12,10 +12,12 @@ const AdminPanel = ({
   adminStats, 
   adminExtending, 
   handleAdminExtend, 
+  handleAdminToggleStatus,
   adminSearch, 
   setAdminSearch, 
   adminPlanFilter, 
-  setAdminPlanFilter 
+  setAdminPlanFilter,
+  fetchAdminStats
 }) => {
   
   // Dados para o gráfico de distribuição de MRR
@@ -25,7 +27,6 @@ const AdminPanel = ({
     { name: 'Enterprise', value: (adminStats?.mrrDistribution?.enterprise || 0), color: '#f59e0b' },
   ].filter(d => d.value > 0);
 
-  // Se não houver dados reais de distribuição, usamos dados simulados baseados no MRR total para visualização
   const chartData = mrrDistribution.length > 0 ? mrrDistribution : [
     { name: 'Start', value: (adminStats?.mrr || 1000) * 0.2, color: '#6366f1' },
     { name: 'Pro', value: (adminStats?.mrr || 1000) * 0.5, color: '#8b5cf6' },
@@ -35,10 +36,34 @@ const AdminPanel = ({
   return (
     <div className="tab-panel" style={{ animation: 'fadeIn 0.3s ease' }}>
       
+      {/* Header com Refresh */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#fff' }}>👑 Central de Comando Admin</h2>
+          <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Visão geral da saúde do seu ecossistema SaaS.</p>
+        </div>
+        <button 
+          onClick={fetchAdminStats}
+          style={{ 
+            background: 'rgba(255,255,255,0.05)', 
+            border: '1px solid rgba(255,255,255,0.1)', 
+            color: '#fff', 
+            padding: '8px 16px', 
+            borderRadius: '12px', 
+            fontSize: '0.8rem', 
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🔄 Sincronizar Dados
+        </button>
+      </div>
+      
       {/* Resumo Financeiro e Distribuição */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
         
-        {/* Cards de Métricas */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
           {[
             { label: 'MRR Total', value: adminStats ? `R$ ${(adminStats.mrr || 0).toLocaleString('pt-BR')}` : '—', color: '#10b981', icon: '💰' },
@@ -56,7 +81,6 @@ const AdminPanel = ({
           ))}
         </div>
 
-        {/* Gráfico de Pizza MRR */}
         <div className="glass-card" style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.03)' }}>
           <div style={{ marginBottom: '1rem' }}>
             <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#fff' }}>Distribuição de Receita</h4>
@@ -97,8 +121,7 @@ const AdminPanel = ({
             border: '1px solid rgba(245,158,11,0.2)', 
             borderRadius: 16, 
             padding: '1.2rem', 
-            marginBottom: '1.5rem',
-            boxShadow: '0 4px 20px rgba(245, 158, 11, 0.05)'
+            marginBottom: '1.5rem'
           }}
         >
           <div style={{ color: '#f59e0b', fontWeight: 800, marginBottom: '1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -123,7 +146,7 @@ const AdminPanel = ({
                   <span style={{ color: '#f59e0b', fontSize: '0.7rem' }}>Expira {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}</span>
                 </div>
                 <button
-                  onClick={() => handleAdminExtend(c.email, 30)}
+                  onClick={() => handleAdminExtend(c.email, 7)}
                   disabled={adminExtending === c.email}
                   className="btn-primary"
                   style={{ 
@@ -133,7 +156,7 @@ const AdminPanel = ({
                     boxShadow: 'none'
                   }}
                 >
-                  {adminExtending === c.email ? '...' : '+30 dias'}
+                  {adminExtending === c.email ? '...' : '+7 dias'}
                 </button>
               </div>
             ))}
@@ -154,8 +177,8 @@ const AdminPanel = ({
           }}
         >
           <div>
-            <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff' }}>👑 Gestão de Assinaturas</h3>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Controle total sobre clientes e acesso.</p>
+            <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff' }}>📋 Gestão de Assinaturas</h3>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Pesquise, filtre e gerencie acessos em tempo real.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative' }}>
@@ -165,32 +188,32 @@ const AdminPanel = ({
                 placeholder="Buscar cliente..."
                 style={{ 
                   background: 'rgba(0,0,0,0.3)', 
-                  border: '1px solid rgba(255,255,255,0.05)', 
-                  borderRadius: '10px', 
+                  border: '1px solid rgba(255,255,255,0.1)', 
+                  borderRadius: '12px', 
                   color: '#fff', 
-                  padding: '8px 12px 8px 32px', 
+                  padding: '10px 12px 10px 36px', 
                   fontSize: '0.8rem', 
-                  width: 200, 
+                  width: 250, 
                   outline: 'none' 
                 }}
               />
-              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
             </div>
             <select
               value={adminPlanFilter} 
               onChange={e => setAdminPlanFilter(e.target.value)}
               style={{ 
                 background: 'rgba(0,0,0,0.3)', 
-                border: '1px solid rgba(255,255,255,0.05)', 
-                borderRadius: '10px', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                borderRadius: '12px', 
                 color: '#fff', 
-                padding: '8px 12px', 
+                padding: '10px 12px', 
                 fontSize: '0.8rem', 
                 cursor: 'pointer', 
                 outline: 'none' 
               }}
             >
-              <option value="all">Filtrar Plano</option>
+              <option value="all">Todos os Planos</option>
               <option value="trial">Trial</option>
               <option value="start">Start</option>
               <option value="pro">Pro</option>
@@ -204,7 +227,7 @@ const AdminPanel = ({
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
             <thead>
               <tr>
-                {['Nome', 'Email', 'Plano', 'Status', 'Expiração', 'Ação'].map(h => (
+                {['Cliente', 'Plano', 'Status', 'Expiração', 'Controles'].map(h => (
                   <th 
                     key={h} 
                     style={{ 
@@ -243,11 +266,11 @@ const AdminPanel = ({
                   
                   return (
                     <tr key={i} style={{ background: 'rgba(255,255,255,0.01)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.01)'}>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 600, borderRadius: '12px 0 0 12px' }}>
-                        {c.full_name || <span style={{ opacity: 0.3 }}>—</span>}
-                      </td>
-                      <td style={{ padding: '1rem', color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                        {c.email}
+                      <td style={{ padding: '1rem', borderRadius: '12px 0 0 12px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{c.full_name || <span style={{ opacity: 0.3 }}>Sem Nome</span>}</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{c.email}</span>
+                        </div>
                       </td>
                       <td style={{ padding: '1rem' }}>
                         <span 
@@ -268,26 +291,62 @@ const AdminPanel = ({
                       <td style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.is_active ? '#10b981' : '#ef4444' }} />
-                          {c.is_active ? 'Ativo' : 'Inativo'}
+                          <span style={{ color: c.is_active ? '#10b981' : '#ef4444', fontWeight: 600 }}>
+                            {c.is_active ? 'Ativo' : 'Bloqueado'}
+                          </span>
                         </div>
                       </td>
-                      <td 
-                        style={{ 
-                          padding: '1rem', 
-                          color: expired ? '#ef4444' : 'var(--color-text-muted)', 
-                          fontSize: '0.8rem' 
-                        }}
-                      >
-                        {exp ? exp.toLocaleDateString('pt-BR') : '—'}
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontSize: '0.8rem', color: expired ? '#ef4444' : '#fff' }}>
+                            {exp ? exp.toLocaleDateString('pt-BR') : '—'}
+                          </span>
+                          {expired && <span style={{ fontSize: '0.6rem', color: '#ef4444' }}>Expirado</span>}
+                        </div>
                       </td>
                       <td style={{ padding: '1rem', borderRadius: '0 12px 12px 0' }}>
-                        <button
-                          onClick={() => handleAdminExtend(c.email, 30)}
-                          disabled={adminExtending === c.email}
-                          style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.7rem', cursor: 'pointer' }}
-                        >
-                          +30d
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => handleAdminToggleStatus(c.email, c.is_active)}
+                            disabled={adminExtending === c.email}
+                            title={c.is_active ? "Bloquear Acesso" : "Desbloquear Acesso"}
+                            style={{ 
+                              background: c.is_active ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+                              border: 'none', 
+                              color: c.is_active ? '#ef4444' : '#10b981', 
+                              padding: '8px', 
+                              borderRadius: '10px', 
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '35px',
+                              height: '35px'
+                            }}
+                          >
+                            {c.is_active ? '⏸️' : '▶️'}
+                          </button>
+                          <button
+                            onClick={() => handleAdminExtend(c.email, 7)}
+                            disabled={adminExtending === c.email}
+                            title="Presentear com 7 dias"
+                            style={{ 
+                              background: 'rgba(245, 158, 11, 0.1)', 
+                              border: 'none', 
+                              color: '#f59e0b', 
+                              padding: '8px', 
+                              borderRadius: '10px', 
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '35px',
+                              height: '35px'
+                            }}
+                          >
+                            🎁
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

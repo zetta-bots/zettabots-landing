@@ -193,14 +193,14 @@
 | Sprint 1.5 | Onboarding | 8 | 8 | 100% |
 | Sprint 2 | Motor IA | 13 | 18 | 72% |
 | Sprint 3 | Premium | 2 | 7 | 28% |
-| Sprint 4 | Dashboard | 0 | 14 | 0% |
+| Sprint 4 | Dashboard | 14 | 14 | 100% |
 | Sprint 5 | Vitrine | 0 | 3 | 0% |
 | Sprint 6 | Admin | 5 | 5 | 100% |
 
 ---
 
 ## ⚡ Próxima Ação
-**Opção C: Chat de Teste Rápido**
-1. Implementar componente de chat flutuante no Dashboard.
-2. Integrar com o motor de IA para testar instruções e conhecimento.
-3. Adicionar botão de "Limpar Memória" para novos testes.
+**Gestão de Clientes Avançada (Painel Admin)**
+1. Adicionar barra de busca e filtros por plano.
+2. Implementar ações de "Bloquear/Ativar" e "Estender Trial".
+3. Criar modal de detalhes do cliente.

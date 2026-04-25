@@ -137,6 +137,22 @@ export default function Dashboard() {
     finally { setAdminExtending(null) }
   }
 
+  const handleAdminToggleStatus = async (email, currentStatus) => {
+    try {
+      setAdminExtending(email) // Reuso o loading de extending
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: !currentStatus })
+        .eq('email', email)
+      
+      if (error) throw error
+      showToast(currentStatus ? 'Cliente Bloqueado!' : 'Cliente Ativado!', 'success')
+      fetchAdminStats()
+    } catch (err) {
+      showToast('Erro ao mudar status', 'error')
+    } finally { setAdminExtending(null) }
+  }
+
   const fetchStats = async (instanceName) => {
     try {
       const res = await fetch('/api/dashboard-core', {
@@ -593,10 +609,12 @@ export default function Dashboard() {
             adminStats={adminStats} 
             adminExtending={adminExtending} 
             handleAdminExtend={handleAdminExtend} 
+            handleAdminToggleStatus={handleAdminToggleStatus}
             adminSearch={adminSearch} 
             setAdminSearch={setAdminSearch} 
             adminPlanFilter={adminPlanFilter} 
             setAdminPlanFilter={setAdminPlanFilter} 
+            fetchAdminStats={fetchAdminStats}
           />
         )}
 
