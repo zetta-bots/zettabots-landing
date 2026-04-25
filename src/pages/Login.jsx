@@ -66,6 +66,8 @@ export default function Login() {
       localStorage.setItem('zb_session', JSON.stringify({
         recordId: data.recordId,
         instanceName: data.instanceName,
+        name: data.name,
+        email: data.email,
         phone: data.phone,
         status: data.status,
         systemPrompt: data.systemPrompt
