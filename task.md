@@ -59,8 +59,8 @@
 | S1-11 | `[x]` | Criar plano **Start** R$ 127/mês | ID: `9b8bd701cb91458c9ee44d5de078ac22` |
 | S1-12 | `[x]` | Criar plano **Pro** R$ 247/mês | ID: `0b5aaeae72934debb68b11c8d525a3f1` |
 | S1-13 | `[x]` | Criar plano **Enterprise** R$ 997/mês | ID: `774fa8b6775245dfb8301942ca7fbd8a` |
-| S1-14 | `[ ]` | Configurar URL webhook MP → `https://zettabots.ia.br/api/webhook-billing` | Painel MP → Integrações → Notificações |
-| S1-15 | `[ ]` | Testar checkout ponta-a-ponta (sandbox) | — |
+| S1-14 | `[x]` | Configurar URL webhook MP → `https://zettabots.ia.br/api/webhook-billing` | Modo produção + Pagamentos + Planos e assinaturas ✅ |
+| S1-15 | `[x]` | Testar checkout ponta-a-ponta (sandbox) | Simulação MP → 200 OK ✅ |
 
 ### 1.3 — Webhook Financeiro (implementado em Vercel, não n8n)
 | # | Status | Task |
@@ -72,7 +72,7 @@
 | S1-20 | `[x]` | `subscription_preapproval cancelled` → bloquear + logout Evolution | ✅ |
 | S1-21 | `[x]` | audit_log em todos os eventos de billing | ✅ |
 | S1-21b | `[x]` | `api/create-subscription.js` — cria assinatura recorrente (preapproval) | ✅ |
-| S1-22 | `[ ]` | Testar webhook com payload real do MP | Fazer após S1-14 |
+| S1-22 | `[x]` | Testar webhook com payload real do MP | Simulação MP → 200 OK ✅ |
 
 ### 1.4 — Kill Switch Diário
 | # | Status | Task |
@@ -108,22 +108,23 @@
 | # | Status | Task |
 |---|---|---|
 | S2-01 | `[x]` | Workflow base existe (`bot-por-cliente-ULTIMATE.json`) |
-| S2-02 | `[ ]` | Migrar para `zetta-bot-master` |
-| S2-03 | `[ ]` | Nó 1: Receber mensagem via Evolution webhook |
-| S2-04 | `[ ]` | Nó 2: Buscar sessão no Redis (cache 30 min) |
-| S2-05 | `[ ]` | Nó 3: Se não tem sessão → buscar no Supabase |
-| S2-06 | `[ ]` | Nó 4: IF `is_active=false` → "Serviço suspenso" + STOP |
-| S2-07 | `[ ]` | Nó 5: Switch por `plan_type` |
-| S2-08 | `[ ]` | Nó 6: Checar Safety Switch |
-| S2-09 | `[ ]` | Nó 7: Salvar sessão no Redis (TTL 1800s) |
-| S2-10 | `[ ]` | Nó 8: Humanização (delay + "digitando") |
-| S2-11 | `[ ]` | Nó 9: Enviar resposta via Evolution |
-| S2-12 | `[ ]` | Nó 10: Extração CRM assíncrona (Gemini) |
-| S2-13 | `[x]` | Gemini integrado no workflow atual |
-| S2-17 | `[x]` | Groq integrado (null-pointer — a corrigir) |
-| S2-18 | `[ ]` | Corrigir null-pointer Groq |
-| S2-19 | `[ ]` | Roteador: Groq (rápido) → Gemini (complexo) |
-| S2-20 | `[ ]` | Fallback: Groq falha → Gemini automático |
+| S2-02 | `[x]` | `zetta-bot-master-v3.json` — workflow mestre atualizado | Importar no n8n, substituir v2 |
+| S2-03 | `[x]` | Receber mensagem via Evolution webhook | Filtro anti-loop incluído ✅ |
+| S2-04 | `[x]` | Buscar sessão no Redis (cache 30 min TTL=1800s) | ✅ |
+| S2-05 | `[x]` | Se não tem sessão → buscar perfil no Supabase | profiles + instances ✅ |
+| S2-06 | `[x]` | IF `is_active=false` → "Serviço suspenso" + STOP | ✅ |
+| S2-07 | `[ ]` | Switch por `plan_type` (limitar features por plano) | Próximo passo |
+| S2-08 | `[ ]` | Checar Safety Switch | Sprint 3 |
+| S2-09 | `[x]` | Salvar sessão no Redis (TTL 1800s, últimas 20 msgs) | ✅ |
+| S2-10 | `[x]` | Humanização: typing indicator + delay proporcional ao tamanho | `options.presence=composing` + delay 40ms/char ✅ |
+| S2-11 | `[x]` | Enviar resposta via Evolution | ✅ |
+| S2-12 | `[ ]` | Extração CRM assíncrona (Gemini) | Sprint 3 |
+| S2-13 | `[x]` | Groq llama-3.3-70b integrado | ✅ |
+| S2-17 | `[x]` | Whisper Groq para transcrição de áudio | ✅ |
+| S2-18 | `[x]` | Fix null-pointer Groq (retorna [] se vazio) | ✅ |
+| S2-18b | `[x]` | Fix critical: system_prompt buscado de `instances` (não `profiles`) | Era bug — prompt customizado nunca chegava na IA ✅ |
+| S2-19 | `[ ]` | Roteador: Groq (rápido) → Gemini (complexo) | Pós-validação |
+| S2-20 | `[ ]` | Fallback: Groq falha → Gemini automático | Pós-validação |
 
 ---
 
@@ -192,7 +193,7 @@
 | Infra | Base | 6 | 9 | 67% |
 | Sprint 1 | Billing | 28 | 32 | 88% |
 | Sprint 1.5 | Onboarding | 8 | 8 | 100% |
-| Sprint 2 | Motor IA | 3 | 16 | 19% |
+| Sprint 2 | Motor IA | 13 | 18 | 72% |
 | Sprint 3 | Premium | 1 | 7 | 14% |
 | Sprint 4 | Dashboard | 0 | 14 | 0% |
 | Sprint 5 | Vitrine | 0 | 3 | 0% |
