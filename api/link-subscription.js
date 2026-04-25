@@ -34,7 +34,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Plano desconhecido' });
     }
 
-    // Atualiza o perfil no Supabase
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+    // Ativa o plano imediatamente (fallback manual para quando o webhook demora)
     const updateRes = await fetch(`${sbUrl}/rest/v1/profiles?id=eq.${userId}`, {
       method: 'PATCH',
       headers: {
@@ -46,20 +49,19 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         mercadopago_subscription_id: sub.id,
         mercadopago_payer_id: String(sub.payer_id || ''),
-        // plan_type permanece 'trial' — muda para o plano real após o 1º pagamento
+        plan_type: planType,
+        plan_expires_at: expiresAt.toISOString(),
+        is_active: true,
       }),
     });
 
     const updatedProfile = await updateRes.json();
-    console.log(`✅ Subscription ${sub.id} vinculada ao user ${userId} (plano ${planType})`);
+    console.log(`✅ Subscription ${sub.id} vinculada e plano ${planType} ativado para user ${userId}`);
 
     return res.status(200).json({
       success: true,
       plan: planType,
       subscription_id: sub.id,
-      trial_end: sub.auto_recurring?.free_trial
-        ? new Date(sub.date_created).toISOString()
-        : null,
       profile: updatedProfile?.[0] || null,
     });
   } catch (err) {

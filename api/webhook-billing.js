@@ -56,18 +56,30 @@ export default async function handler(req, res) {
           return;
         }
 
+        // Ativa o plano imediatamente — não espera o authorized_payment
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+
         await patchProfile(sbUrl, sbKey, profile.id, {
           mercadopago_subscription_id: subId,
           mercadopago_payer_id: String(sub.payer_id || ''),
+          plan_type: planType,
+          plan_expires_at: expiresAt.toISOString(),
+          is_active: true,
         });
+
+        if (profile.instance_name) {
+          await patchInstances(sbUrl, sbKey, profile.instance_name, { status: planType });
+        }
 
         await insertAuditLog(sbUrl, sbKey, {
           user_id: profile.id,
           instance_name: profile.instance_name || null,
-          action: 'subscription_authorized',
-          new_value: 'trial',
+          action: 'plan_activated',
+          old_value: profile.plan_type,
+          new_value: planType,
           triggered_by: 'mercadopago_webhook',
-          metadata: JSON.stringify({ plan: planType, sub_id: subId }),
+          metadata: JSON.stringify({ plan: planType, sub_id: subId, trigger: 'subscription_authorized' }),
         });
 
         // Provisiona instância se ainda não existe
@@ -75,7 +87,7 @@ export default async function handler(req, res) {
           triggerOnboarding({ userId: profile.id, email: sub.payer_email, planType });
         }
 
-        console.log(`[billing] trial iniciado: ${sub.payer_email} → ${planType}`);
+        console.log(`[billing] plano ${planType} ativado (subscription_authorized): ${sub.payer_email}`);
         return;
       }
 
