@@ -323,13 +323,16 @@ export default function Dashboard() {
         .from('knowledge_base')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Erro no Supabase Storage:', uploadError);
+        throw new Error(`Storage: ${uploadError.message}`);
+      }
 
-      // 2. Inserir metadados na tabela (isso pode disparar o n8n via webhook de banco)
+      // 2. Inserir metadados na tabela
       const { data, error: dbError } = await supabase
         .from('knowledge_base')
         .insert([{
-          user_id: session.id,
+          user_id: session.id || session.user_id, // Suporte a diferentes formatos de session
           instance_name: selectedInstance,
           file_name: file.name,
           file_path: filePath,
@@ -338,7 +341,10 @@ export default function Dashboard() {
         }])
         .select();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Erro no Supabase Database:', dbError);
+        throw new Error(`Database: ${dbError.message}`);
+      }
 
       setKnowledgeFiles(prev => [data[0], ...prev]);
       showToast('Arquivo enviado! O treinamento começará em instantes. 🧠', 'success');
@@ -347,8 +353,8 @@ export default function Dashboard() {
       // fetch('WEBHOOK_N8N_AQUI', { method: 'POST', body: JSON.stringify(data[0]) });
 
     } catch (err) {
-      console.error('Erro no upload:', err);
-      showToast('Erro ao enviar arquivo para o cérebro.', 'error');
+      console.error('Erro detalhado no upload:', err);
+      showToast(`Erro: ${err.message}`, 'error');
     } finally {
       setSaving(false);
     }
