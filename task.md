@@ -203,9 +203,9 @@
 **Gestão**  
 - [x] Painel Admin Avançado (Zetta-Admin)
     - [x] Filtros e Busca de clientes
-    - [x] Botões Manuais (Pausar/Play/Presentear)
-    - [x] UI Otimista (Feedback instantâneo sem delay)
-- [ ] Ciclo de Vida Automatizado (SaaS Sênior)
-    - [/] Cron de Bloqueio por Expiração (`api/billing-cron.js`)
+    - [x] Botões de Sobrescrita Manual (Pausar/Play/Presentear)
+    - [x] UX Sênior: Optimistic UI e Normalização de Dados (case-insensitive)
+- [x] Automação de Faturamento (SaaS Sênior)
+    - [x] Motor de Cron Job para Bloqueio Automático (`api/billing-cron.js`)
     - [ ] Webhook de Integração Mercado Pago (Auto-liberação)
-    - [ ] Log de Atividades do Sistema (Audit Log)
+- [ ] Log de Atividades do Sistema (Audit Log)
