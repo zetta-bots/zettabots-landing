@@ -29,25 +29,23 @@ export default async function handler(req, res) {
 
     const isAdmin = cleanInput.includes('21969875522');
 
-    // Busca company_name do profile para usar como nome de exibição
-    let companyName = record.name || ''
-    console.log('🔍 auth-verify record.name:', record.name, '| record.email:', record.email)
-    if (!isAdmin && supabaseKey) {
+    // Usa nome do negócio gravado pelo n8n em instances.name
+    // Se o nome parece um hash de instância (ex: zb4d0297b460b6), trata como vazio
+    const isInstanceHash = /^zb[0-9a-f]{10,}$/i.test(record.name || '')
+    let companyName = isInstanceHash ? '' : (record.name || '')
+    // Fallback: busca company_name no profile pelo email
+    if (!isAdmin && !companyName && record.email && supabaseKey) {
       try {
-        const lookupFilter = record.email
-          ? `email=eq.${encodeURIComponent(record.email)}`
-          : `whatsapp_number=ilike.*${phoneWithout55.slice(-11)}`
-        console.log('🔍 profile lookup filter:', lookupFilter)
-        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?${lookupFilter}&select=company_name,full_name&limit=1`, {
+        const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(record.email)}&select=company_name,full_name&limit=1`, {
           headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
         })
-        const profileData = await profileRes.json()
-        console.log('🔍 profile result:', JSON.stringify(profileData))
-        const p = profileData?.[0]
-        companyName = p?.company_name || p?.full_name || companyName
-      } catch (e) { console.error('profile lookup error:', e.message) }
+        if (profileRes.ok) {
+          const profileData = await profileRes.json()
+          const p = profileData?.[0]
+          companyName = p?.company_name || p?.full_name || companyName
+        }
+      } catch {}
     }
-    console.log('🔍 final companyName:', companyName)
 
     return res.status(200).json({
       success: true,
