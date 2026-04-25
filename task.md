@@ -200,7 +200,12 @@
 ---
 
 ## ⚡ Próxima Ação
-**Gestão de Clientes Avançada (Painel Admin)**
-1. Adicionar barra de busca e filtros por plano.
-2. Implementar ações de "Bloquear/Ativar" e "Estender Trial".
-3. Criar modal de detalhes do cliente.
+**Gestão**  
+- [x] Painel Admin Avançado (Zetta-Admin)
+    - [x] Filtros e Busca de clientes
+    - [x] Botões Manuais (Pausar/Play/Presentear)
+    - [x] UI Otimista (Feedback instantâneo sem delay)
+- [ ] Ciclo de Vida Automatizado (SaaS Sênior)
+    - [/] Cron de Bloqueio por Expiração (`api/billing-cron.js`)
+    - [ ] Webhook de Integração Mercado Pago (Auto-liberação)
+    - [ ] Log de Atividades do Sistema (Audit Log)
