@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout }) => {
+const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout, isGlobalPaused, handleGlobalEmergency }) => {
   return (
     <aside className="dashboard-sidebar">
       <div className="sidebar-header">

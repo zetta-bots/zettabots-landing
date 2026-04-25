@@ -157,7 +157,7 @@
 | S4-09 | `[x]` | Upload de arquivos com progresso (Simulado) |
 | S4-13 | `[x]` | Monitor de conversas em tempo real |
 | S4-15 | `[x]` | Botão "Assumir Conversa" (Safety Switch) |
-| S4-17 | `[ ]` | Botão de Emergência Global |
+| S4-17 | `[x]` | Botão de Emergência Global (Kill Switch) |
 
 ---
 
