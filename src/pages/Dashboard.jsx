@@ -49,6 +49,7 @@ export default function Dashboard() {
   const [adminExtending, setAdminExtending] = useState(null)
   const [knowledgeFiles, setKnowledgeFiles] = useState([])
   const [isGlobalPaused, setIsGlobalPaused] = useState(false)
+  const [notifications, setNotifications] = useState([])
   const navigate = useNavigate()
 
   const showToast = (message, type = 'info') => {
@@ -81,6 +82,7 @@ export default function Dashboard() {
     setInstances([{ name: parsed.instanceName || parsed.phone, label: 'Instância Principal' }])
     setSelectedInstance(parsed.instanceName || parsed.phone)
     fetchKnowledgeBase(parsed.email)
+    fetchNotifications()
     setLoadingData(false)
   }, [navigate])
 
@@ -374,6 +376,35 @@ export default function Dashboard() {
     }
   }
 
+  const fetchNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      setNotifications(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar notificações:', err);
+    }
+  }
+
+  const markNotificationAsRead = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id);
+      
+      if (error) throw error;
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error('Erro ao marcar notificação:', err);
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('zb_session')
     navigate('/login')
@@ -477,6 +508,8 @@ export default function Dashboard() {
           allInstances={allInstances} 
           selectedInstance={selectedInstance} 
           setSelectedInstance={setSelectedInstance} 
+          notifications={notifications}
+          markAsRead={markNotificationAsRead}
         />
 
         {activeTab === 'status' && (
