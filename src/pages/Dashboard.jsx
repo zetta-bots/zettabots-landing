@@ -15,6 +15,7 @@ import ConnectionPanel from '../components/dashboard/ConnectionPanel'
 import AdminPanel from '../components/dashboard/AdminPanel'
 import AIConfigPanel from '../components/dashboard/AIConfigPanel'
 import SubModal from '../components/dashboard/SubModal'
+import FastTestChat from '../components/dashboard/FastTestChat'
 
 export default function Dashboard() {
   const [instances, setInstances] = useState([])
@@ -598,6 +599,12 @@ export default function Dashboard() {
             setAdminPlanFilter={setAdminPlanFilter} 
           />
         )}
+
+        <FastTestChat 
+          session={session} 
+          systemPrompt={prompt} 
+          knowledgeFiles={knowledgeFiles} 
+        />
       </main>
 
       {showSubModal && (

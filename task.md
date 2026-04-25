@@ -148,13 +148,13 @@
 |---|---|---|
 | S4-01 | `[x]` | Dashboard modularizado em `/components/dashboard/` |
 | S4-02 | `[x]` | FeedIAPanel.jsx (UI e lógica de limites) |
-| S4-03 | `[ ]` | Backend: Endpoint para processamento de arquivos (n8n) |
-| S4-04 | `[ ]` | Notificação de "Treinamento Concluído" |
+| S4-03 | `[x]` | Backend: Endpoint para processamento de arquivos (n8n) |
+| S4-04 | `[x]` | Notificação de "Treinamento Concluído" |
 | S4-05 | `[x]` | Integração Recharts no Status |
 | S4-06 | `[x]` | Gráfico de Atividade (Mensagens) |
 | S4-07 | `[x]` | Gráfico de Leads Capturados |
 | S4-08 | `[x]` | Limite de arquivos por plano (UI) |
-| S4-09 | `[x]` | Upload de arquivos com progresso (Simulado) |
+| S4-09 | `[x]` | Upload de arquivos com progresso (Real via Supabase) |
 | S4-13 | `[x]` | Monitor de conversas em tempo real |
 | S4-15 | `[x]` | Botão "Assumir Conversa" (Safety Switch) |
 | S4-17 | `[x]` | Botão de Emergência Global (Kill Switch) |
@@ -200,7 +200,7 @@
 ---
 
 ## ⚡ Próxima Ação
-**Sprint 4: Modularização do Dashboard.jsx + Integração Recharts**
-1. Quebrar Dashboard.jsx em sub-componentes.
-2. Implementar gráficos de ROI com Recharts.
-3. Adicionar upload de arquivos para treinamento da IA.
+**Opção C: Chat de Teste Rápido**
+1. Implementar componente de chat flutuante no Dashboard.
+2. Integrar com o motor de IA para testar instruções e conhecimento.
+3. Adicionar botão de "Limpar Memória" para novos testes.
