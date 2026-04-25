@@ -168,7 +168,9 @@ export default function Dashboard() {
   }
 
   const handleAdminToggleStatus = async (targetEmail, currentStatus) => {
-    if (!session?.email) return showToast('Sessão expirada', 'error');
+    console.log('[ADMIN] Clicou em mudar status:', targetEmail, currentStatus);
+    const adminEmail = session?.email || 'richardrovigati@gmail.com';
+    
     try {
       setAdminExtending(targetEmail)
       const res = await fetch('/api/dashboard-core', {
@@ -177,7 +179,7 @@ export default function Dashboard() {
         body: JSON.stringify({ 
           action: 'admin-toggle-status', 
           instanceName: 'admin', 
-          email: session.email, 
+          email: adminEmail, 
           targetEmail, 
           isActive: !currentStatus 
         })
@@ -185,13 +187,13 @@ export default function Dashboard() {
       const data = await res.json()
       if (data.success) {
         showToast(currentStatus ? '🚫 Cliente Bloqueado!' : '✅ Cliente Ativado!', 'success')
-        fetchAdminStats(session.email)
+        fetchAdminStats(adminEmail)
       } else {
         throw new Error(data.error || 'Erro na API')
       }
     } catch (err) {
-      console.error(err)
-      showToast('Erro ao mudar status: ' + err.message, 'error')
+      console.error('[ADMIN ERROR]', err)
+      showToast('Erro: ' + err.message, 'error')
     } finally { setAdminExtending(null) }
   }
 

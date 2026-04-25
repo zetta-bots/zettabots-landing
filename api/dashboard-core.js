@@ -278,9 +278,9 @@ export default async function handler(req, res) {
       case 'admin-toggle-status': {
         try {
           const { email: adminEmail, targetEmail, isActive } = req.body;
-          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado: ' + adminEmail });
 
-          await fetch(
+          const sbRes = await fetch(
             `${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}`,
             {
               method: 'PATCH',
@@ -288,9 +288,15 @@ export default async function handler(req, res) {
               body: JSON.stringify({ is_active: isActive }),
             }
           );
+          
+          if (!sbRes.ok) {
+            const errText = await sbRes.text();
+            throw new Error('Supabase Error: ' + errText);
+          }
+
           return res.status(200).json({ success: true });
         } catch (e) {
-          return res.status(500).json({ error: 'Toggle status error' });
+          return res.status(500).json({ error: e.message });
         }
       }
 
