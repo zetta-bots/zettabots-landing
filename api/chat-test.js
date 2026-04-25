@@ -9,6 +9,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!process.env.GROQ_API_KEY) {
+    return res.status(500).json({ error: 'Configuração ausente: GROQ_API_KEY não encontrada no servidor.' });
+  }
+
   const { message, systemPrompt, history = [] } = req.body;
 
   try {

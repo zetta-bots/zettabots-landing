@@ -42,11 +42,11 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles }) => {
       if (data.response) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
       } else {
-        throw new Error('Sem resposta da IA');
+        throw new Error(data.error || 'Sem resposta da IA');
       }
     } catch (err) {
       console.error('Erro no chat:', err);
-      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Erro ao conectar com a IA. Verifique sua chave de API ou conexão.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Erro: ${err.message}` }]);
     } finally {
       setIsTyping(false);
     }
