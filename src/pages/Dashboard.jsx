@@ -149,7 +149,7 @@ export default function Dashboard() {
       return {
         ...prev,
         clients: prev.clients.map(c => {
-          if (c.email === targetEmail) {
+          if (c.email.toLowerCase() === targetEmail.toLowerCase()) {
             const newDate = new Date(c.plan_expires_at || new Date());
             newDate.setDate(newDate.getDate() + days);
             return { ...c, plan_expires_at: newDate.toISOString() };
@@ -187,7 +187,7 @@ export default function Dashboard() {
         ...prev,
         totalActive: !currentStatus ? (prev.totalActive + 1) : (prev.totalActive - 1),
         totalBlocked: currentStatus ? (prev.totalBlocked + 1) : (prev.totalBlocked - 1),
-        clients: prev.clients.map(c => c.email === targetEmail ? { ...c, is_active: !currentStatus } : c)
+        clients: prev.clients.map(c => c.email.toLowerCase() === targetEmail.toLowerCase() ? { ...c, is_active: !currentStatus } : c)
       };
     });
 
