@@ -140,37 +140,58 @@ export default function Dashboard() {
   }
 
   const handleAdminExtend = async (targetEmail, days = 7) => {
+    if (!session?.email) return showToast('Sessão expirada', 'error');
     setAdminExtending(targetEmail)
     try {
-      await fetch('/api/dashboard-core', {
+      const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'admin-extend', instanceName: selectedInstance, email: session?.email, targetEmail, days })
+        body: JSON.stringify({ 
+          action: 'admin-extend', 
+          instanceName: 'admin', 
+          email: session.email, 
+          targetEmail, 
+          days 
+        })
       })
-      showToast('Trial estendido com sucesso!', 'success')
-      fetchAdminStats()
-    } catch { showToast('Erro ao estender', 'error') }
-    finally { setAdminExtending(null) }
+      const data = await res.json()
+      if (data.success) {
+        showToast('Prazo atualizado com sucesso! 🎁', 'success')
+        fetchAdminStats(session.email)
+      } else {
+        throw new Error(data.error || 'Erro na API')
+      }
+    } catch (err) { 
+      console.error(err)
+      showToast('Erro ao estender: ' + err.message, 'error') 
+    } finally { setAdminExtending(null) }
   }
 
   const handleAdminToggleStatus = async (targetEmail, currentStatus) => {
+    if (!session?.email) return showToast('Sessão expirada', 'error');
     try {
       setAdminExtending(targetEmail)
-      await fetch('/api/dashboard-core', {
+      const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           action: 'admin-toggle-status', 
-          instanceName: selectedInstance, 
-          email: session?.email, 
+          instanceName: 'admin', 
+          email: session.email, 
           targetEmail, 
           isActive: !currentStatus 
         })
       })
-      showToast(currentStatus ? 'Cliente Bloqueado!' : 'Cliente Ativado!', 'success')
-      fetchAdminStats()
+      const data = await res.json()
+      if (data.success) {
+        showToast(currentStatus ? '🚫 Cliente Bloqueado!' : '✅ Cliente Ativado!', 'success')
+        fetchAdminStats(session.email)
+      } else {
+        throw new Error(data.error || 'Erro na API')
+      }
     } catch (err) {
-      showToast('Erro ao mudar status', 'error')
+      console.error(err)
+      showToast('Erro ao mudar status: ' + err.message, 'error')
     } finally { setAdminExtending(null) }
   }
 
