@@ -309,6 +309,12 @@ export default function Dashboard() {
     }
   }
 
+  const handleRefreshData = () => {
+    fetchKnowledgeBase();
+    fetchNotifications();
+    showToast('Dados atualizados!', 'success');
+  }
+
   const handleUploadKnowledge = async (file) => {
     if (!session) return;
     setSaving(true);
@@ -551,6 +557,7 @@ export default function Dashboard() {
             files={knowledgeFiles}
             handleUpload={handleUploadKnowledge}
             handleDelete={handleDeleteKnowledge}
+            handleRefresh={handleRefreshData}
           />
         )}
 

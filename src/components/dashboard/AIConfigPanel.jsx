@@ -9,7 +9,8 @@ const AIConfigPanel = ({
   showToast, 
   files, 
   handleUpload,
-  handleDelete
+  handleDelete,
+  handleRefresh
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('behavior');
   const [uploading, setUploading] = useState(false);
@@ -64,46 +65,55 @@ const AIConfigPanel = ({
             <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>🧠 Configuração do Cérebro</h2>
             <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Customize o comportamento e o conhecimento do seu Agente de IA.</p>
           </div>
-          <div className="segmented-control" style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px' }}>
-            <button 
-              onClick={() => setActiveSubTab('behavior')}
-              style={{ 
-                padding: '8px 16px', 
-                borderRadius: '8px', 
-                border: 'none', 
-                fontSize: '0.75rem', 
-                fontWeight: 600, 
-                cursor: 'pointer',
-                background: activeSubTab === 'behavior' ? 'var(--color-primary)' : 'transparent',
-                color: activeSubTab === 'behavior' ? '#fff' : 'var(--color-text-muted)',
-                transition: 'all 0.2s'
-              }}
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+             <button 
+              onClick={handleRefresh}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '5px' }}
+              title="Atualizar Dados"
             >
-              Comportamento
+              🔄
             </button>
-            <button 
-              onClick={() => {
-                if (currentPlan === 'start') {
-                  showToast('O plano START não inclui Base de Conhecimento. Faça upgrade para o PRO!', 'error');
-                } else {
-                  setActiveSubTab('knowledge');
-                }
-              }}
-              style={{ 
-                padding: '8px 16px', 
-                borderRadius: '8px', 
-                border: 'none', 
-                fontSize: '0.75rem', 
-                fontWeight: 600, 
-                cursor: 'pointer',
-                background: activeSubTab === 'knowledge' ? 'var(--color-primary)' : 'transparent',
-                color: activeSubTab === 'knowledge' ? '#fff' : (currentPlan === 'start' ? '#444' : 'var(--color-text-muted)'),
-                transition: 'all 0.2s',
-                opacity: currentPlan === 'start' ? 0.6 : 1
-              }}
-            >
-              Conhecimento {currentPlan === 'start' && '🔒'}
-            </button>
+            <div className="segmented-control" style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px' }}>
+              <button 
+                onClick={() => setActiveSubTab('behavior')}
+                style={{ 
+                  padding: '8px 16px', 
+                  borderRadius: '8px', 
+                  border: 'none', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  background: activeSubTab === 'behavior' ? 'var(--color-primary)' : 'transparent',
+                  color: activeSubTab === 'behavior' ? '#fff' : 'var(--color-text-muted)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Comportamento
+              </button>
+              <button 
+                onClick={() => {
+                  if (currentPlan === 'start') {
+                    showToast('O plano START não inclui Base de Conhecimento. Faça upgrade para o PRO!', 'error');
+                  } else {
+                    setActiveSubTab('knowledge');
+                  }
+                }}
+                style={{ 
+                  padding: '8px 16px', 
+                  borderRadius: '8px', 
+                  border: 'none', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  background: activeSubTab === 'knowledge' ? 'var(--color-primary)' : 'transparent',
+                  color: activeSubTab === 'knowledge' ? '#fff' : (currentPlan === 'start' ? '#444' : 'var(--color-text-muted)'),
+                  transition: 'all 0.2s',
+                  opacity: currentPlan === 'start' ? 0.6 : 1
+                }}
+              >
+                Conhecimento {currentPlan === 'start' && '🔒'}
+              </button>
+            </div>
           </div>
         </div>
 
