@@ -26,22 +26,30 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles }) => {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsTyping(true);
 
-    // Simulação de resposta da IA (Posteriormente conectaremos com a API real)
-    setTimeout(() => {
-      const activeFiles = knowledgeFiles.filter(f => f.status === 'ready');
-      let response = "";
+    try {
+      const response = await fetch('/api/chat-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: userMessage, 
+          systemPrompt: systemPrompt,
+          history: messages.slice(-5) // Envia as últimas 5 mensagens para contexto
+        })
+      });
 
-      if (userMessage.toLowerCase().includes('quem é você')) {
-        response = "Eu sou o assistente virtual da ZettaBots, treinado com as suas instruções personalizadas.";
-      } else if (activeFiles.length > 0 && userMessage.toLowerCase().includes('conhecimento')) {
-        response = `Eu já aprendi com ${activeFiles.length} arquivo(s) que você subiu. Estou pronto para responder baseado neles!`;
+      const data = await response.json();
+      
+      if (data.response) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
       } else {
-        response = "Recebi sua mensagem! Estou configurado com o seu System Prompt e pronto para atender seus leads.";
+        throw new Error('Sem resposta da IA');
       }
-
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+    } catch (err) {
+      console.error('Erro no chat:', err);
+      setMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Erro ao conectar com a IA. Verifique sua chave de API ou conexão.' }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
