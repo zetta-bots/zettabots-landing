@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import './Dashboard.css'
 
 // Dashboard Components
@@ -79,6 +80,7 @@ export default function Dashboard() {
     setNotificationEmail(parsed.notificationEmail || parsed.email || '')
     setInstances([{ name: parsed.instanceName || parsed.phone, label: 'Instância Principal' }])
     setSelectedInstance(parsed.instanceName || parsed.phone)
+    fetchKnowledgeBase(parsed.email)
     setLoadingData(false)
   }, [navigate])
 
@@ -291,6 +293,87 @@ export default function Dashboard() {
     }
   }
 
+  const fetchKnowledgeBase = async (email) => {
+    try {
+      const { data, error } = await supabase
+        .from('knowledge_base')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setKnowledgeFiles(data || []);
+    } catch (err) {
+      console.error('Erro ao buscar base de conhecimento:', err);
+    }
+  }
+
+  const handleUploadKnowledge = async (file) => {
+    if (!session) return;
+    setSaving(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `${session.email}/${fileName}`;
+
+      // 1. Upload para o Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('knowledge_base')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Inserir metadados na tabela (isso pode disparar o n8n via webhook de banco)
+      const { data, error: dbError } = await supabase
+        .from('knowledge_base')
+        .insert([{
+          user_id: session.id,
+          instance_name: selectedInstance,
+          file_name: file.name,
+          file_path: filePath,
+          file_size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+          status: 'processing'
+        }])
+        .select();
+
+      if (dbError) throw dbError;
+
+      setKnowledgeFiles(prev => [data[0], ...prev]);
+      showToast('Arquivo enviado! O treinamento começará em instantes. 🧠', 'success');
+      
+      // 3. Opcional: Chamar webhook n8n manualmente se não usar DB Triggers
+      // fetch('WEBHOOK_N8N_AQUI', { method: 'POST', body: JSON.stringify(data[0]) });
+
+    } catch (err) {
+      console.error('Erro no upload:', err);
+      showToast('Erro ao enviar arquivo para o cérebro.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const handleDeleteKnowledge = async (id, filePath) => {
+    try {
+      const { error: storageError } = await supabase.storage
+        .from('knowledge_base')
+        .remove([filePath]);
+      
+      if (storageError) console.warn('Erro ao remover do storage, continuando...', storageError);
+
+      const { error: dbError } = await supabase
+        .from('knowledge_base')
+        .delete()
+        .eq('id', id);
+
+      if (dbError) throw dbError;
+
+      setKnowledgeFiles(prev => prev.filter(f => f.id !== id));
+      showToast('Arquivo removido da base de conhecimento.', 'info');
+    } catch (err) {
+      showToast('Erro ao remover arquivo.', 'error');
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('zb_session')
     navigate('/login')
@@ -427,7 +510,8 @@ export default function Dashboard() {
             showToast={showToast} 
             selectedInstance={selectedInstance}
             files={knowledgeFiles}
-            setFiles={setKnowledgeFiles}
+            handleUpload={handleUploadKnowledge}
+            handleDelete={handleDeleteKnowledge}
           />
         )}
 

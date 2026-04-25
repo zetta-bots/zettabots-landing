@@ -8,7 +8,8 @@ const AIConfigPanel = ({
   session, 
   showToast, 
   files, 
-  setFiles 
+  handleUpload,
+  handleDelete
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('behavior');
   const [uploading, setUploading] = useState(false);
@@ -23,39 +24,34 @@ const AIConfigPanel = ({
     admin: Infinity
   };
 
-  const currentPlan = session.plan_type || 'trial';
+  const currentPlan = session?.plan_type || 'trial';
   const limit = planLimits[currentPlan] || 3;
   const isLimitReached = files.length >= limit;
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const selectedFiles = Array.from(e.target.files);
-    handleUpload(selectedFiles);
-  };
-
-  const handleUpload = async (selectedFiles) => {
+    if (selectedFiles.length === 0) return;
+    
     if (isLimitReached) {
       showToast(`Limite atingido para o plano ${currentPlan.toUpperCase()}.`, 'error');
       return;
     }
+
     setUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(20);
+    
     try {
-      for (let i = 20; i <= 100; i += 20) {
-        await new Promise(r => setTimeout(r, 300));
-        setUploadProgress(i);
+      for (const file of selectedFiles) {
+        setUploadProgress(40);
+        await handleUpload(file);
+        setUploadProgress(100);
       }
-      const newFiles = selectedFiles.map(f => ({
-        name: f.name,
-        size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
-        date: new Date().toLocaleDateString('pt-BR')
-      }));
-      setFiles(prev => [...prev, ...newFiles]);
-      showToast('Base de conhecimento atualizada!', 'success');
     } catch (err) {
-      showToast('Erro ao enviar arquivo', 'error');
+      console.error(err);
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -63,7 +59,6 @@ const AIConfigPanel = ({
     <div className="tab-panel">
       <div className="glass-card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
         
-        {/* Header do Painel Unificado */}
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>🧠 Configuração do Cérebro</h2>
@@ -112,7 +107,6 @@ const AIConfigPanel = ({
           </div>
         </div>
 
-        {/* Conteúdo Dinâmico */}
         <div style={{ flex: 1, padding: '2rem', display: 'flex', flexDirection: 'column' }}>
           
           {activeSubTab === 'behavior' && (
@@ -214,12 +208,12 @@ const AIConfigPanel = ({
                     <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>📄</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.name}</p>
-                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{file.size} • {file.date}</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.file_name || file.name}</p>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{file.file_size} • {file.status === 'processing' ? '⌛ Treinando...' : '✅ Ativo'}</p>
                       </div>
                       <button 
                         style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#ef4444', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
-                        onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))}
+                        onClick={() => handleDelete(file.id, file.file_path)}
                       >
                         🗑️
                       </button>
