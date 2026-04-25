@@ -27,34 +27,39 @@ export default async function handler(req, res) {
       case 'get-finance':
         try {
           const { email } = req.body;
-          let filter = `instance_name=eq.${instanceName}`;
-          let instRes = await fetch(`${sbUrl}/rest/v1/instances?${filter}&select=*`, {
-            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-          });
-          let instData = await instRes.json();
-          
-          // Fallback sênior: Busca por email se o nome da instância não retornar nada
-          if ((!instData || instData.length === 0) && email) {
-            instRes = await fetch(`${sbUrl}/rest/v1/instances?email=eq.${email}&select=*`, {
-              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-            });
-            instData = await instRes.json();
+          const PLAN_DISPLAY = {
+            start:      { label: 'Start',      value: 'R$ 127,00' },
+            pro:        { label: 'Pro',         value: 'R$ 247,00' },
+            enterprise: { label: 'Enterprise',  value: 'R$ 997,00' },
+            trial:      { label: 'Trial',       value: 'Grátis'    },
+            blocked:    { label: 'Bloqueado',   value: '—'         },
+            pago:       { label: 'Pro',         value: 'R$ 247,00' },
+          };
+
+          // Busca em profiles (tem plan_type e plan_expires_at)
+          let profileData = null;
+          if (email) {
+            const pRes = await fetch(
+              `${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(email)}&select=plan_type,plan_expires_at,mercadopago_subscription_id&limit=1`,
+              { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
+            );
+            const pArr = await pRes.json();
+            profileData = pArr?.[0] || null;
           }
 
-          let record = {};
-          if (instData && instData.length > 0) {
-            record = instData[0];
-          }
-          
+          const status = profileData?.plan_type || 'trial';
+          const planInfo = PLAN_DISPLAY[status] || PLAN_DISPLAY.trial;
+          const nextBilling = profileData?.plan_expires_at
+            ? new Date(profileData.plan_expires_at).toLocaleDateString('pt-BR')
+            : 'Sem Vencimento';
+
           return res.status(200).json({
             success: true,
-            plan: record.plan || 'ZettaBots Pro',
-            status: record.status || 'trial',
-            nextBilling: record.next_billing ? new Date(record.next_billing).toLocaleDateString('pt-BR') : 'Sem Vencimento',
-            value: 'R$ 247,00',
-            invoices: [
-              { id: 'FAT-202604', date: '21/04/2026', value: 'R$ 247,00', status: 'Pago' }
-            ]
+            plan: `ZettaBots ${planInfo.label}`,
+            status,
+            nextBilling,
+            value: planInfo.value,
+            invoices: [],
           });
         } catch (e) {
           return res.status(500).json({ error: 'Finance fetch error' });
@@ -150,7 +155,7 @@ export default async function handler(req, res) {
               const record = instData[0];
               let phone = record.phone || '';
               if (phone && !phone.includes('@')) phone = `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
-              raw = [{ id: phone || record.id, name: record.name || 'Lead Ativo', lastMsg: 'Lead Monitorado pela Sarah' }];
+              raw = [{ id: phone || record.id, name: record.name || 'Lead Ativo', lastMsg: 'Monitorado via IA' }];
             }
           }
 
@@ -236,21 +241,19 @@ export default async function handler(req, res) {
 
       case 'toggle-ai':
         try {
-          const { enabled, systemPrompt } = req.body;
-          const setRes = await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
-            method: 'POST',
-            headers: fetchOptions.headers,
-            body: JSON.stringify({
-              enabled: enabled,
-              systemPrompt: systemPrompt || "Você é a Sarah.",
-              model: "gpt-4o",
-              timezone: "America/Sao_Paulo",
-              audioTranscription: true,
-              presence: "composing"
-            })
+          const { enabled } = req.body;
+          const paused = !enabled;
+          await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(instanceName)}`, {
+            method: 'PATCH',
+            headers: {
+              apikey: sbKey,
+              Authorization: `Bearer ${sbKey}`,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ ai_paused: paused }),
           });
-          if (!setRes.ok) throw new Error('Failed to toggle AI in Evolution');
-          return res.status(200).json({ success: true, enabled });
+          return res.status(200).json({ success: true, enabled, ai_paused: paused });
         } catch (error) {
           return res.status(500).json({ error: 'Error toggling AI' });
         }

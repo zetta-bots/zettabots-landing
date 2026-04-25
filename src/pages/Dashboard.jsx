@@ -497,7 +497,9 @@ export default function Dashboard() {
                     <p style={{color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '4px'}}>Gestão de plano e faturamento</p>
                   </div>
                   <span className={`finance-badge ${financeData?.status || 'trial'}`}>
-                    {financeData?.status === 'pago' ? 'PRO Ativo' : 'Trial'}
+                    {financeData?.status === 'trial' ? 'Trial' :
+                     financeData?.status === 'blocked' ? 'Bloqueado' :
+                     financeData?.status ? `${financeData.status.charAt(0).toUpperCase() + financeData.status.slice(1)} Ativo` : 'Trial'}
                   </span>
                 </div>
 
