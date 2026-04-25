@@ -18,7 +18,6 @@ import SubModal from '../components/dashboard/SubModal'
 import FastTestChat from '../components/dashboard/FastTestChat'
 
 export default function Dashboard() {
-  const [instances, setInstances] = useState([])
   const [selectedInstance, setSelectedInstance] = useState(null)
   const [session, setSession] = useState(null)
   const [activeTab, setActiveTab] = useState('status')
@@ -29,7 +28,6 @@ export default function Dashboard() {
   const [qrTimer, setQrTimer] = useState(40)
   const [chats, setChats] = useState([])
   const [leads, setLeads] = useState([])
-  const [loadingData, setLoadingData] = useState(true)
   const [stats, setStats] = useState({ chats: 0, contacts: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] })
   const [financeData, setFinanceData] = useState(null)
   const [selectedChat, setSelectedChat] = useState(null)
@@ -79,7 +77,6 @@ export default function Dashboard() {
       fetchAllInstances(parsed.email)
     }
 
-    setLoadingData(false)
   }, [navigate])
 
   // Polling para atualizar status de arquivos e notificações
@@ -536,10 +533,6 @@ export default function Dashboard() {
     } catch (err) {
       showToast('Erro ao excluir', 'error');
     }
-  }
-
-  const handleAdminExtendUser = async (email, days) => {
-    await handleAdminExtend(email, days)
   }
 
   if (!session) return null

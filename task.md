@@ -206,6 +206,6 @@
     - [x] Botões de Sobrescrita Manual (Pausar/Play/Presentear)
     - [x] UX Sênior: Optimistic UI e Normalização de Dados (case-insensitive)
 - [x] Automação de Faturamento (SaaS Sênior)
-    - [x] Motor de Cron Job para Bloqueio Automático (`api/billing-cron.js`)
+    - [x] Motor de Cron Job para Bloqueio Automático (`api/billing-cron.js`) + agendado no `vercel.json` (03:00 UTC)
     - [ ] Webhook de Integração Mercado Pago (Auto-liberação)
 - [ ] Log de Atividades do Sistema (Audit Log)

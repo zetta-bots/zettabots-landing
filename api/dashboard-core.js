@@ -233,10 +233,16 @@ export default async function handler(req, res) {
             return d > now && d <= in7;
           });
           const mrr = active.reduce((s, p) => s + (PLAN_MRR[p.plan_type] || 0), 0);
+          const mrrDistribution = {
+            start:      active.filter(p => p.plan_type === 'start').length * 127,
+            pro:        active.filter(p => p.plan_type === 'pro' || p.plan_type === 'pago').length * 247,
+            enterprise: active.filter(p => p.plan_type === 'enterprise').length * 997,
+          };
 
           return res.status(200).json({
             success: true,
             mrr,
+            mrrDistribution,
             totalClients: clients.length,
             totalActive:  active.length,
             totalTrial:   trial.length,
@@ -313,6 +319,28 @@ export default async function handler(req, res) {
         } catch (e) {
           return res.status(500).json({ error: 'Admin fetch error' });
         }
+
+      case 'global-kill-switch': {
+        try {
+          const { email, enabled } = req.body;
+          const profRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(email)}&select=instance_name`,
+            { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
+          );
+          const profiles = await profRes.json();
+          const targetInstance = profiles?.[0]?.instance_name;
+          if (targetInstance) {
+            await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(targetInstance)}`, {
+              method: 'PATCH',
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({ ai_paused: enabled }),
+            });
+          }
+          return res.status(200).json({ success: true, ai_paused: enabled });
+        } catch (e) {
+          return res.status(500).json({ error: 'Kill switch error' });
+        }
+      }
 
       case 'toggle-ai':
         try {
