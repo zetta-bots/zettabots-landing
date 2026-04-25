@@ -67,7 +67,7 @@ const AIConfigPanel = ({
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>🧠 Configuração do Cérebro</h2>
-            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Customize o comportamento e o conhecimento da Sarah.</p>
+            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Customize o comportamento e o conhecimento do seu Agente de IA.</p>
           </div>
           <div className="segmented-control" style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px' }}>
             <button 
@@ -125,7 +125,7 @@ const AIConfigPanel = ({
                 className="prompt-editor" 
                 value={prompt} 
                 onChange={(e) => setPrompt(e.target.value)} 
-                placeholder="Ex: Você é a Sarah, uma assistente gentil..."
+                placeholder="Ex: Você é o assistente virtual da empresa..."
                 style={{ 
                   flex: 1,
                   minHeight: '350px',
@@ -160,7 +160,7 @@ const AIConfigPanel = ({
             <div style={{ animation: 'fadeIn 0.3s ease' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
-                  <h4 style={{ margin: 0, color: '#fff' }}>Base de Dados da Sarah</h4>
+                  <h4 style={{ margin: 0, color: '#fff' }}>Base de Dados da IA</h4>
                   <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Arquivos usados para RAG (Retrieval Augmented Generation).</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -202,7 +202,7 @@ const AIConfigPanel = ({
                   {uploading ? '⚙️' : isLimitReached ? '🔒' : '📁'}
                 </div>
                 <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>
-                  {uploading ? 'Processando Conhecimento...' : isLimitReached ? 'Limite de Armazenamento Atingido' : 'Arraste manuais ou tabelas de preços'}
+                  {uploading ? 'Processando Conhecimento...' : isLimitReached ? 'Limite de Armazenamento Atingido' : 'Arraste manuais ou catálogos da sua empresa'}
                 </h3>
                 <p style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Suporta PDF, TXT e DOC (Até 10MB)</p>
               </div>
@@ -227,7 +227,7 @@ const AIConfigPanel = ({
                   ))}
                   {files.length === 0 && (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', color: '#444', border: '1px solid rgba(255,255,255,0.02)', borderRadius: '20px' }}>
-                      <p>Nenhum arquivo customizado. A Sarah usará apenas o comportamento padrão.</p>
+                      <p>Nenhum arquivo customizado. A IA usará apenas o comportamento padrão.</p>
                     </div>
                   )}
                 </div>
