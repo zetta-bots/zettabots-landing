@@ -75,8 +75,8 @@ export default function Dashboard() {
     fetchNotifications()
     
     if (parsed.email === 'richardrovigati@gmail.com') {
-      fetchAdminStats()
-      fetchAllInstances()
+      fetchAdminStats(parsed.email)
+      fetchAllInstances(parsed.email)
     }
 
     setLoadingData(false)
@@ -109,24 +109,30 @@ export default function Dashboard() {
     if (activeTab === 'leads' && selectedInstance) fetchLeads(selectedInstance)
   }, [activeTab, selectedInstance])
 
-  const fetchAllInstances = async () => {
+  const fetchAllInstances = async (emailOverride) => {
     try {
+      const email = emailOverride || session?.email;
+      if (!email) return;
+
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-all-instances', instanceName: selectedInstance, email: session?.email })
+        body: JSON.stringify({ action: 'get-all-instances', instanceName: selectedInstance, email })
       })
       const data = await res.json()
       if (data.success) setAllInstances(data.instances)
     } catch (err) { console.error('ERRO ADMIN:', err) }
   }
 
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = async (emailOverride) => {
     try {
+      const email = emailOverride || session?.email;
+      if (!email) return;
+
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-admin-stats', instanceName: selectedInstance, email: session?.email })
+        body: JSON.stringify({ action: 'get-admin-stats', instanceName: selectedInstance, email })
       })
       const data = await res.json()
       if (data.success) setAdminStats(data)
