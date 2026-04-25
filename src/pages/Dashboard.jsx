@@ -2,26 +2,19 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
-const MediaMessage = ({ msg, instanceName }) => {
-  const [media, setMedia] = useState(null);
-  useEffect(() => {
-    if (msg.id && (msg.type === 'image' || msg.type === 'audio')) {
-      fetch('/api/dashboard-core', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-media', instanceName, messageId: msg.id })
-      }).then(r => r.json()).then(data => {
-        if(data.success) setMedia(`data:${data.mimetype};base64,${data.base64}`);
-      }).catch(e => console.error(e));
-    }
-  }, [msg.id, msg.type, instanceName]);
-
-  if (!media) return <span>{msg.text} <small style={{opacity: 0.6}}>(Carregando mídia...)</small></span>;
-  
-  if (msg.type === 'image') return <img src={media} alt="Mídia" style={{maxWidth: '100%', borderRadius: '8px', marginTop: '5px'}} />;
-  if (msg.type === 'audio') return <audio controls src={media} style={{maxWidth: '240px', height: '40px', marginTop: '5px'}} />;
-  return <span>{msg.text}</span>;
-}
+// Dashboard Components
+import Sidebar from '../components/dashboard/Sidebar'
+import Header from '../components/dashboard/Header'
+import StatsPanel from '../components/dashboard/StatsPanel'
+import LeadsPanel from '../components/dashboard/LeadsPanel'
+import ChatMonitorPanel from '../components/dashboard/ChatMonitorPanel'
+import PersonalityPanel from '../components/dashboard/PersonalityPanel'
+import FinancePanel from '../components/dashboard/FinancePanel'
+import IntegrationsPanel from '../components/dashboard/IntegrationsPanel'
+import ConnectionPanel from '../components/dashboard/ConnectionPanel'
+import AdminPanel from '../components/dashboard/AdminPanel'
+import FeedIAPanel from '../components/dashboard/FeedIAPanel'
+import SubModal from '../components/dashboard/SubModal'
 
 export default function Dashboard() {
   const [instances, setInstances] = useState([])
@@ -348,492 +341,118 @@ export default function Dashboard() {
   return (
     <div className={`dashboard-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
       <header className="mobile-header">
-        <div className="premium-logo-container mini"><img src="/images/logo.png" alt="ZettaBots" /></div>
+        <div className="premium-logo-container mini">
+          <img src="/images/logo.png" alt="ZettaBots" />
+        </div>
         <button className="hamburger-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           <span></span><span></span><span></span>
         </button>
       </header>
 
-      <aside className="dashboard-sidebar">
-        <div className="sidebar-header">
-          <div className="premium-logo-container"><img src="/images/logo.png" alt="ZettaBots" /></div>
-          <div className="brand-info"><h2>ZettaBots</h2><p>IA de Vendas</p></div>
-        </div>
-        <nav className="sidebar-nav">
-          <button className={`nav-item ${activeTab === 'status' ? 'active' : ''}`} onClick={() => setActiveTab('status')}><span className="icon">📊</span> Dashboard</button>
-          <button className={`nav-item ${activeTab === 'leads' ? 'active' : ''}`} onClick={() => setActiveTab('leads')}><span className="icon">👤</span> Meus Leads</button>
-          <button className={`nav-item ${activeTab === 'mensagens' ? 'active' : ''}`} onClick={() => setActiveTab('mensagens')}><span className="icon">💬</span> Monitor de Chat</button>
-          <button className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} onClick={() => setActiveTab('bot')}><span className="icon">🤖</span> Personalidade IA</button>
-          <button className={`nav-item ${activeTab === 'financeiro' ? 'active' : ''}`} onClick={() => setActiveTab('financeiro')}><span className="icon">💰</span> Financeiro</button>
-          <button className={`nav-item ${activeTab === 'integracoes' ? 'active' : ''}`} onClick={() => setActiveTab('integracoes')}><span className="icon">🔌</span> Integrações</button>
-           <button className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} onClick={() => setActiveTab('conexao')}><span className="icon">🔗</span> Conexão</button>
-           {isAdmin && (
-             <button className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')} style={{marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', color: '#fbbf24'}}><span className="icon">👑</span> Painel Admin</button>
-           )}
-        </nav>
-        <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}><span className="icon">🚪</span> Sair</button>
-        </div>
-      </aside>
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isAdmin={isAdmin} 
+        handleLogout={handleLogout} 
+      />
 
       <main className="dashboard-main">
-        <header className="main-header">
-          <div className="header-title">
-            <h1>{isAdmin ? 'ZettaBots Master' : `Bem-vindo, ${session.name || session.instanceName || ''}`}</h1>
-            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-              <p>{activeTab === 'conexao' ? 'CONEXÃO' : activeTab.toUpperCase()}</p>
-              {isAdmin && allInstances.length > 0 && (
-                <select 
-                  className="instance-selector-mini"
-                  value={selectedInstance}
-                  onChange={(e) => setSelectedInstance(e.target.value)}
-                >
-                  {allInstances.map(i => (
-                    <option key={i.id} value={i.instance_name}>{i.instance_name}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-          <div className="plan-badge-v2">
-            ⭐ PLANO {['pago', 'admin'].includes(session.status) ? 'PRO' : 'TRIAL'}
-          </div>
-        </header>
+        <Header 
+          isAdmin={isAdmin} 
+          session={session} 
+          activeTab={activeTab} 
+          allInstances={allInstances} 
+          selectedInstance={selectedInstance} 
+          setSelectedInstance={setSelectedInstance} 
+        />
 
         {activeTab === 'status' && (
-          <div className="tab-panel">
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon purple">👤</div>
-                <div className="stat-info"><span className="stat-label">Leads Capturados</span><span className="stat-value">{leads.length || stats.contacts}</span></div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon blue">💬</div>
-                <div className="stat-info"><span className="stat-label">Conversas Ativas</span><span className="stat-value">{stats.chats}</span></div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon green">🕒</div>
-                <div className="stat-info"><span className="stat-label">Tempo Economizado</span><span className="stat-value">{stats.savedTime}</span></div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon orange">💰</div>
-                <div className="stat-info"><span className="stat-label">ROI Estimado</span><span className="stat-value">{stats.roi}</span></div>
-              </div>
-            </div>
-
-            <div className="glass-card activity-section">
-              <h3>Atividade da IA (Mensagens/Dia)</h3>
-              <div className="chart-container" style={{ height: '220px', display: 'flex', alignItems: 'flex-end', gap: '15px', paddingTop: '30px' }}>
-                {(stats.activity || [10, 20, 30, 40, 50, 60, 70]).map((val, i) => (
-                  <div key={i} className="chart-bar-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#7c3aed', marginBottom: '5px', fontWeight: 'bold' }}>{val}</span>
-                    <div className="chart-bar" style={{ width: '100%', background: 'linear-gradient(to top, #7c3aed, #06b6d4)', height: `${(val / (Math.max(...stats.activity, 1) || 1)) * 100}%`, borderRadius: '8px 8px 0 0', transition: 'height 0.5s ease' }}></div>
-                    <span style={{ marginTop: '8px', fontSize: '0.65rem', color: '#a1a1aa' }}>{['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <StatsPanel leads={leads} stats={stats} />
         )}
 
         {activeTab === 'leads' && (
-          <div className="tab-panel">
-            <div className="glass-card">
-              <h3>Lista de Leads Capturados</h3>
-              <div style={{ marginTop: '1.5rem', overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
-                      <th style={{ padding: '1rem', color: '#a1a1aa' }}>NOME</th>
-                      <th style={{ padding: '1rem', color: '#a1a1aa' }}>WHATSAPP</th>
-                      <th style={{ padding: '1rem', color: '#a1a1aa' }}>STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leads.map((lead, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <td style={{ padding: '1rem', fontWeight: '600' }}>{lead.name}</td>
-                        <td style={{ padding: '1rem', color: '#a1a1aa' }}>{lead.phone}</td>
-                        <td style={{ padding: '1rem' }}><span style={{ padding: '4px 8px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '6px', fontSize: '0.7rem' }}>{lead.status}</span></td>
-                      </tr>
-                    ))}
-                    {leads.length === 0 && <tr><td colSpan="3" style={{padding: '2rem', textAlign: 'center', color: '#a1a1aa'}}>Aguardando primeiros leads...</td></tr>}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <LeadsPanel leads={leads} />
         )}
 
         {activeTab === 'mensagens' && (
-          <div className="chat-monitor-container">
-            <div className="chat-list-panel">
-              <div className="panel-header"><h3>Conversas Ativas</h3></div>
-              <div className="conversations-scroll">
-                {chats.map((chat, i) => (
-                  <div className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`} key={i} onClick={() => {setSelectedChat(chat); fetchChatMessages(chat.id)}}>
-                    <div className="chat-item-header"><span className="chat-name">{chat.user}</span><span className="chat-time">{chat.time}</span></div>
-                    <p className="chat-status">{chat.lastMsg}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="chat-window-panel">
-              {selectedChat ? (
-                <>
-                <div className="chat-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <h4>{selectedChat.user}</h4>
-                  <button 
-                    className={`btn-${isAIPaused ? 'danger' : 'secondary'}`} 
-                    onClick={handleToggleAI} 
-                    style={{fontSize: '0.7rem', padding: '0.4rem 0.8rem'}}
-                  >
-                    {isAIPaused ? '🚫 IA PAUSADA' : '🤖 IA ATIVA'}
-                  </button>
-                </div>
-                <div className="messages-container">
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
-                      {['image', 'audio'].includes(msg.type) ? <MediaMessage msg={msg} instanceName={selectedInstance} /> : msg.text}
-                      <span className="message-time">{msg.time}</span>
-                    </div>
-                  ))}
-                  {chatMessages.length === 0 && <div className="chat-empty-state">Carregando histórico...</div>}
-                </div>
-                </>
-              ) : <div className="chat-empty-state"><p>Selecione uma conversa para monitorar a IA.</p></div>}
-            </div>
-          </div>
+          <ChatMonitorPanel 
+            chats={chats} 
+            selectedChat={selectedChat} 
+            setSelectedChat={setSelectedChat} 
+            fetchChatMessages={fetchChatMessages} 
+            isAIPaused={isAIPaused} 
+            handleToggleAI={handleToggleAI} 
+            chatMessages={chatMessages} 
+            selectedInstance={selectedInstance} 
+          />
         )}
 
         {activeTab === 'bot' && (
-          <div className="tab-panel">
-            <div className="glass-card">
-              <h3>Treinar Personalidade da IA</h3>
-              <p style={{fontSize: '0.8rem', color: '#a1a1aa', marginBottom: '1rem'}}>Defina como sua IA deve se comportar e quais produtos ela deve vender.</p>
-              <textarea className="prompt-editor" rows="12" value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ width: '100%', padding: '1rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '12px' }} />
-              <button onClick={handleSavePrompt} disabled={saving} className="btn-primary" style={{marginTop: '1rem'}}>{saving ? 'Salvando...' : 'Salvar Personalidade'}</button>
-            </div>
-          </div>
+          <PersonalityPanel 
+            prompt={prompt} 
+            setPrompt={setPrompt} 
+            handleSavePrompt={handleSavePrompt} 
+            saving={saving} 
+          />
+        )}
+
+        {activeTab === 'feed' && (
+          <FeedIAPanel 
+            session={session} 
+            showToast={showToast} 
+            selectedInstance={selectedInstance} 
+          />
         )}
 
         {activeTab === 'financeiro' && (
-          <div className="tab-panel finance-container">
-            <div className="finance-top-row">
-              <div className="premium-card">
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                  <div>
-                    <h3 style={{margin: 0, fontSize: '1.4rem'}}>Sua Assinatura</h3>
-                    <p style={{color: 'var(--color-text-muted)', fontSize: '0.85rem', marginTop: '4px'}}>Gestão de plano e faturamento</p>
-                  </div>
-                  <span className={`finance-badge ${financeData?.status || 'trial'}`}>
-                    {financeData?.status === 'trial' ? 'Trial' :
-                     financeData?.status === 'blocked' ? 'Bloqueado' :
-                     financeData?.status ? `${financeData.status.charAt(0).toUpperCase() + financeData.status.slice(1)} Ativo` : 'Trial'}
-                  </span>
-                </div>
-
-                {financeData ? (
-                  <div style={{ marginTop: '2rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                      <div className="stat-info">
-                        <span className="stat-label">Plano Atual</span>
-                        <span style={{fontSize: '1.1rem', fontWeight: '700'}}>{financeData.plan}</span>
-                      </div>
-                      <div className="stat-info">
-                        <span className="stat-label">Valor Mensal</span>
-                        <span style={{fontSize: '1.1rem', fontWeight: '700', color: 'var(--color-primary)'}}>{financeData.value}</span>
-                      </div>
-                      <div className="stat-info">
-                        <span className="stat-label">Próxima Cobrança</span>
-                        <span style={{fontSize: '0.9rem', fontWeight: '600'}}>{financeData.nextBilling}</span>
-                      </div>
-                      <div className="stat-info">
-                        <span className="stat-label">ID do Cliente</span>
-                        <span style={{fontSize: '0.9rem', fontWeight: '600', opacity: 0.5}}>{session.phone}</span>
-                      </div>
-                    </div>
-                    
-                    <div style={{display: 'flex', gap: '12px'}}>
-                      <button className="btn-primary" style={{flex: 1}} onClick={() => setShowSubModal(true)}>🚀 Renovar / Mudar Plano</button>
-                      <button className="btn-secondary" style={{padding: '0.8rem'}} onClick={() => window.open('https://wa.me/5521969875522', '_blank')}>💬 Suporte</button>
-                    </div>
-                  </div>
-                ) : <div className="spinner"></div>}
-              </div>
-
-              <div className="premium-card">
-                <h3 style={{fontSize: '1.1rem', marginBottom: '1.5rem'}}>Faturas Recentes</h3>
-                <div className="invoice-list">
-                  {financeData?.invoices.map((inv, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '1.2rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div>
-                        <p style={{ fontWeight: '700', margin: 0, fontSize: '0.95rem' }}>{inv.id}</p>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: 0 }}>{inv.date}</p>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontWeight: '800', color: '#10b981', margin: 0 }}>{inv.value}</p>
-                        <span style={{ fontSize: '0.65rem', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: '700' }}>{inv.status.toUpperCase()}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {!financeData?.invoices.length && <p style={{color: 'var(--color-text-muted)', fontSize: '0.8rem', textAlign: 'center', marginTop: '2rem'}}>Nenhuma fatura encontrada.</p>}
-                </div>
-              </div>
-            </div>
-          </div>
+          <FinancePanel 
+            financeData={financeData} 
+            session={session} 
+            setShowSubModal={setShowSubModal} 
+          />
         )}
 
         {activeTab === 'integracoes' && (
-          <div className="tab-panel">
-            <div className="glass-card">
-              <h3>🔌 Integrações Externas</h3>
-              <div style={{padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '15px', marginTop: '1rem'}}>
-                <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem'}}>URL do seu Webhook (Make/n8n/Zapier)</label>
-                <input type="text" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} style={{width: '100%', padding: '0.8rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white'}} />
-                <button onClick={handleSaveIntegrations} className="btn-primary" style={{marginTop: '1rem'}}>Salvar Endpoint</button>
-              </div>
-            </div>
-          </div>
+          <IntegrationsPanel 
+            webhookUrl={webhookUrl} 
+            setWebhookUrl={setWebhookUrl} 
+            handleSaveIntegrations={handleSaveIntegrations} 
+          />
         )}
 
         {activeTab === 'conexao' && (
-          <div className="tab-panel">
-            <div className="glass-card" style={{textAlign: 'center', padding: '3rem'}}>
-              <h3 style={{marginBottom: '0.5rem'}}>Conexão WhatsApp</h3>
-              <p style={{color: '#a1a1aa', fontSize: '0.85rem', marginBottom: '2rem'}}>
-                {qrStatus === 'CONNECTED' && 'WhatsApp conectado e funcionando'}
-                {qrStatus === 'QRCODE' && 'Abra o WhatsApp do seu negócio → Configurações → Aparelhos Conectados → Escanear QR'}
-                {qrStatus === 'DISCONNECTED' && 'Instância desconectada. Gere um novo QR para conectar.'}
-                {qrStatus === 'NOT_FOUND' && 'Instância não encontrada. Entre em contato com o suporte.'}
-                {qrStatus === 'loading' && 'Verificando status da conexão...'}
-              </p>
-
-              <div style={{background: 'white', padding: '1.5rem', borderRadius: '24px', display: 'inline-block', boxShadow: '0 10px 40px rgba(0,0,0,0.3)', position: 'relative'}}>
-                {qrStatus === 'CONNECTED' && (
-                  <div style={{width: '240px', height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#10b981'}}>
-                    <div style={{fontSize: '5rem'}}>✅</div>
-                    <div style={{fontSize: '1rem', fontWeight: 700, color: '#10b981', marginTop: '0.5rem'}}>Conectado</div>
-                  </div>
-                )}
-                {qrStatus === 'QRCODE' && qrCode && (
-                  <div style={{position: 'relative'}}>
-                    <img src={qrCode} alt="QR Code WhatsApp" style={{width: '240px', height: '240px', display: 'block'}} />
-                    <div style={{position: 'absolute', bottom: '8px', right: '8px', background: qrTimer <= 10 ? '#ef4444' : '#10b981', color: 'white', borderRadius: '999px', padding: '2px 10px', fontSize: '0.75rem', fontWeight: 700}}>
-                      {qrTimer}s
-                    </div>
-                  </div>
-                )}
-                {(qrStatus === 'loading' || (qrStatus === 'QRCODE' && !qrCode)) && (
-                  <div style={{width: '240px', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                    <div className="spinner" style={{width: '60px', height: '60px'}}></div>
-                  </div>
-                )}
-                {(qrStatus === 'DISCONNECTED' || qrStatus === 'NOT_FOUND') && (
-                  <div style={{width: '240px', height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem'}}>
-                    <div style={{fontSize: '3.5rem'}}>📵</div>
-                    <div style={{fontSize: '0.9rem', fontWeight: 600, color: '#a1a1aa'}}>
-                      {qrStatus === 'NOT_FOUND' ? 'Instância não encontrada' : 'Desconectado'}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {qrStatus === 'QRCODE' && (
-                <p style={{marginTop: '1rem', color: qrTimer <= 10 ? '#ef4444' : '#a1a1aa', fontSize: '0.82rem', fontWeight: qrTimer <= 10 ? 700 : 400}}>
-                  {qrTimer <= 10 ? `⚠️ QR expira em ${qrTimer}s — prepare o WhatsApp` : `QR atualiza automaticamente em ${qrTimer}s`}
-                </p>
-              )}
-
-              <div style={{marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap'}}>
-                <button onClick={() => fetchQrCode(selectedInstance)} className="btn-secondary" disabled={qrStatus === 'loading'}>
-                  {qrStatus === 'loading' ? 'Carregando...' : qrStatus === 'CONNECTED' ? 'Verificar Status' : 'Gerar novo QR'}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ConnectionPanel 
+            qrStatus={qrStatus} 
+            qrCode={qrCode} 
+            qrTimer={qrTimer} 
+            fetchQrCode={fetchQrCode} 
+            selectedInstance={selectedInstance} 
+          />
         )}
+
         {activeTab === 'admin' && isAdmin && (
-          <div className="tab-panel">
-
-            {/* MRR Cards */}
-            <div style={{display:'flex', gap:'1rem', marginBottom:'1.5rem', flexWrap:'wrap'}}>
-              {[
-                { label:'MRR', value: adminStats ? `R$ ${(adminStats.mrr||0).toLocaleString('pt-BR')}` : '—', color:'#10b981' },
-                { label:'Total Clientes', value: adminStats?.totalClients ?? '—', color:'#8b5cf6' },
-                { label:'Ativos (Pagos)', value: adminStats?.totalActive ?? '—', color:'#6366f1' },
-                { label:'Em Trial', value: adminStats?.totalTrial ?? '—', color:'#3b82f6' },
-                { label:'Bloqueados', value: adminStats?.totalBlocked ?? '—', color:'#ef4444' },
-              ].map(c => (
-                <div key={c.label} style={{flex:1, minWidth:130, background:'var(--color-surface)', border:`1px solid ${c.color}33`, borderRadius:12, padding:'1rem 1.2rem'}}>
-                  <div style={{color:'var(--color-text-muted)', fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:1, marginBottom:4}}>{c.label}</div>
-                  <div style={{color:c.color, fontSize:'1.6rem', fontWeight:700}}>{c.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Alertas expiração */}
-            {adminStats?.expiringSoon?.length > 0 && (
-              <div style={{background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.3)', borderRadius:12, padding:'1rem 1.2rem', marginBottom:'1.5rem'}}>
-                <div style={{color:'#f59e0b', fontWeight:700, marginBottom:'0.75rem', fontSize:'0.85rem'}}>
-                  ⚠️ Expirando nos próximos 7 dias ({adminStats.expiringSoon.length})
-                </div>
-                {adminStats.expiringSoon.map(c => (
-                  <div key={c.email} style={{display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8, marginBottom:6}}>
-                    <span style={{fontSize:'0.85rem'}}>
-                      {c.full_name || c.email}
-                      <span style={{color:'var(--color-text-muted)', marginLeft:8, fontSize:'0.75rem'}}>
-                        — {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => handleAdminExtend(c.email, 30)}
-                      disabled={adminExtending === c.email}
-                      style={{background:'#f59e0b', color:'#000', border:'none', padding:'3px 10px', borderRadius:6, cursor:'pointer', fontSize:'0.75rem', fontWeight:700}}
-                    >
-                      {adminExtending === c.email ? '...' : '+30 dias'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Tabela de clientes */}
-            <div className="premium-card" style={{padding:'1.5rem'}}>
-              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem', flexWrap:'wrap', gap:'0.75rem'}}>
-                <h3 style={{fontSize:'1.1rem', margin:0}}>👑 Clientes</h3>
-                <div style={{display:'flex', gap:'0.5rem', flexWrap:'wrap'}}>
-                  <input
-                    value={adminSearch} onChange={e => setAdminSearch(e.target.value)}
-                    placeholder="Buscar nome ou email..."
-                    style={{background:'var(--color-bg)', border:'1px solid var(--color-border)', borderRadius:8, color:'#fff', padding:'6px 12px', fontSize:'0.8rem', width:220, outline:'none'}}
-                  />
-                  <select
-                    value={adminPlanFilter} onChange={e => setAdminPlanFilter(e.target.value)}
-                    style={{background:'var(--color-bg)', border:'1px solid var(--color-border)', borderRadius:8, color:'var(--color-text-muted)', padding:'6px 12px', fontSize:'0.8rem', cursor:'pointer', outline:'none'}}
-                  >
-                    <option value="all">Todos</option>
-                    <option value="trial">Trial</option>
-                    <option value="start">Start</option>
-                    <option value="pro">Pro</option>
-                    <option value="enterprise">Enterprise</option>
-                    <option value="blocked">Bloqueados</option>
-                  </select>
-                </div>
-              </div>
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr style={{borderBottom:'1px solid var(--color-border)'}}>
-                      {['Nome','Email','Plano','Status','Expira em','Ações'].map(h => (
-                        <th key={h} style={{padding:'0.75rem 1rem', fontSize:'0.7rem', color:'var(--color-text-muted)', textAlign:'left', textTransform:'uppercase', letterSpacing:0.5}}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(adminStats?.clients || [])
-                      .filter(c => {
-                        const s = adminSearch.toLowerCase()
-                        const matchS = !s || (c.email||'').toLowerCase().includes(s) || (c.full_name||'').toLowerCase().includes(s)
-                        const matchP = adminPlanFilter === 'all' || c.plan_type === adminPlanFilter
-                        return matchS && matchP
-                      })
-                      .map((c, i) => {
-                        const PLAN_COLOR = {start:'#6366f1',pro:'#8b5cf6',enterprise:'#f59e0b',trial:'#3b82f6',blocked:'#ef4444',pago:'#8b5cf6'}
-                        const PLAN_LABEL = {start:'Start',pro:'Pro',enterprise:'Enterprise',trial:'Trial',blocked:'Bloqueado',pago:'Pro'}
-                        const color = PLAN_COLOR[c.plan_type] || '#888'
-                        const exp = c.plan_expires_at ? new Date(c.plan_expires_at) : null
-                        const expired = exp && exp < new Date()
-                        return (
-                          <tr key={i} style={{borderBottom:'1px solid rgba(255,255,255,0.03)'}}>
-                            <td style={{padding:'0.75rem 1rem', fontSize:'0.85rem'}}>{c.full_name || <span style={{color:'#555'}}>—</span>}</td>
-                            <td style={{padding:'0.75rem 1rem', color:'var(--color-text-muted)', fontSize:'0.8rem'}}>{c.email}</td>
-                            <td style={{padding:'0.75rem 1rem'}}>
-                              <span style={{background:`${color}22`, color, border:`1px solid ${color}55`, padding:'2px 8px', borderRadius:20, fontSize:'0.7rem', fontWeight:700}}>
-                                {PLAN_LABEL[c.plan_type] || c.plan_type}
-                              </span>
-                            </td>
-                            <td style={{padding:'0.75rem 1rem'}}>
-                              <span style={{color: c.is_active ? '#10b981' : '#ef4444', fontSize:'0.75rem', fontWeight:600}}>
-                                {c.is_active ? '● Ativo' : '● Inativo'}
-                              </span>
-                            </td>
-                            <td style={{padding:'0.75rem 1rem', color: expired ? '#ef4444' : 'var(--color-text-muted)', fontSize:'0.8rem'}}>
-                              {exp ? exp.toLocaleDateString('pt-BR') : <span style={{color:'#555'}}>—</span>}
-                              {expired && <span style={{marginLeft:4, fontSize:'0.65rem', color:'#ef4444'}}>VENCIDO</span>}
-                            </td>
-                            <td style={{padding:'0.75rem 1rem'}}>
-                              <button
-                                onClick={() => handleAdminExtend(c.email, 30)}
-                                disabled={adminExtending === c.email}
-                                className="btn-secondary"
-                                style={{padding:'3px 10px', fontSize:'0.7rem'}}
-                              >
-                                {adminExtending === c.email ? '...' : '+30d'}
-                              </button>
-                            </td>
-                          </tr>
-                        )
-                      })
-                    }
-                    {adminStats && adminStats.clients?.filter(c => {
-                      const s = adminSearch.toLowerCase()
-                      return (!s || (c.email||'').toLowerCase().includes(s) || (c.full_name||'').toLowerCase().includes(s)) &&
-                        (adminPlanFilter === 'all' || c.plan_type === adminPlanFilter)
-                    }).length === 0 && (
-                      <tr><td colSpan={6} style={{padding:'2rem', textAlign:'center', color:'#555'}}>Nenhum cliente encontrado</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <AdminPanel 
+            adminStats={adminStats} 
+            adminExtending={adminExtending} 
+            handleAdminExtend={handleAdminExtend} 
+            adminSearch={adminSearch} 
+            setAdminSearch={setAdminSearch} 
+            adminPlanFilter={adminPlanFilter} 
+            setAdminPlanFilter={setAdminPlanFilter} 
+          />
         )}
       </main>
 
       {showSubModal && (
-        <div className="modal-overlay" onClick={() => {setShowSubModal(false); setCheckoutPix(null)}}>
-          <div className="premium-card" style={{ width: '90%', maxWidth: '450px', position: 'relative' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{fontSize: '1.3rem', textAlign: 'center', marginBottom: '0.5rem'}}>💎 Escolha seu Plano</h3>
-            <p style={{color: 'var(--color-text-muted)', fontSize: '0.85rem', textAlign: 'center', marginBottom: '1.5rem'}}>Assine o ZettaBots PRO e libere todo o poder da IA.</p>
-            
-            <div style={{padding: '1rem', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '16px', border: '1px solid rgba(124, 58, 237, 0.2)', textAlign: 'center', marginBottom: '1.5rem'}}>
-               <p style={{fontSize: '0.7rem', color: 'var(--color-primary)', fontWeight: '800', textTransform: 'uppercase', marginBottom: '4px'}}>Oferta Especial</p>
-               <h4 style={{fontSize: '2rem', margin: 0}}>R$ 247<span style={{fontSize: '0.9rem', opacity: 0.6}}>/mês</span></h4>
-            </div>
-
-            <div className="payment-options">
-               <button className={`method-btn ${!checkoutPix ? '' : 'selected'}`} onClick={() => handleGeneratePix('pix')}>
-                  <span style={{fontSize: '1.5rem'}}>⚡</span>
-                  <span style={{fontSize: '0.8rem', fontWeight: '700'}}>Pix Instantâneo</span>
-               </button>
-               <button className="method-btn" onClick={() => handleGeneratePix('card')}>
-                  <span style={{fontSize: '1.5rem'}}>💳</span>
-                  <span style={{fontSize: '0.8rem', fontWeight: '700'}}>Cartão / Outros</span>
-               </button>
-            </div>
-
-            {checkoutLoading && <div className="spinner" style={{marginTop: '2rem'}}></div>}
-
-            {checkoutPix && (
-              <div className="pix-display-area">
-                <img src={`data:image/jpeg;base64,${checkoutPix.qr_code_base64}`} alt="PIX QR Code" style={{width: '200px', height: '200px'}} />
-                <p style={{color: '#18181b', fontSize: '0.8rem', marginTop: '10px', textAlign: 'center'}}>Aponte a câmera do seu banco para o QR Code acima</p>
-                <button 
-                  onClick={() => {navigator.clipboard.writeText(checkoutPix.qr_code); showToast('Código Copiado!', 'success')}} 
-                  className="btn-primary" 
-                  style={{width: '100%', marginTop: '15px', padding: '0.6rem'}}
-                >
-                  📋 Copiar Código PIX
-                </button>
-              </div>
-            )}
-            
-            <button className="btn-secondary" style={{width: '100%', marginTop: '1rem', fontSize: '0.8rem'}} onClick={() => {setShowSubModal(false); setCheckoutPix(null)}}>Cancelar</button>
-          </div>
-        </div>
+        <SubModal 
+          setShowSubModal={setShowSubModal} 
+          setCheckoutPix={setCheckoutPix} 
+          checkoutPix={checkoutPix} 
+          handleGeneratePix={handleGeneratePix} 
+          checkoutLoading={checkoutLoading} 
+          showToast={showToast} 
+        />
       )}
-
 
       <div className="toast-container">
         {toasts.map(t => (

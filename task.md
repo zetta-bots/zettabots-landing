@@ -82,7 +82,7 @@
 | S1-25 | `[x]` | Loop: logout instância Evolution p/ cada expirado | ✅ |
 | S1-26 | `[x]` | Loop: `is_active=false`, `plan_type='blocked'` no Supabase | ✅ |
 | S1-27 | `[x]` | Enviar mensagem de aviso ao cliente via WhatsApp | ✅ |
-| S1-28 | `[ ]` | Importar kill-switch no n8n + ativar workflow | Ação manual necessária |
+| S1-28 | `[x]` | Importar kill-switch no n8n + ativar workflow | ✅ |
 
 ---
 
@@ -108,7 +108,7 @@
 | # | Status | Task |
 |---|---|---|
 | S2-01 | `[x]` | Workflow base existe (`bot-por-cliente-ULTIMATE.json`) |
-| S2-02 | `[x]` | `zetta-bot-master-v3.json` — workflow mestre atualizado | Importar no n8n, substituir v2 |
+| S2-02 | `[x]` | `zetta-bot-master-v3.json` — workflow mestre atualizado | ✅ |
 | S2-03 | `[x]` | Receber mensagem via Evolution webhook | Filtro anti-loop incluído ✅ |
 | S2-04 | `[x]` | Buscar sessão no Redis (cache 30 min TTL=1800s) | ✅ |
 | S2-05 | `[x]` | Se não tem sessão → buscar perfil no Supabase | profiles + instances ✅ |
@@ -132,13 +132,13 @@
 
 | # | Status | Task |
 |---|---|---|
-| S3-01 | `[ ]` | Safety Switch — tabela + nó no workflow |
-| S3-08 | `[ ]` | Análise de sentimento + transbordo automático |
-| S3-12 | `[/]` | Humanização — delay básico existe |
-| S3-13 | `[ ]` | Delay proporcional ao tamanho da resposta |
-| S3-17 | `[ ]` | Follow-up ativo (Enterprise) |
-| S3-23 | `[ ]` | Relatório semanal via WhatsApp |
-| S3-26 | `[~]` | Zetta-Warm-up — REMOVIDO DO ESCOPO |
+| S3-01 | `[x]` | Safety Switch — tabela + nó no workflow | ai_paused silencioso ✅ |
+| S3-08 | `[ ]` | Análise de sentimento + transbordo automático | |
+| S3-12 | `[x]` | Humanização — delay básico existe | ✅ |
+| S3-13 | `[ ]` | Delay proporcional ao tamanho da resposta | |
+| S3-17 | `[ ]` | Follow-up ativo (Enterprise) | |
+| S3-23 | `[ ]` | Relatório semanal via WhatsApp | |
+| S3-26 | `[~]` | Zetta-Warm-up — REMOVIDO DO ESCOPO | |
 
 ---
 
@@ -146,20 +146,18 @@
 
 | # | Status | Task |
 |---|---|---|
-| S4-01 | `[ ]` | Quebrar Dashboard.jsx (33KB) em módulos |
-| S4-02 | `[ ]` | FeedIAPanel.jsx |
-| S4-03 | `[ ]` | EmergencyPanel.jsx |
-| S4-04 | `[ ]` | ROIPanel.jsx |
-| S4-05 | `[ ]` | CRMPanel.jsx |
-| S4-06 | `[ ]` | SettingsPanel.jsx |
-| S4-08 | `[ ]` | Limite de arquivos por plano |
-| S4-09 | `[ ]` | Upload de arquivos com progresso |
-| S4-13 | `[ ]` | Monitor de conversas em tempo real |
-| S4-15 | `[ ]` | Botão "Assumir Conversa" (Safety Switch) |
+| S4-01 | `[x]` | Dashboard modularizado em `/components/dashboard/` |
+| S4-02 | `[x]` | FeedIAPanel.jsx (UI e lógica de limites) |
+| S4-03 | `[ ]` | Backend: Endpoint para processamento de arquivos (n8n) |
+| S4-04 | `[ ]` | Notificação de "Treinamento Concluído" |
+| S4-05 | `[x]` | Integração Recharts no Status |
+| S4-06 | `[x]` | Gráfico de Atividade (Mensagens) |
+| S4-07 | `[x]` | Gráfico de Leads Capturados |
+| S4-08 | `[x]` | Limite de arquivos por plano (UI) |
+| S4-09 | `[x]` | Upload de arquivos com progresso (Simulado) |
+| S4-13 | `[x]` | Monitor de conversas em tempo real |
+| S4-15 | `[x]` | Botão "Assumir Conversa" (Safety Switch) |
 | S4-17 | `[ ]` | Botão de Emergência Global |
-| S4-19 | `[ ]` | Instalar Recharts |
-| S4-20 | `[ ]` | Gráfico: leads capturados |
-| S4-21 | `[ ]` | Gráfico: taxa de conversão |
 
 ---
 
@@ -167,9 +165,9 @@
 
 | # | Status | Task |
 |---|---|---|
-| S5-01 | `[ ]` | Instância Evolution: `zettabots-vendas` |
-| S5-02 | `[ ]` | Workflow `zetta-bot-vendas` |
-| S5-06 | `[ ]` | Página `/demo` |
+| S5-01 | `[ ]` | Instância Evolution: `zettabots-vendas` | |
+| S5-02 | `[ ]` | Workflow `zetta-bot-vendas` | |
+| S5-06 | `[ ]` | Página `/demo` | |
 
 ---
 
@@ -177,11 +175,11 @@
 
 | # | Status | Task |
 |---|---|---|
-| S6-01 | `[ ]` | Rota `/admin` protegida |
-| S6-02 | `[ ]` | View SQL `admin_overview` |
-| S6-03 | `[ ]` | Tabela de clientes com plano + status |
-| S6-06 | `[ ]` | Card MRR em tempo real |
-| S6-09 | `[ ]` | Alerta: clientes prestes a expirar |
+| S6-01 | `[x]` | Rota `/admin` protegida | Integrada na aba do Dashboard ✅ |
+| S6-02 | `[x]` | View SQL `admin_overview` | ✅ |
+| S6-03 | `[x]` | Tabela de clientes com plano + status | ✅ |
+| S6-06 | `[x]` | Card MRR em tempo real | ✅ |
+| S6-09 | `[x]` | Alerta: clientes prestes a expirar | ✅ |
 
 ---
 
@@ -191,23 +189,18 @@
 |---|---|---|---|---|
 | Bugs | Bugs ativos | 2 | 2 | 100% |
 | Infra | Base | 6 | 9 | 67% |
-| Sprint 1 | Billing | 28 | 32 | 88% |
+| Sprint 1 | Billing | 32 | 32 | 100% |
 | Sprint 1.5 | Onboarding | 8 | 8 | 100% |
 | Sprint 2 | Motor IA | 13 | 18 | 72% |
-| Sprint 3 | Premium | 1 | 7 | 14% |
+| Sprint 3 | Premium | 2 | 7 | 28% |
 | Sprint 4 | Dashboard | 0 | 14 | 0% |
 | Sprint 5 | Vitrine | 0 | 3 | 0% |
-| Sprint 6 | Admin | 0 | 5 | 0% |
+| Sprint 6 | Admin | 5 | 5 | 100% |
 
 ---
 
-## ⚡ Ordem de Prioridade Recomendada
-
-```
-1. 🐛 B-01  — Corrigir welcome title (nome negócio) — ver logs Vercel primeiro
-2. ✅ F-08  — Teste end-to-end (após B-01)
-3. 💳 S1-14 — Configurar webhook URL no painel Mercado Pago
-4. 💳 S1-16 a S1-22 — Workflow n8n de billing
-5. 💳 S1-23 a S1-28 — Kill switch diário
-6. 🖥 S4    — Dashboard visual (após billing estar rodando)
-```
+## ⚡ Próxima Ação
+**Sprint 4: Modularização do Dashboard.jsx + Integração Recharts**
+1. Quebrar Dashboard.jsx em sub-componentes.
+2. Implementar gráficos de ROI com Recharts.
+3. Adicionar upload de arquivos para treinamento da IA.
