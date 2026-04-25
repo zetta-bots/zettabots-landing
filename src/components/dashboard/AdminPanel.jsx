@@ -318,7 +318,11 @@ const AdminPanel = ({
                         <div style={{ display: 'flex', gap: '8px', position: 'relative', zIndex: 9999 }}>
                           <button
                             onClick={() => {
-                              handleAdminToggleStatus(c.email, c.is_active);
+                              if (typeof handleAdminToggleStatus === 'function') {
+                                handleAdminToggleStatus(c.email, c.is_active);
+                              } else {
+                                window.alert('ERRO: Função handleAdminToggleStatus não foi recebida pelo componente!');
+                              }
                             }}
                             disabled={adminExtending === c.email}
                             title={c.is_active ? "Bloquear Acesso" : "Desbloquear Acesso"}
@@ -333,16 +337,18 @@ const AdminPanel = ({
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontSize: '0.65rem',
-                              fontWeight: 'bold',
-                              position: 'relative',
-                              zIndex: 10000
+                              fontWeight: 'bold'
                             }}
                           >
                             {c.is_active ? 'BLOQUEAR' : 'ATIVAR'}
                           </button>
                           <button
                             onClick={() => {
-                              handleAdminExtend(c.email, 7);
+                              if (typeof handleAdminExtend === 'function') {
+                                handleAdminExtend(c.email, 7);
+                              } else {
+                                window.alert('ERRO: Função handleAdminExtend não foi recebida pelo componente!');
+                              }
                             }}
                             disabled={adminExtending === c.email}
                             title="Presentear com 7 dias"
@@ -357,9 +363,7 @@ const AdminPanel = ({
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontSize: '0.65rem',
-                              fontWeight: 'bold',
-                              position: 'relative',
-                              zIndex: 10000
+                              fontWeight: 'bold'
                             }}
                           >
                             +7 DIAS
