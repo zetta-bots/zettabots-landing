@@ -223,6 +223,65 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: 'Error fetching media' });
         }
 
+      case 'get-admin-stats': {
+        try {
+          const { email: adminEmail } = req.body;
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+
+          const profRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?select=id,email,full_name,plan_type,is_active,plan_expires_at,mercadopago_subscription_id&order=created_at.desc`,
+            { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
+          );
+          const clients = await profRes.json() || [];
+
+          const PLAN_MRR = { start: 127, pro: 247, enterprise: 997, trial: 0, blocked: 0, pago: 247 };
+          const now = new Date();
+          const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+          const active   = clients.filter(p => p.is_active && !['trial','blocked'].includes(p.plan_type));
+          const trial    = clients.filter(p => p.plan_type === 'trial');
+          const blocked  = clients.filter(p => p.plan_type === 'blocked' || !p.is_active);
+          const expiring = clients.filter(p => {
+            if (!p.plan_expires_at || !p.is_active) return false;
+            const d = new Date(p.plan_expires_at);
+            return d > now && d <= in7;
+          });
+          const mrr = active.reduce((s, p) => s + (PLAN_MRR[p.plan_type] || 0), 0);
+
+          return res.status(200).json({
+            success: true,
+            mrr,
+            totalClients: clients.length,
+            totalActive:  active.length,
+            totalTrial:   trial.length,
+            totalBlocked: blocked.length,
+            expiringSoon: expiring,
+            clients,
+          });
+        } catch (e) {
+          return res.status(500).json({ error: 'Admin stats error' });
+        }
+      }
+
+      case 'admin-extend': {
+        try {
+          const { email: adminEmail, targetEmail, days = 30 } = req.body;
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+          const newExpiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+          await fetch(
+            `${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}`,
+            {
+              method: 'PATCH',
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({ plan_expires_at: newExpiry, is_active: true, plan_type: 'trial' }),
+            }
+          );
+          return res.status(200).json({ success: true });
+        } catch (e) {
+          return res.status(500).json({ error: 'Extend error' });
+        }
+      }
+
       case 'get-all-instances':
         try {
           const { email } = req.body;
