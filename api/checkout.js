@@ -74,11 +74,11 @@ export default async function handler(req, res) {
             }
           ],
           external_reference: recordId,
-          notification_url: 'https://zettabots-landing.vercel.app/api/webhook-billing',
+          notification_url: 'https://zettabots.ia.br/api/webhook-billing',
           back_urls: {
-            success: 'https://zettabots-landing.vercel.app/dashboard',
-            failure: 'https://zettabots-landing.vercel.app/dashboard',
-            pending: 'https://zettabots-landing.vercel.app/dashboard'
+            success: 'https://zettabots.ia.br/dashboard',
+            failure: 'https://zettabots.ia.br/dashboard',
+            pending: 'https://zettabots.ia.br/dashboard'
           },
           auto_return: 'approved'
         })
