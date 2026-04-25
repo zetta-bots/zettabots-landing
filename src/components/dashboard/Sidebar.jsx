@@ -70,6 +70,30 @@ const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout }) => {
             <span className="icon">👑</span> Painel Admin
           </button>
         )}
+        <div style={{ marginTop: '2rem', padding: '0 1rem' }}>
+          <button 
+            className={`nav-item emergency-btn ${isGlobalPaused ? 'active' : ''}`} 
+            onClick={handleGlobalEmergency}
+            style={{ 
+              width: '100%', 
+              background: isGlobalPaused ? '#ef4444' : 'rgba(239, 68, 68, 0.1)', 
+              color: isGlobalPaused ? '#fff' : '#ef4444', 
+              border: isGlobalPaused ? 'none' : '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '12px',
+              padding: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              transition: 'all 0.3s ease',
+              boxShadow: isGlobalPaused ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none'
+            }}
+          >
+            <span className="icon">{isGlobalPaused ? '🚨' : '🆘'}</span>
+            {isGlobalPaused ? 'MODO PÂNICO ATIVO' : 'BOTÃO DE EMERGÊNCIA'}
+          </button>
+        </div>
       </nav>
       <div className="sidebar-footer">
         <button className="logout-btn" onClick={handleLogout}>

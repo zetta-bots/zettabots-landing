@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [adminPlanFilter, setAdminPlanFilter] = useState('all')
   const [adminExtending, setAdminExtending] = useState(null)
   const [knowledgeFiles, setKnowledgeFiles] = useState([])
+  const [isGlobalPaused, setIsGlobalPaused] = useState(false)
   const navigate = useNavigate()
 
   const showToast = (message, type = 'info') => {
@@ -263,6 +264,33 @@ export default function Dashboard() {
     }
   }
 
+  const handleGlobalEmergency = async () => {
+    const nextState = !isGlobalPaused;
+    setIsGlobalPaused(nextState);
+    showToast(nextState ? '🚨 ATIVANDO MODO DE EMERGÊNCIA...' : '✅ Desativando modo de emergência...', 'warning');
+    
+    // Aqui no futuro chamaremos um endpoint que pausa TODAS as instâncias do usuário de uma vez
+    try {
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'global-kill-switch',
+          email: session.email,
+          enabled: !nextState
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(nextState ? 'BOTS PAUSADOS EM TODA A REDE.' : 'Operação normal restabelecida.', 'success');
+        // Se pausou global, pausa a instância atual localmente para refletir na UI
+        if (nextState) setIsAIPaused(true);
+      }
+    } catch (err) {
+      console.error('Erro no Kill Switch:', err);
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('zb_session')
     navigate('/login')
@@ -353,7 +381,9 @@ export default function Dashboard() {
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         isAdmin={isAdmin} 
-        handleLogout={handleLogout} 
+        handleLogout={handleLogout}
+        isGlobalPaused={isGlobalPaused}
+        handleGlobalEmergency={handleGlobalEmergency}
       />
 
       <main className="dashboard-main">

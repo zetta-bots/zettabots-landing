@@ -87,7 +87,13 @@ const AIConfigPanel = ({
               Comportamento
             </button>
             <button 
-              onClick={() => setActiveSubTab('knowledge')}
+              onClick={() => {
+                if (currentPlan === 'start') {
+                  showToast('O plano START não inclui Base de Conhecimento. Faça upgrade para o PRO!', 'error');
+                } else {
+                  setActiveSubTab('knowledge');
+                }
+              }}
               style={{ 
                 padding: '8px 16px', 
                 borderRadius: '8px', 
@@ -96,11 +102,12 @@ const AIConfigPanel = ({
                 fontWeight: 600, 
                 cursor: 'pointer',
                 background: activeSubTab === 'knowledge' ? 'var(--color-primary)' : 'transparent',
-                color: activeSubTab === 'knowledge' ? '#fff' : 'var(--color-text-muted)',
-                transition: 'all 0.2s'
+                color: activeSubTab === 'knowledge' ? '#fff' : (currentPlan === 'start' ? '#444' : 'var(--color-text-muted)'),
+                transition: 'all 0.2s',
+                opacity: currentPlan === 'start' ? 0.6 : 1
               }}
             >
-              Conhecimento
+              Conhecimento {currentPlan === 'start' && '🔒'}
             </button>
           </div>
         </div>
