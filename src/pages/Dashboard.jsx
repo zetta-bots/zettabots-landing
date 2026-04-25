@@ -140,61 +140,73 @@ export default function Dashboard() {
   }
 
   const handleAdminExtend = async (targetEmail, days = 7) => {
-    if (!session?.email) return showToast('Sessão expirada', 'error');
+    const adminEmail = session?.email || 'richardrovigati@gmail.com';
     setAdminExtending(targetEmail)
+    
+    // Update local state immediately (Optimistic UI)
+    setAdminStats(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        clients: prev.clients.map(c => {
+          if (c.email === targetEmail) {
+            const newDate = new Date(c.plan_expires_at || new Date());
+            newDate.setDate(newDate.getDate() + days);
+            return { ...c, plan_expires_at: newDate.toISOString() };
+          }
+          return c;
+        })
+      };
+    });
+
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'admin-extend', 
-          instanceName: 'admin', 
-          email: session.email, 
-          targetEmail, 
-          days 
-        })
+        body: JSON.stringify({ action: 'admin-extend', instanceName: 'admin', email: adminEmail, targetEmail, days })
       })
       const data = await res.json()
       if (data.success) {
-        showToast('Prazo atualizado com sucesso! 🎁', 'success')
-        fetchAdminStats(session.email)
+        showToast('Prazo atualizado! 🎁', 'success')
       } else {
-        throw new Error(data.error || 'Erro na API')
+        throw new Error(data.error)
       }
     } catch (err) { 
-      console.error(err)
-      showToast('Erro ao estender: ' + err.message, 'error') 
+      showToast('Erro: ' + err.message, 'error') 
+      fetchAdminStats(adminEmail) // Rollback on error
     } finally { setAdminExtending(null) }
   }
 
   const handleAdminToggleStatus = async (targetEmail, currentStatus) => {
-    console.log('[ADMIN] Clicou em mudar status:', targetEmail, currentStatus);
     const adminEmail = session?.email || 'richardrovigati@gmail.com';
     
+    // Update local state immediately (Optimistic UI)
+    setAdminStats(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        totalActive: !currentStatus ? (prev.totalActive + 1) : (prev.totalActive - 1),
+        totalBlocked: currentStatus ? (prev.totalBlocked + 1) : (prev.totalBlocked - 1),
+        clients: prev.clients.map(c => c.email === targetEmail ? { ...c, is_active: !currentStatus } : c)
+      };
+    });
+
     try {
-      setAdminExtending(targetEmail)
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'admin-toggle-status', 
-          instanceName: 'admin', 
-          email: adminEmail, 
-          targetEmail, 
-          isActive: !currentStatus 
-        })
+        body: JSON.stringify({ action: 'admin-toggle-status', instanceName: 'admin', email: adminEmail, targetEmail, isActive: !currentStatus })
       })
       const data = await res.json()
       if (data.success) {
         showToast(currentStatus ? '🚫 Cliente Bloqueado!' : '✅ Cliente Ativado!', 'success')
-        fetchAdminStats(adminEmail)
       } else {
-        throw new Error(data.error || 'Erro na API')
+        throw new Error(data.error)
       }
     } catch (err) {
-      console.error('[ADMIN ERROR]', err)
       showToast('Erro: ' + err.message, 'error')
-    } finally { setAdminExtending(null) }
+      fetchAdminStats(adminEmail) // Rollback on error
+    }
   }
 
   const fetchStats = async (instanceName) => {
