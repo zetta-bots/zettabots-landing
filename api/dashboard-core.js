@@ -12,7 +12,6 @@ export default async function handler(req, res) {
   try {
     const fetchOptions = { headers: { 'apikey': key, 'Content-Type': 'application/json' }, timeout: 8000 };
 
-    // Função Sênior para achar a instância correta (evita erro de atlasdafe vs Atlas da Fé)
     const getCorrectInstance = async (name) => {
       try {
         const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
@@ -36,7 +35,6 @@ export default async function handler(req, res) {
             pago:       { label: 'Pro',         value: 'R$ 247,00' },
           };
 
-          // Busca em profiles (tem plan_type e plan_expires_at)
           let profileData = null;
           if (email) {
             const pRes = await fetch(
@@ -98,7 +96,6 @@ export default async function handler(req, res) {
       case 'get-leads':
         try {
           const realName = await getCorrectInstance(instanceName);
-          // Tenta buscar contatos reais da Evolution primeiro (Alta Fidelidade)
           const contactRes = await fetch(`${url}/contact/fetchContacts?instanceName=${realName}`, fetchOptions);
           const contactData = await contactRes.json();
           const contacts = Array.isArray(contactData) ? contactData : (contactData.data || []);
@@ -116,7 +113,6 @@ export default async function handler(req, res) {
           }
           throw new Error('No contacts in Evolution');
         } catch (e) {
-          // Fallback para o Supabase se a Evolution falhar
           const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id`, {
              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
           });
@@ -207,22 +203,6 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, messages: [] });
         }
 
-      case 'get-media':
-        try {
-          const { messageId } = req.body;
-          if (!messageId) return res.status(400).json({ error: 'Missing params' });
-          const resMedia = await fetch(`${url}/chat/getBase64FromMediaMessage/${instanceName}`, {
-            method: 'POST',
-            headers: fetchOptions.headers,
-            body: JSON.stringify({ message: { key: { id: messageId } } })
-          });
-          if (!resMedia.ok) throw new Error('Failed to fetch from Evolution');
-          const data = await resMedia.json();
-          return res.status(200).json({ success: true, base64: data.base64, mimetype: data.mimetype });
-        } catch (error) {
-          return res.status(500).json({ error: 'Error fetching media' });
-        }
-
       case 'get-admin-stats': {
         try {
           const { email: adminEmail } = req.body;
@@ -265,15 +245,22 @@ export default async function handler(req, res) {
 
       case 'admin-extend': {
         try {
-          const { email: adminEmail, targetEmail, days = 30 } = req.body;
+          const { email: adminEmail, targetEmail, days = 7 } = req.body;
           if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
-          const newExpiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+          
+          const pRes = await fetch(`${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}&select=plan_expires_at`, {
+             headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+          });
+          const pArr = await pRes.json();
+          const currentExp = pArr?.[0]?.plan_expires_at ? new Date(pArr[0].plan_expires_at) : new Date();
+          const newExp = new Date(currentExp.getTime() + (days * 24 * 60 * 60 * 1000)).toISOString();
+
           await fetch(
             `${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}`,
             {
               method: 'PATCH',
               headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-              body: JSON.stringify({ plan_expires_at: newExpiry, is_active: true, plan_type: 'trial' }),
+              body: JSON.stringify({ plan_expires_at: newExp, is_active: true }),
             }
           );
           return res.status(200).json({ success: true });
@@ -282,12 +269,29 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'admin-toggle-status': {
+        try {
+          const { email: adminEmail, targetEmail, isActive } = req.body;
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+
+          await fetch(
+            `${sbUrl}/rest/v1/profiles?email=eq.${encodeURIComponent(targetEmail)}`,
+            {
+              method: 'PATCH',
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({ is_active: isActive }),
+            }
+          );
+          return res.status(200).json({ success: true });
+        } catch (e) {
+          return res.status(500).json({ error: 'Toggle status error' });
+        }
+      }
+
       case 'get-all-instances':
         try {
           const { email } = req.body;
-          if (email !== 'richardrovigati@gmail.com' && instanceName !== '5521969875522') {
-            return res.status(403).json({ error: 'Acesso negado' });
-          }
+          if (email !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
 
           const allRes = await fetch(`${sbUrl}/rest/v1/instances?select=*&order=created_at.desc`, {
             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
@@ -321,6 +325,6 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid action' });
     }
   } catch (e) {
-    return res.status(500).json({ error: 'Server Down' });
+    return res.status(500).json({ error: 'Server Error' });
   }
 }

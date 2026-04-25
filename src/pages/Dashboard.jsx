@@ -49,9 +49,51 @@ export default function Dashboard() {
   const [adminPlanFilter, setAdminPlanFilter] = useState('all')
   const [adminExtending, setAdminExtending] = useState(null)
   const [knowledgeFiles, setKnowledgeFiles] = useState([])
-  const [isGlobalPaused, setIsGlobalPaused] = useState(false)
   const [notifications, setNotifications] = useState([])
+  const [isGlobalPaused, setIsGlobalPaused] = useState(false)
+
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const zbSession = localStorage.getItem('zb_session')
+    if (!zbSession) {
+      navigate('/login')
+      return
+    }
+    const parsed = JSON.parse(zbSession)
+    setSession(parsed)
+    setSelectedInstance(parsed.instanceName)
+    setPrompt(parsed.systemPrompt?.replace(/\[SISTEMA - SILÊNCIO TOTAL\][\s\S]*?Fim\.\n\n/, '') || '')
+    setWebhookUrl(parsed.webhookUrl || '')
+    setNotificationEmail(parsed.notificationEmail || '')
+    setIsAdmin(parsed.email === 'richardrovigati@gmail.com')
+    
+    // Inicia carregamento
+    fetchStats(parsed.instanceName)
+    fetchFinance(parsed.instanceName)
+    fetchKnowledgeBase()
+    fetchNotifications()
+    
+    if (parsed.email === 'richardrovigati@gmail.com') {
+      fetchAdminStats()
+      fetchAllInstances()
+    }
+
+    setLoadingData(false)
+  }, [navigate])
+
+  // Polling para atualizar status de arquivos e notificações
+  useEffect(() => {
+    const hasProcessingFiles = knowledgeFiles.some(f => f.status === 'processing');
+    
+    if (hasProcessingFiles) {
+      const interval = setInterval(() => {
+        fetchKnowledgeBase();
+        fetchNotifications();
+      }, 5000); // Atualiza a cada 5 segundos se houver algo treinando
+      return () => clearInterval(interval);
+    }
+  }, [knowledgeFiles]);
 
   const showToast = (message, type = 'info') => {
     const id = Date.now()
@@ -60,43 +102,11 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    const savedSession = localStorage.getItem('zb_session')
-    if (!savedSession) {
-      navigate('/login')
-      return
-    }
-    
-    const parsed = JSON.parse(savedSession)
-    setSession(parsed)
-    
-    if (parsed.email === 'richardrovigati@gmail.com' || parsed.phone === '5521969875522') {
-      setIsAdmin(true)
-    }
-
-    let p = parsed.systemPrompt || ''
-    // Lógica robusta para esconder cabeçalhos [SISTEMA]
-    const cleanP = p.replace(/\[SISTEMA.*?\][\s\S]*?Fim\./g, '').trim()
-    setPrompt(cleanP || p)
-    
-    setWebhookUrl(parsed.webhookUrl || '')
-    setNotificationEmail(parsed.notificationEmail || parsed.email || '')
-    setInstances([{ name: parsed.instanceName || parsed.phone, label: 'Instância Principal' }])
-    setSelectedInstance(parsed.instanceName || parsed.phone)
-    fetchKnowledgeBase(parsed.email)
-    fetchNotifications()
-    setLoadingData(false)
-  }, [navigate])
-
-  useEffect(() => {
-    if (selectedInstance) {
-      fetchStats(selectedInstance)
-      if (activeTab === 'mensagens') fetchChats(selectedInstance)
-      if (activeTab === 'leads') fetchLeads(selectedInstance)
-      if (activeTab === 'financeiro') fetchFinance(selectedInstance)
-      if (activeTab === 'conexao' || activeTab === 'status') fetchQrCode(selectedInstance)
-      if (activeTab === 'admin' && isAdmin) { fetchAllInstances(); fetchAdminStats(); }
-    }
-    setMobileMenuOpen(false)
+    if (activeTab === 'status' && selectedInstance) fetchStats(selectedInstance)
+    if (activeTab === 'conexao' && selectedInstance) fetchQrCode(selectedInstance)
+    if (activeTab === 'mensagens' && selectedInstance) fetchChats(selectedInstance)
+    if (activeTab === 'financeiro' && selectedInstance) fetchFinance(selectedInstance)
+    if (activeTab === 'leads' && selectedInstance) fetchLeads(selectedInstance)
   }, [activeTab, selectedInstance])
 
   const fetchAllInstances = async () => {
@@ -123,7 +133,7 @@ export default function Dashboard() {
     } catch (err) { console.error('ADMIN STATS:', err) }
   }
 
-  const handleAdminExtend = async (targetEmail, days = 30) => {
+  const handleAdminExtend = async (targetEmail, days = 7) => {
     setAdminExtending(targetEmail)
     try {
       await fetch('/api/dashboard-core', {
@@ -137,15 +147,20 @@ export default function Dashboard() {
     finally { setAdminExtending(null) }
   }
 
-  const handleAdminToggleStatus = async (email, currentStatus) => {
+  const handleAdminToggleStatus = async (targetEmail, currentStatus) => {
     try {
-      setAdminExtending(email) // Reuso o loading de extending
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_active: !currentStatus })
-        .eq('email', email)
-      
-      if (error) throw error
+      setAdminExtending(targetEmail)
+      await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'admin-toggle-status', 
+          instanceName: selectedInstance, 
+          email: session?.email, 
+          targetEmail, 
+          isActive: !currentStatus 
+        })
+      })
       showToast(currentStatus ? 'Cliente Bloqueado!' : 'Cliente Ativado!', 'success')
       fetchAdminStats()
     } catch (err) {
@@ -290,7 +305,6 @@ export default function Dashboard() {
     setIsGlobalPaused(nextState);
     showToast(nextState ? '🚨 ATIVANDO MODO DE EMERGÊNCIA...' : '✅ Desativando modo de emergência...', 'warning');
     
-    // Aqui no futuro chamaremos um endpoint que pausa TODAS as instâncias do usuário de uma vez
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -298,21 +312,22 @@ export default function Dashboard() {
         body: JSON.stringify({ 
           action: 'global-kill-switch',
           email: session.email,
-          enabled: !nextState
+          instanceName: selectedInstance,
+          enabled: nextState
         })
       });
       const data = await res.json();
-      if (data.success) {
-        showToast(nextState ? 'BOTS PAUSADOS EM TODA A REDE.' : 'Operação normal restabelecida.', 'success');
-        // Se pausou global, pausa a instância atual localmente para refletir na UI
-        if (nextState) setIsAIPaused(true);
+      if (!data.success) {
+        setIsGlobalPaused(!nextState);
+        showToast('Erro ao ativar emergência', 'error');
       }
     } catch (err) {
-      console.error('Erro no Kill Switch:', err);
+      setIsGlobalPaused(!nextState);
+      showToast('Erro de conexão', 'error');
     }
   }
 
-  const fetchKnowledgeBase = async (email) => {
+  const fetchKnowledgeBase = async () => {
     try {
       const { data, error } = await supabase
         .from('knowledge_base')
@@ -320,89 +335,14 @@ export default function Dashboard() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setKnowledgeFiles(data || []);
+      setKnowledgeBaseFiles(data || []);
     } catch (err) {
       console.error('Erro ao buscar base de conhecimento:', err);
     }
   }
 
-  const handleRefreshData = () => {
-    fetchKnowledgeBase();
-    fetchNotifications();
-    showToast('Dados atualizados!', 'success');
-  }
-
-  const handleUploadKnowledge = async (file) => {
-    if (!session) return;
-    setSaving(true);
-    
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = `${session.email}/${fileName}`;
-
-      // 1. Upload para o Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('knowledge_base')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.error('Erro no Supabase Storage:', uploadError);
-        throw new Error(`Storage: ${uploadError.message}`);
-      }
-
-      // 2. Inserir metadados na tabela
-      const { data, error: dbError } = await supabase
-        .from('knowledge_base')
-        .insert([{
-          user_id: session.id || session.user_id, // Suporte a diferentes formatos de session
-          instance_name: selectedInstance,
-          file_name: file.name,
-          file_path: filePath,
-          file_size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-          status: 'processing'
-        }])
-        .select();
-
-      if (dbError) {
-        console.error('Erro no Supabase Database:', dbError);
-        throw new Error(`Database: ${dbError.message}`);
-      }
-
-      setKnowledgeFiles(prev => [data[0], ...prev]);
-      showToast('Arquivo enviado! O treinamento começará em instantes. 🧠', 'success');
-      
-      // 3. Opcional: Chamar webhook n8n manualmente se não usar DB Triggers
-      // fetch('WEBHOOK_N8N_AQUI', { method: 'POST', body: JSON.stringify(data[0]) });
-
-    } catch (err) {
-      console.error('Erro detalhado no upload:', err);
-      showToast(`Erro: ${err.message}`, 'error');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const handleDeleteKnowledge = async (id, filePath) => {
-    try {
-      const { error: storageError } = await supabase.storage
-        .from('knowledge_base')
-        .remove([filePath]);
-      
-      if (storageError) console.warn('Erro ao remover do storage, continuando...', storageError);
-
-      const { error: dbError } = await supabase
-        .from('knowledge_base')
-        .delete()
-        .eq('id', id);
-
-      if (dbError) throw dbError;
-
-      setKnowledgeFiles(prev => prev.filter(f => f.id !== id));
-      showToast('Arquivo removido da base de conhecimento.', 'info');
-    } catch (err) {
-      showToast('Erro ao remover arquivo.', 'error');
-    }
+  const setKnowledgeBaseFiles = (files) => {
+    setKnowledgeFiles(files);
   }
 
   const fetchNotifications = async () => {
@@ -505,6 +445,60 @@ export default function Dashboard() {
     } catch (err) {
       showToast('⚠️ Erro ao salvar integrações', 'error')
     } finally { setSaving(false) }
+  }
+
+  const handleRefreshData = () => {
+    fetchKnowledgeBase();
+    fetchNotifications();
+    showToast('Dados atualizados!', 'success');
+  }
+
+  const handleUploadKnowledge = async (file) => {
+    if (!session) return;
+    setSaving(true);
+    try {
+      const fileName = `${Date.now()}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('knowledge_base')
+        .upload(`${session.id}/${fileName}`, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: dbError } = await supabase
+        .from('knowledge_base')
+        .insert([{
+          user_id: session.id || session.user_id,
+          file_name: file.name,
+          file_path: uploadData.path,
+          file_size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+          status: 'processing'
+        }]);
+
+      if (dbError) throw dbError;
+
+      showToast('Arquivo enviado! Treinando IA...', 'success');
+      fetchKnowledgeBase();
+    } catch (err) {
+      showToast('Erro no upload: ' + err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const handleDeleteKnowledge = async (id, filePath) => {
+    if (!window.confirm('Excluir este conhecimento?')) return;
+    try {
+      await supabase.storage.from('knowledge_base').remove([filePath]);
+      await supabase.from('knowledge_base').delete().eq('id', id);
+      showToast('Conhecimento removido!', 'info');
+      fetchKnowledgeBase();
+    } catch (err) {
+      showToast('Erro ao excluir', 'error');
+    }
+  }
+
+  const handleAdminExtendUser = async (email, days) => {
+    await handleAdminExtend(email, days)
   }
 
   if (!session) return null
