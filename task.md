@@ -52,6 +52,7 @@
 | S1-10d | `[x]` | View `admin_overview` |
 | S1-10e | `[x]` | Migration 001 rodada ✅ |
 | S1-10f | `[x]` | Migration 003 — coluna `email` em `profiles` ✅ |
+| S1-10g | `[x]` | Migration 007 — tabela `sessions` (substitui Redis no workflow) ✅ |
 
 ### 1.2 — Mercado Pago (Planos)
 | # | Status | Task | Observação |
