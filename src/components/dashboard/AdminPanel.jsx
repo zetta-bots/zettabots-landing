@@ -305,46 +305,56 @@ const AdminPanel = ({
                         </div>
                       </td>
                       <td style={{ padding: '1rem', borderRadius: '0 12px 12px 0' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', position: 'relative', zIndex: 9999 }}>
                           <button
-                            onClick={() => handleAdminToggleStatus(c.email, c.is_active)}
+                            onClick={() => {
+                              window.alert('Botão Bloquear clicado para: ' + c.email);
+                              handleAdminToggleStatus(c.email, c.is_active);
+                            }}
                             disabled={adminExtending === c.email}
                             title={c.is_active ? "Bloquear Acesso" : "Desbloquear Acesso"}
                             style={{ 
-                              background: c.is_active ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+                              background: c.is_active ? '#ef4444' : '#10b981', 
                               border: 'none', 
-                              color: c.is_active ? '#ef4444' : '#10b981', 
-                              padding: '8px', 
+                              color: '#fff', 
+                              padding: '8px 12px', 
                               borderRadius: '10px', 
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              width: '35px',
-                              height: '35px'
+                              fontSize: '0.65rem',
+                              fontWeight: 'bold',
+                              position: 'relative',
+                              zIndex: 10000
                             }}
                           >
-                            {c.is_active ? '⏸️' : '▶️'}
+                            {c.is_active ? 'BLOQUEAR' : 'ATIVAR'}
                           </button>
                           <button
-                            onClick={() => handleAdminExtend(c.email, 7)}
+                            onClick={() => {
+                              window.alert('Botão Presente clicado para: ' + c.email);
+                              handleAdminExtend(c.email, 7);
+                            }}
                             disabled={adminExtending === c.email}
                             title="Presentear com 7 dias"
                             style={{ 
-                              background: 'rgba(245, 158, 11, 0.1)', 
+                              background: '#f59e0b', 
                               border: 'none', 
-                              color: '#f59e0b', 
-                              padding: '8px', 
+                              color: '#fff', 
+                              padding: '8px 12px', 
                               borderRadius: '10px', 
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              width: '35px',
-                              height: '35px'
+                              fontSize: '0.65rem',
+                              fontWeight: 'bold',
+                              position: 'relative',
+                              zIndex: 10000
                             }}
                           >
-                            🎁
+                            +7 DIAS
                           </button>
                         </div>
                       </td>
