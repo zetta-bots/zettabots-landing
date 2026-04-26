@@ -152,8 +152,14 @@ export default function Dashboard() {
           window.open(data.url, '_blank')
           showToast('Checkout aberto em nova aba!', 'success')
         } else {
-          setCheckoutPix(data.payment.point_of_interaction.transaction_data)
-          showToast('Pix gerado com sucesso!', 'success')
+          const pixData = data.payment?.point_of_interaction?.transaction_data
+          if (pixData) {
+            setCheckoutPix(pixData)
+            showToast('Pix gerado com sucesso!', 'success')
+          } else {
+            showToast('Erro: Dados do Pix não encontrados na resposta', 'error')
+            console.error('Pix data missing:', data.payment)
+          }
         }
       } else {
         showToast('Erro: ' + (data.error || 'Falha ao gerar cobrança'), 'error')

@@ -166,53 +166,67 @@ export default async function handler(req, res) {
 
     switch (action) {
       case 'create-payment': {
-        if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
-        const { Payment } = require('mercadopago');
-        const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
-        const payment = await new Payment(client).create({
-          body: {
-            transaction_amount: planPrice,
-            description: `Assinatura ZettaBots ${planLabel} (30 dias)`,
-            payment_method_id: 'pix',
-            payer: {
-              email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br',
-              first_name: name || 'Cliente ZettaBots'
-            },
-            external_reference: String(recordId),
-            metadata: {
-              plan_type: planLabel.toLowerCase()
+        try {
+          if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
+          if (!process.env.MERCADOPAGO_ACCESS_TOKEN) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
+
+          const { Payment } = require('mercadopago');
+          const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+          const payment = await new Payment(client).create({
+            body: {
+              transaction_amount: planPrice,
+              description: `Assinatura ZettaBots ${planLabel} (30 dias)`,
+              payment_method_id: 'pix',
+              payer: {
+                email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br',
+                first_name: name || 'Cliente ZettaBots'
+              },
+              external_reference: String(recordId),
+              metadata: {
+                plan_type: planLabel.toLowerCase()
+              }
             }
-          }
-        });
-        return res.status(200).json({ success: true, payment });
+          });
+          return res.status(200).json({ success: true, payment });
+        } catch (mpErr) {
+          console.error('[create-payment] Mercado Pago Error:', mpErr.message);
+          return res.status(500).json({ error: `Erro ao gerar Pix: ${mpErr.message}` });
+        }
       }
       case 'create-checkout': {
-        if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
-        const { Preference } = require('mercadopago');
-        const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
-        const preference = await new Preference(client).create({
-          body: {
-            items: [
-              {
-                title: `Assinatura ZettaBots ${planLabel} (30 dias)`,
-                quantity: 1,
-                unit_price: planPrice,
-                currency_id: 'BRL'
-              }
-            ],
-            payer: {
-              email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br'
-            },
-            external_reference: String(recordId),
-            back_urls: {
-              success: 'https://zettabots.com.br/dashboard?status=success',
-              failure: 'https://zettabots.com.br/dashboard?status=failure',
-              pending: 'https://zettabots.com.br/dashboard?status=pending'
-            },
-            auto_return: 'approved'
-          }
-        });
-        return res.status(200).json({ success: true, url: preference.init_point });
+        try {
+          if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
+          if (!process.env.MERCADOPAGO_ACCESS_TOKEN) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
+
+          const { Preference } = require('mercadopago');
+          const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+          const preference = await new Preference(client).create({
+            body: {
+              items: [
+                {
+                  title: `Assinatura ZettaBots ${planLabel} (30 dias)`,
+                  quantity: 1,
+                  unit_price: planPrice,
+                  currency_id: 'BRL'
+                }
+              ],
+              payer: {
+                email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br'
+              },
+              external_reference: String(recordId),
+              back_urls: {
+                success: 'https://zettabots.com.br/dashboard?status=success',
+                failure: 'https://zettabots.com.br/dashboard?status=failure',
+                pending: 'https://zettabots.com.br/dashboard?status=pending'
+              },
+              auto_return: 'approved'
+            }
+          });
+          return res.status(200).json({ success: true, url: preference.init_point });
+        } catch (mpErr) {
+          console.error('[create-checkout] Mercado Pago Error:', mpErr.message);
+          return res.status(500).json({ error: `Erro ao gerar checkout: ${mpErr.message}` });
+        }
       }
       case 'get-finance':
         try {
@@ -984,6 +998,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid action' });
     }
   } catch (e) {
-    return res.status(500).json({ error: 'Server Error' });
+    console.error('[dashboard-core] Unhandled error:', e.message, e.stack);
+    return res.status(500).json({ error: `Server Error: ${e.message}` });
   }
 }
