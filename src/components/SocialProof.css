@@ -47,7 +47,7 @@
 
 @media (max-width: 768px) {
   .social-proof-toast {
-    bottom: 20px;
+    bottom: 100px;
     left: 20px;
     right: 20px;
     max-width: none;
