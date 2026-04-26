@@ -423,7 +423,10 @@ export default async function handler(req, res) {
             if (r.ok) {
               const d = await r.json();
               console.log(`[get-messages] Strategy 1 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
-              raw = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+              if (d && d.messages) {
+                console.log(`[get-messages] Strategy 1 d.messages type: ${typeof d.messages}, isArray: ${Array.isArray(d.messages)}, value: ${JSON.stringify(d.messages).substring(0, 200)}`);
+              }
+              raw = Array.isArray(d) ? d : (d && d.messages ? (Array.isArray(d.messages) ? d.messages : []) : (d && d.data ? d.data : []));
               console.log(`[get-messages] Strategy 1 extracted ${raw.length} messages`);
             }
           } catch (e1) {
