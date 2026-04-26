@@ -489,37 +489,6 @@ export default function Dashboard() {
     navigate('/login')
   }
 
-  const handleGeneratePix = async (method = 'pix') => {
-    try {
-      setCheckoutLoading(true)
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          recordId: session.recordId || session.id, 
-          email: session.email, 
-          name: session.name,
-          payment_method: method,
-          instanceName: selectedInstance
-        })
-      })
-      const data = await res.json()
-      if (data.success) {
-        if (method === 'pix') {
-          setCheckoutPix(data)
-        } else if (data.init_point) {
-          window.open(data.init_point, '_blank')
-          setShowSubModal(false)
-        }
-      } else {
-        showToast('Erro: ' + (data.error || 'Falha ao gerar cobrança'), 'error')
-      }
-    } catch (err) {
-      showToast('Erro de conexão: ' + err.message, 'error')
-    } finally {
-      setCheckoutLoading(false)
-    }
-  }
 
   const handleSavePrompt = async () => {
     setSaving(true)
