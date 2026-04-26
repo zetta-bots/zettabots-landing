@@ -170,8 +170,9 @@ export default async function handler(req, res) {
           if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
           if (!process.env.MERCADOPAGO_ACCESS_TOKEN) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
 
-          const { Payment } = require('mercadopago');
-          const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+          const mpModule = await import('mercadopago');
+          const { Payment, MercadoPagoConfig } = mpModule;
+          const client = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
           const payment = await new Payment(client).create({
             body: {
               transaction_amount: planPrice,
@@ -198,8 +199,9 @@ export default async function handler(req, res) {
           if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
           if (!process.env.MERCADOPAGO_ACCESS_TOKEN) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
 
-          const { Preference } = require('mercadopago');
-          const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+          const mpModule = await import('mercadopago');
+          const { Preference, MercadoPagoConfig } = mpModule;
+          const client = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
           const preference = await new Preference(client).create({
             body: {
               items: [
