@@ -90,7 +90,7 @@ const ChatMonitorPanel = ({
                 key={i}
                 onClick={() => {
                   setSelectedChat(chat);
-                  fetchChatMessages(chat.id);
+                  fetchChatMessages(chat.remoteJid || chat.id);
                 }}
               >
                 <div className="chat-item-header">

@@ -384,7 +384,8 @@ export default async function handler(req, res) {
             success: true,
             chats: raw.slice(0, 20).map(c => ({
               id: c.id || c.remoteJid,
-              user: c.name || c.pushName || (c.id ? c.id.split('@')[0] : 'Cliente'),
+              remoteJid: c.remoteJid || c.id,
+              user: c.name || c.pushName || (c.remoteJid ? c.remoteJid.split('@')[0] : (c.id ? c.id.split('@')[0] : 'Cliente')),
               lastMsg: c.lastMsg || 'Monitorado via IA',
               time: 'Ativo'
             }))
