@@ -26,20 +26,35 @@ const MediaMessage = ({ msg, instanceName }) => {
 };
 
 const SkeletonChatLoader = () => (
-  <div style={{ padding: '0.5rem' }}>
-    {[1, 2, 3].map(i => (
-      <div
-        key={i}
-        style={{
-          padding: '1rem',
-          marginBottom: '0.5rem',
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '8px',
-          animation: 'pulse 2s infinite',
-          height: '70px'
-        }}
-      />
+  <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    {[1, 2, 3, 4].map(i => (
+      <div key={i} style={{ 
+        padding: '1.25rem', 
+        background: 'rgba(255,255,255,0.02)', 
+        borderRadius: '16px',
+        border: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}>
+        <div className="skeleton skeleton-title" style={{ width: '40%' }}></div>
+        <div className="skeleton skeleton-text" style={{ width: '90%' }}></div>
+      </div>
     ))}
+  </div>
+);
+
+const SkeletonMessageLoader = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem' }}>
+    <div style={{ alignSelf: 'flex-start', width: '60%' }}>
+      <div className="skeleton" style={{ height: '60px', borderRadius: '18px 18px 18px 4px', width: '100%' }}></div>
+    </div>
+    <div style={{ alignSelf: 'flex-end', width: '50%' }}>
+      <div className="skeleton" style={{ height: '40px', borderRadius: '18px 18px 4px 18px', width: '100%', background: 'rgba(124, 58, 237, 0.1)' }}></div>
+    </div>
+    <div style={{ alignSelf: 'flex-start', width: '40%' }}>
+      <div className="skeleton" style={{ height: '45px', borderRadius: '18px 18px 18px 4px', width: '100%' }}></div>
+    </div>
   </div>
 );
 
@@ -84,22 +99,23 @@ const ChatMonitorPanel = ({
           </div>
         ) : (
           <div className="conversations-scroll">
-            {chats.map((chat, i) => (
-              <div
-                className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
-                key={i}
-                onClick={() => {
-                  setSelectedChat(chat);
-                  fetchChatMessages(chat.remoteJid || chat.id);
-                }}
-              >
-                <div className="chat-item-header">
-                  <span className="chat-name">{chat.user}</span>
-                  <span className="chat-time">{chat.time}</span>
+              {chats.map((chat, i) => (
+                <div
+                  className={`chat-item reveal-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
+                  key={i}
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                  onClick={() => {
+                    setSelectedChat(chat);
+                    fetchChatMessages(chat.remoteJid || chat.id);
+                  }}
+                >
+                  <div className="chat-item-header">
+                    <span className="chat-name">{chat.user}</span>
+                    <span className="chat-time">{chat.time}</span>
+                  </div>
+                  <p className="chat-status">{chat.lastMsg}</p>
                 </div>
-                <p className="chat-status">{chat.lastMsg}</p>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </div>
@@ -118,23 +134,7 @@ const ChatMonitorPanel = ({
             </div>
             <div className="messages-container">
               {chatMessagesLoading ? (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  gap: '8px',
-                  color: '#a1a1aa'
-                }}>
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: '#7c3aed',
-                    animation: 'pulse 1.5s infinite'
-                  }} />
-                  <span style={{ fontSize: '0.9rem' }}>Carregando histórico...</span>
-                </div>
+                <SkeletonMessageLoader />
               ) : chatMessages.length === 0 ? (
                 <div className="chat-empty-state">
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>

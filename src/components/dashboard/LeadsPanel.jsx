@@ -1,7 +1,21 @@
 import React from 'react';
 
-const LeadsPanel = ({ leads, contactCount = 0, message = null }) => {
+const LeadsPanel = ({ leads, loading = false, contactCount = 0, message = null }) => {
   const hasLeads = leads && leads.length > 0;
+
+  const SkeletonRow = () => (
+    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+      <td style={{ padding: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="skeleton skeleton-avatar" style={{ width: '32px', height: '32px' }}></div>
+          <div className="skeleton skeleton-title" style={{ width: '100px', margin: 0 }}></div>
+        </div>
+      </td>
+      <td style={{ padding: '1rem' }}><div className="skeleton skeleton-text" style={{ width: '120px' }}></div></td>
+      <td style={{ padding: '1rem' }}><div className="skeleton skeleton-text" style={{ width: '80px' }}></div></td>
+      <td style={{ padding: '1rem' }}><div className="skeleton skeleton-text" style={{ width: '60px' }}></div></td>
+    </tr>
+  );
 
   return (
     <div className="tab-panel">
@@ -10,10 +24,10 @@ const LeadsPanel = ({ leads, contactCount = 0, message = null }) => {
           <div>
             <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Lista de Leads Capturados</h3>
             <p style={{ margin: '4px 0 0', color: '#a1a1aa', fontSize: '0.85rem' }}>
-              {hasLeads ? `${leads.length} lead${leads.length !== 1 ? 's' : ''} ativo${leads.length !== 1 ? 's' : ''}` : 'Nenhum lead ainda'}
+              {loading ? 'Sincronizando contatos...' : hasLeads ? `${leads.length} lead${leads.length !== 1 ? 's' : ''} ativo${leads.length !== 1 ? 's' : ''}` : 'Nenhum lead ainda'}
             </p>
           </div>
-          {contactCount > 0 && !hasLeads && (
+          {contactCount > 0 && !hasLeads && !loading && (
             <span style={{
               background: 'rgba(124, 58, 237, 0.1)',
               color: '#a78bfa',
@@ -27,7 +41,26 @@ const LeadsPanel = ({ leads, contactCount = 0, message = null }) => {
           )}
         </div>
 
-        {!hasLeads ? (
+        {loading ? (
+          <div style={{ marginTop: '1.5rem', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>NOME</th>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>WHATSAPP</th>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>STATUS</th>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>DATA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </tbody>
+            </table>
+          </div>
+        ) : !hasLeads ? (
           <div style={{
             padding: '3rem 2rem',
             textAlign: 'center',
@@ -96,7 +129,7 @@ const LeadsPanel = ({ leads, contactCount = 0, message = null }) => {
               </thead>
               <tbody>
                 {leads.map((lead, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', hover: 'background' }}>
+                  <tr key={i} className="reveal-item" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', animationDelay: `${i * 0.05}s` }}>
                     <td style={{ padding: '1rem', fontWeight: '600' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{

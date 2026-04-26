@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [chats, setChats] = useState([])
   const [chatsLoading, setChatsLoading] = useState(false)
   const [leads, setLeads] = useState([])
+  const [leadsLoading, setLeadsLoading] = useState(false)
   const [leadsContactCount, setLeadsContactCount] = useState(0)
   const [leadsMessage, setLeadsMessage] = useState(null)
   const [stats, setStats] = useState({ chats: 0, contacts: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] })
@@ -322,6 +323,7 @@ export default function Dashboard() {
   }
 
   const fetchLeads = async (instanceName) => {
+    setLeadsLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -330,11 +332,19 @@ export default function Dashboard() {
       })
       const data = await res.json()
       if (data.success) {
-        setLeads(data.contacts || [])
+        const newLeads = data.contacts || [];
+        if (newLeads.length > leads.length && leads.length > 0) {
+          showToast(`${newLeads.length - leads.length} novos leads sincronizados! 🚀`, 'success');
+        }
+        setLeads(newLeads)
         setLeadsContactCount(data.contactCount || data.totalContactsFromApi || 0)
         setLeadsMessage(data.message || null)
       }
-    } catch (err) { console.error('LEADS ERROR:', err) }
+    } catch (err) { 
+      console.error('LEADS ERROR:', err) 
+    } finally {
+      setLeadsLoading(false)
+    }
   }
 
   const handleToggleAI = async () => {
@@ -637,6 +647,7 @@ export default function Dashboard() {
         {activeTab === 'leads' && (
           <LeadsPanel
             leads={leads}
+            loading={leadsLoading}
             contactCount={leadsContactCount}
             message={leadsMessage}
           />

@@ -33,6 +33,38 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Skeleton Loader Animation */
+@keyframes skeleton-loading {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.05) 25%, 
+    rgba(255, 255, 255, 0.1) 37%, 
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+.skeleton-text { height: 10px; width: 100%; margin: 4px 0; }
+.skeleton-title { height: 16px; width: 60%; margin-bottom: 8px; }
+.skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
+
+/* Smooth Reveal Animation */
+.reveal-item {
+  animation: revealUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 h1, h2, h3, h4, .brand-info h2 {
   font-family: 'Outfit', sans-serif;
 }
