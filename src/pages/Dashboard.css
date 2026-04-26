@@ -1040,3 +1040,17 @@ h1, h2, h3, h4, .brand-info h2 {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Connection Panel Responsive Grid */
+.connection-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3rem;
+}
+
+@media (max-width: 768px) {
+  .connection-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
