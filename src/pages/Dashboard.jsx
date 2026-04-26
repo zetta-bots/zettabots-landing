@@ -714,18 +714,26 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'financeiro' && (
-          isAdmin ? (
-            <FinancialDashboard
-              adminStats={adminStats}
-              session={session}
-            />
-          ) : (
-            <FinancePanel
-              financeData={financeData}
-              session={session}
-              setShowSubModal={setShowSubModal}
-            />
-          )
+          <div className="tab-panel reveal-item">
+            {isAdmin ? (
+              <div key="admin-finance">
+                {adminStats ? (
+                  <FinancialDashboard adminStats={adminStats} session={session} />
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '4rem' }}>
+                    <div className="spinner"></div>
+                    <p style={{ marginTop: '1rem', color: '#64748b' }}>Carregando métricas de faturamento...</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <FinancePanel
+                financeData={financeData}
+                session={session}
+                setShowSubModal={setShowSubModal}
+              />
+            )}
+          </div>
         )}
 
         {activeTab === 'integracoes' && (

@@ -200,7 +200,7 @@ const FinancialDashboard = ({ adminStats, session }) => {
         <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
           <p style={{ color: '#a1a1aa', fontSize: '0.85rem', margin: '0 0 8px' }}>Ticket Médio</p>
           <p style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0, color: '#10b981' }}>
-            R$ {adminStats.totalActive > 0 ? Math.round(adminStats.mrr / adminStats.totalActive) : 0}
+            R$ {adminStats?.totalActive > 0 ? Math.round((adminStats.mrr || 0) / adminStats.totalActive) : 0}
           </p>
         </div>
       </div>
