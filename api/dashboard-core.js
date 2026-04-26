@@ -817,7 +817,7 @@ export default async function handler(req, res) {
 
           let contacts = [];
           if (instData && instData.length > 0) {
-            const contactsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=50&order=created_at.desc`, {
+            const contactsRes = await fetch(`${sbUrl}/rest/v1/crm_leads?instance_name=eq.${encodeURIComponent(found.name)}&select=*&limit=50&order=created_at.desc`, {
               headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
             });
             const sbContacts = await contactsRes.json() || [];
@@ -825,7 +825,7 @@ export default async function handler(req, res) {
               id: c.id,
               name: c.name || c.phone || 'Contato',
               phone: c.phone || '---',
-              status: c.status || 'Novo',
+              status: c.stage || 'lead',
               date: c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : 'Recente',
               source: 'supabase'
             }));
