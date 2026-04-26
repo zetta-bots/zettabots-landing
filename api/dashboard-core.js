@@ -388,6 +388,51 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, messages: [] });
         }
 
+      case 'debug-chats': {
+        try {
+          const realName = await getCorrectInstance(instanceName);
+          const results = {};
+
+          // Test Strategy 1
+          try {
+            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
+            results.strategy1 = { status: r.status, ok: r.ok, data: await r.json() };
+          } catch (e) { results.strategy1 = { error: e.message }; }
+
+          // Test Strategy 2
+          try {
+            const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
+            results.strategy2 = { status: r.status, ok: r.ok, data: await r.json() };
+          } catch (e) { results.strategy2 = { error: e.message }; }
+
+          // Test Strategy 3
+          try {
+            const r = await fetch(`${url}/chat/findChats/${realName}`, {
+              ...fetchOptions,
+              method: 'POST',
+              body: JSON.stringify({ where: {}, take: 50 })
+            });
+            results.strategy3 = { status: r.status, ok: r.ok, data: await r.json() };
+          } catch (e) { results.strategy3 = { error: e.message }; }
+
+          // Test Strategy 4 - Messages
+          try {
+            const r = await fetch(`${url}/message/findMessages/${realName}`, {
+              ...fetchOptions,
+              method: 'POST',
+              body: JSON.stringify({ where: {}, take: 10 })
+            });
+            results.strategy4_response = { status: r.status, ok: r.ok };
+            const data = await r.json();
+            results.strategy4_sample = Array.isArray(data) ? data.slice(0, 1) : (data.messages ? data.messages.slice(0, 1) : data);
+          } catch (e) { results.strategy4 = { error: e.message }; }
+
+          return res.status(200).json({ success: true, debug: results, instanceName, realName });
+        } catch (e) {
+          return res.status(200).json({ success: false, error: e.message });
+        }
+      }
+
       case 'get-admin-stats': {
         try {
           const { email: adminEmail } = req.body;
