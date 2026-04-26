@@ -23,8 +23,8 @@ export default async function handler(req, res) {
         const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
         const instances = await listRes.json();
         const data = Array.isArray(instances) ? instances : (instances.data || []);
-        const found = data.find(i => i.instanceName.toLowerCase() === name.toLowerCase() || i.instanceName.toLowerCase().includes(name.toLowerCase()));
-        return found ? found.instanceName : name;
+        const found = data.find(i => (i.name && i.name.toLowerCase() === name.toLowerCase()) || (i.name && i.name.toLowerCase().includes(name.toLowerCase())));
+        return found ? found.name : name;
       } catch (e) { return name; }
     };
 
@@ -74,9 +74,9 @@ export default async function handler(req, res) {
           const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
           const instances = await listRes.json();
           const data = Array.isArray(instances) ? instances : (instances.data || []);
-          const found = data.find(i => i.instanceName.toLowerCase() === instanceName.toLowerCase() || i.instanceName.toLowerCase().includes(instanceName.toLowerCase()));
+          const found = data.find(i => (i.name && i.name.toLowerCase() === instanceName.toLowerCase()) || (i.name && i.name.toLowerCase().includes(instanceName.toLowerCase())));
 
-          if (!found) throw new Error('Instance not found');
+          if (!found) throw new Error(`Instance "${instanceName}" not found`);
 
           const statsData = found._count || { Message: 0, Contact: 0, Chat: 0 };
           const contacts = statsData.Contact || 0;
