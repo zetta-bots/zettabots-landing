@@ -12,11 +12,12 @@ import {
   Area
 } from 'recharts';
 
-const StatsPanel = ({ leads, stats }) => {
-  // Extrair as últimas 5 atividades reais baseadas nos leads com verificação de segurança
+const StatsPanel = ({ leads = [], stats = {} }) => {
+  // Garantir que temos arrays e objetos válidos para evitar crashes
   const safeLeads = Array.isArray(leads) ? leads : [];
-  
-  // Dados simulados para o gráfico de leads (baseados no total de leads atual)
+  const safeStats = stats || {};
+
+  // Dados para o gráfico de leads
   const leadsData = [
     { name: 'Seg', value: Math.floor(safeLeads.length * 0.1) },
     { name: 'Ter', value: Math.floor(safeLeads.length * 0.2) },
@@ -27,21 +28,25 @@ const StatsPanel = ({ leads, stats }) => {
     { name: 'Dom', value: safeLeads.length },
   ];
 
-  const activityData = (stats.activity || [0, 0, 0, 0, 0, 0, 0]).map((val, i) => ({
+  const activityData = (safeStats.activity || [0, 0, 0, 0, 0, 0, 0]).map((val, i) => ({
     name: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i],
     value: val
   }));
 
   // Extrair as últimas 5 atividades reais baseadas nos leads
   const recentActivities = [...safeLeads]
-    .sort((a, b) => new Date(b.last_contact_at || b.created_at) - new Date(a.last_contact_at || a.created_at))
+    .sort((a, b) => {
+      const dateA = new Date(b.last_contact_at || b.created_at || 0);
+      const dateB = new Date(a.last_contact_at || a.created_at || 0);
+      return dateA - dateB;
+    })
     .slice(0, 5)
     .map(lead => ({
-      id: lead.id,
-      title: lead.sentiment === 'hot' ? '🔥 Lead Quente capturado!' : '👤 Novo lead identificado',
-      desc: `${lead.name || 'Cliente'} (${lead.phone || 'Sem número'})`,
-      time: lead.last_contact_at ? new Date(lead.last_contact_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Recente',
-      type: lead.sentiment === 'hot' ? 'danger' : 'success'
+      id: lead?.id || Math.random(),
+      title: lead?.sentiment === 'hot' ? '🔥 Lead Quente capturado!' : '👤 Novo lead identificado',
+      desc: `${lead?.name || 'Cliente'} (${lead?.phone || 'Sem número'})`,
+      time: lead?.last_contact_at ? new Date(lead.last_contact_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Recente',
+      type: lead?.sentiment === 'hot' ? 'danger' : 'success'
     }));
 
   const CustomTooltip = ({ active, payload }) => {
@@ -54,9 +59,9 @@ const StatsPanel = ({ leads, stats }) => {
           borderRadius: '8px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
         }}>
-          <p style={{ color: '#fff', margin: 0, fontSize: '0.75rem', fontWeight: 600 }}>{payload[0].payload.name}</p>
+          <p style={{ color: '#fff', margin: 0, fontSize: '0.75rem', fontWeight: 600 }}>{payload[0]?.payload?.name}</p>
           <p style={{ color: '#a78bfa', margin: '4px 0 0', fontSize: '1rem', fontWeight: 800 }}>
-            {payload[0].value} {payload[0].name === 'value' ? 'msgs' : 'leads'}
+            {payload[0]?.value || 0} {payload[0]?.name === 'value' ? 'msgs' : 'leads'}
           </p>
         </div>
       );
@@ -70,23 +75,27 @@ const StatsPanel = ({ leads, stats }) => {
         <div className="stat-card gradient-purple">
           <div className="stat-content">
             <span className="stat-label">Leads Capturados</span>
-            <span className="stat-value">{safeLeads.length || stats.contacts}</span>
-            <div className="stat-bar"><div className="stat-bar-fill" style={{ width: `${Math.min((safeLeads.length || stats.contacts) * 10, 100)}%` }}></div></div>
+            <span className="stat-value">{safeLeads.length || safeStats.contacts || 0}</span>
+            <div className="stat-bar">
+              <div className="stat-bar-fill" style={{ width: `${Math.min((safeLeads.length || safeStats.contacts || 0) * 10, 100)}%` }}></div>
+            </div>
           </div>
           <div className="stat-icon">👤</div>
         </div>
         <div className="stat-card gradient-blue">
           <div className="stat-content">
             <span className="stat-label">Conversas Ativas</span>
-            <span className="stat-value">{stats.chats}</span>
-            <div className="stat-bar"><div className="stat-bar-fill" style={{ width: `${Math.min(stats.chats * 10, 100)}%` }}></div></div>
+            <span className="stat-value">{safeStats.chats || 0}</span>
+            <div className="stat-bar">
+              <div className="stat-bar-fill" style={{ width: `${Math.min((safeStats.chats || 0) * 10, 100)}%` }}></div>
+            </div>
           </div>
           <div className="stat-icon">💬</div>
         </div>
         <div className="stat-card gradient-green">
           <div className="stat-content">
             <span className="stat-label">Trabalho da IA</span>
-            <span className="stat-value">{stats.messages || 0}</span>
+            <span className="stat-value">{safeStats.messages || 0}</span>
             <div className="stat-sub">mensagens enviadas</div>
           </div>
           <div className="stat-icon">🤖</div>
@@ -94,7 +103,7 @@ const StatsPanel = ({ leads, stats }) => {
         <div className="stat-card gradient-orange">
           <div className="stat-content">
             <span className="stat-label">ROI Estimado</span>
-            <span className="stat-value">{stats.roi || 'R$ 0'}</span>
+            <span className="stat-value">{safeStats.roi || 'R$ 0'}</span>
             <div className="stat-sub">em vendas potenciais</div>
           </div>
           <div className="stat-icon">💰</div>
@@ -217,9 +226,9 @@ const StatsPanel = ({ leads, stats }) => {
                   boxShadow: `0 0 10px ${act.type === 'danger' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(16, 185, 129, 0.5)'}`
                 }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#fff' }}>{act.title}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{act.desc}</span>
-                  <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '4px' }}>{act.time}</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#fff' }}>{act?.title}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{act?.desc}</span>
+                  <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '4px' }}>{act?.time}</span>
                 </div>
               </div>
             )) : (
