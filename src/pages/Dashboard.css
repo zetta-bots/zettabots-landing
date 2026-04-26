@@ -111,24 +111,27 @@ h1, h2, h3, h4, .brand-info h2 {
               radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.05), transparent);
 }
 
-/* Sidebar Estilizada */
 .dashboard-sidebar {
   width: var(--sidebar-width);
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   position: fixed;
+  left: 0;
+  top: 0;
   height: 100vh;
   z-index: 100;
-  transition: transform var(--transition-fast);
+  transition: transform var(--transition-fast), background 0.3s;
 }
 
 .sidebar-header {
-  padding: 2rem 1.5rem;
+  padding: 2.5rem 2rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .premium-logo-container {
@@ -236,8 +239,9 @@ h1, h2, h3, h4, .brand-info h2 {
 .dashboard-main {
   flex: 1;
   margin-left: var(--sidebar-width);
-  padding: 2.5rem;
-  max-width: 1600px;
+  padding: 2rem 2.5rem;
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100vh;
   overflow-y: auto;
 }
 
@@ -674,6 +678,7 @@ h1, h2, h3, h4, .brand-info h2 {
 @media (max-width: 1024px) {
   .dashboard-sidebar {
     transform: translateX(-100%);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
   }
   
   .dashboard-layout.menu-open .dashboard-sidebar {
@@ -682,9 +687,10 @@ h1, h2, h3, h4, .brand-info h2 {
   
   .dashboard-main {
     margin-left: 0;
+    width: 100%;
     padding-top: 100px;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
   
   .mobile-header {

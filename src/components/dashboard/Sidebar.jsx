@@ -2,37 +2,14 @@ import React from 'react';
 
 const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout, isGlobalPaused, handleGlobalEmergency }) => {
   return (
-    <aside className="dashboard-sidebar reveal-item" style={{ 
-      background: 'rgba(15, 23, 42, 0.4)', 
-      backdropFilter: 'blur(30px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-      borderRight: '1px solid rgba(255, 255, 255, 0.05)',
-      width: '280px',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0
-    }}>
-      <div className="sidebar-header" style={{ padding: '2.5rem 2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ 
-            width: '45px', 
-            height: '45px', 
-            borderRadius: '14px', 
-            background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            boxShadow: '0 8px 20px rgba(124, 58, 237, 0.3)',
-            fontSize: '1.5rem'
-          }}>
-            🤖
-          </div>
-          <div className="brand-info">
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '900', letterSpacing: '-0.03em', color: '#fff' }}>ZettaBots</h2>
-            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: '800', color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>IA DE VENDAS</p>
-          </div>
+    <aside className="dashboard-sidebar reveal-item">
+      <div className="sidebar-header">
+        <div className="premium-logo-container">
+          <img src="/images/logo.png" alt="ZettaBots" />
+        </div>
+        <div className="brand-info">
+          <h2>ZettaBots</h2>
+          <p>IA DE VENDAS</p>
         </div>
       </div>
 
