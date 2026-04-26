@@ -422,14 +422,16 @@ export default async function handler(req, res) {
             });
             if (r.ok) {
               const d = await r.json();
-              raw = Array.isArray(d) ? d : (d.messages || d.data || []);
+              console.log(`[get-messages] Strategy 1 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
+              raw = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+              console.log(`[get-messages] Strategy 1 extracted ${raw.length} messages`);
             }
           } catch (e1) {
             console.log(`[get-messages] Strategy 1 failed:`, e1.message);
           }
 
           // Strategy 2: Try /message/findMessages endpoint
-          if (raw.length === 0) {
+          if (raw && raw.length === 0) {
             try {
               const r = await fetch(`${url}/message/findMessages/${realName}`, {
                 method: 'POST',
@@ -438,7 +440,9 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                raw = Array.isArray(d) ? d : (d.messages || d.data || []);
+                console.log(`[get-messages] Strategy 2 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
+                raw = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+                console.log(`[get-messages] Strategy 2 extracted ${raw.length} messages`);
               }
             } catch (e2) {
               console.log(`[get-messages] Strategy 2 failed:`, e2.message);
@@ -446,7 +450,7 @@ export default async function handler(req, res) {
           }
 
           // Strategy 3: Try /message/fetchMessages endpoint
-          if (raw.length === 0) {
+          if (raw && raw.length === 0) {
             try {
               const r = await fetch(`${url}/message/fetchMessages/${realName}?jid=${encodeURIComponent(jidToUse)}&limit=50`, {
                 ...fetchOptions,
@@ -454,7 +458,9 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                raw = Array.isArray(d) ? d : (d.messages || d.data || []);
+                console.log(`[get-messages] Strategy 3 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
+                raw = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+                console.log(`[get-messages] Strategy 3 extracted ${raw.length} messages`);
               }
             } catch (e3) {
               console.log(`[get-messages] Strategy 3 failed:`, e3.message);
@@ -462,7 +468,7 @@ export default async function handler(req, res) {
           }
 
           // Strategy 4: Try searching ALL messages without JID filter (to see if ANY messages exist)
-          if (raw.length === 0) {
+          if (raw && raw.length === 0) {
             try {
               const r = await fetch(`${url}/message/findMessages/${realName}`, {
                 method: 'POST',
@@ -471,7 +477,7 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                const allMsgs = Array.isArray(d) ? d : (d.messages || d.data || []);
+                const allMsgs = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
                 console.log(`[get-messages] Strategy 4 found ${allMsgs.length} total messages. Looking for jid: ${jidToUse}`);
 
                 // Filter by JID if we have messages
@@ -489,6 +495,9 @@ export default async function handler(req, res) {
               console.log(`[get-messages] Strategy 4 failed:`, e4.message);
             }
           }
+
+          // Ensure raw is always an array before using it
+          if (!Array.isArray(raw)) raw = [];
 
           console.log(`[get-messages] Found ${raw.length} messages for ${jidToUse}`);
 
