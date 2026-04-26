@@ -23,9 +23,62 @@ export default async function handler(req, res) {
         const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
         const instances = await listRes.json();
         const data = Array.isArray(instances) ? instances : (instances.data || []);
-        const found = data.find(i => (i.name && i.name.toLowerCase() === name.toLowerCase()) || (i.name && i.name.toLowerCase().includes(name.toLowerCase())));
+
+        // Normalize string for matching (remove accents, spaces, special chars)
+        const normalize = (str) => {
+          return str
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '') // Remove accents
+            .replace(/[^\w]/g, '') // Remove non-word chars
+            .trim();
+        };
+
+        const normalizedInput = normalize(name);
+
+        // Strategy 1: Exact match
+        let found = data.find(i => i.name && normalize(i.name) === normalizedInput);
+
+        // Strategy 2: Partial match (input is substring)
+        if (!found) {
+          found = data.find(i => i.name && normalize(i.name).includes(normalizedInput));
+        }
+
+        // Strategy 3: Partial match (reverse - instance name contains input)
+        if (!found) {
+          found = data.find(i => i.name && normalizedInput.includes(normalize(i.name)));
+        }
+
+        // Strategy 4: Similarity score (if input length > 3)
+        if (!found && normalizedInput.length > 3) {
+          let bestMatch = null;
+          let bestScore = 0;
+
+          data.forEach(i => {
+            if (i.name) {
+              const normalized = normalize(i.name);
+              let matches = 0;
+              for (let j = 0; j < Math.min(normalizedInput.length, normalized.length); j++) {
+                if (normalizedInput[j] === normalized[j]) matches++;
+              }
+              const score = matches / Math.max(normalizedInput.length, normalized.length);
+              if (score > bestScore && score > 0.6) {
+                bestScore = score;
+                bestMatch = i;
+              }
+            }
+          });
+          found = bestMatch;
+        }
+
+        console.log(`[getCorrectInstance] Input: "${name}" → Normalized: "${normalizedInput}" → Found: "${found?.name || 'NOT FOUND'}"`);
+        console.log(`[getCorrectInstance] Available instances:`, data.map(i => i.name).join(', '));
+
         return found ? found.name : name;
-      } catch (e) { return name; }
+      } catch (e) {
+        console.error(`[getCorrectInstance] Error:`, e.message);
+        return name;
+      }
     };
 
     switch (action) {
