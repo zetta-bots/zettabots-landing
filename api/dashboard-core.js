@@ -849,11 +849,42 @@ export default async function handler(req, res) {
             totalContactsFromApi: contactCount
           });
         } catch (error) {
-          console.error('[get-contacts] Error:', error);
           return res.status(500).json({
             success: false,
             error: error.message,
             contacts: []
+          });
+        }
+      }
+
+      case 'debug-crm-leads': {
+        try {
+          const instanceNameToCheck = instanceName || 'ZettaBots';
+
+          const sbRes = await fetch(
+            `${sbUrl}/rest/v1/crm_leads?instance_name=eq.${encodeURIComponent(instanceNameToCheck)}&select=*&limit=10`,
+            { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
+          );
+          const leads = await sbRes.json();
+
+          return res.status(200).json({
+            success: true,
+            message: `Checking crm_leads for instance: ${instanceNameToCheck}`,
+            supabaseStatus: sbRes.status,
+            leadsFound: leads.length,
+            leads: leads.slice(0, 5).map(l => ({
+              id: l.id,
+              instance_name: l.instance_name,
+              phone: l.phone,
+              name: l.name,
+              stage: l.stage,
+              created_at: l.created_at
+            }))
+          });
+        } catch (error) {
+          return res.status(500).json({
+            success: false,
+            error: error.message
           });
         }
       }
