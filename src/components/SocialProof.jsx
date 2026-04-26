@@ -22,12 +22,12 @@ export default function SocialProof() {
 
       setTimeout(() => {
         setVisible(false)
-      }, 5000)
+      }, 3500)
     }
 
     const timer = setInterval(() => {
       showEvent()
-    }, 12000)
+    }, 20000)
 
     // Show first one after 3 seconds
     const firstTimer = setTimeout(showEvent, 3000)

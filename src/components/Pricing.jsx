@@ -34,23 +34,6 @@ const plans = [
     cta: 'Escolher Plano Pro',
     badge: '🔥 Mais popular',
   },
-  {
-    name: 'Agency',
-    price: '997',
-    period: '/mês',
-    desc: 'Solução para agências de automação',
-    highlight: false,
-    features: [
-      'Até 5 números de WhatsApp',
-      'Painel Multi-instâncias',
-      'Suporte à Revenda (White-label)',
-      'Treinamento de IA Customizado',
-      'Prioridade de Processamento',
-      'Gerente de conta dedicado',
-    ],
-    cta: 'Falar com consultor',
-    badge: null,
-  },
 ]
 
 export default function Pricing() {
