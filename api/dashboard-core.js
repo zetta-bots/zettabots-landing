@@ -3,8 +3,8 @@ export default async function handler(req, res) {
   
   const { action, instanceName, remoteJid } = req.body;
   
-  // Ações de Admin não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status'].includes(action);
+  // Ações que não precisam de instanceName obrigatoriamente
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
