@@ -630,6 +630,13 @@ export default function Dashboard() {
 
   return (
     <div className={`dashboard-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
+      {renderError && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.9)', color: '#ef4444', zIndex: 10000, padding: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️ ERRO CRÍTICO</h1>
+          <p style={{ fontSize: '1.2rem', maxWidth: '600px', lineHeight: '1.6' }}>{renderError}</p>
+          <button onClick={() => { setRenderError(null); setActiveTab('status'); }} style={{ marginTop: '30px', background: '#ef4444', color: '#fff', border: 'none', padding: '15px 30px', borderRadius: '10px', fontSize: '1.1rem', cursor: 'pointer', fontWeight: 'bold' }}>RESTAURAR DASHBOARD</button>
+        </div>
+      )}
       {/* Overlay para fechar menu mobile ao clicar fora */}
       {mobileMenuOpen && (
         <div 
