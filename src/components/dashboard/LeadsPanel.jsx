@@ -65,6 +65,32 @@ const LeadsPanel = ({ leads, loading = false, contactCount = 0, message = null }
     currentPage * itemsPerPage
   );
 
+  const handleExportCSV = () => {
+    const headers = ['Nome', 'Telefone', 'Qualificação', 'Data Último Contato', 'Notas IA'];
+    const rows = filteredAndSorted.map(lead => [
+      lead.name,
+      lead.phone,
+      lead.sentiment === 'hot' ? 'Quente' : lead.sentiment === 'cold' ? 'Frio' : 'Neutro',
+      lead.date || (lead.last_contact_at ? new Date(lead.last_contact_at).toLocaleDateString('pt-BR') : 'Hoje'),
+      lead.ai_notes || ''
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `leads_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const SkeletonRow = () => (
     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
       <td style={{ padding: '1.25rem 1rem' }}>
@@ -99,7 +125,7 @@ const LeadsPanel = ({ leads, loading = false, contactCount = 0, message = null }
 
         {/* Busca e Filtros */}
         {hasLeads && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '1rem', marginBottom: '2rem', alignItems: 'end' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto auto', gap: '1rem', marginBottom: '2rem', alignItems: 'end' }}>
             {/* Busca */}
             <div>
               <label style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '0.5rem' }}>Buscar</label>
@@ -191,6 +217,29 @@ const LeadsPanel = ({ leads, loading = false, contactCount = 0, message = null }
               title={`${sortOrder === 'asc' ? 'Decrescente' : 'Crescente'}`}
             >
               {sortOrder === 'asc' ? '↑' : '↓'}
+            </button>
+
+            {/* Export */}
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredAndSorted.length === 0}
+              style={{
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+                color: '#34d399',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                cursor: filteredAndSorted.length === 0 ? 'not-allowed' : 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: '700',
+                transition: 'all 0.2s',
+                opacity: filteredAndSorted.length === 0 ? 0.5 : 1
+              }}
+              onMouseEnter={e => filteredAndSorted.length > 0 && (e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)')}
+              onMouseLeave={e => filteredAndSorted.length > 0 && (e.currentTarget.style.background = 'rgba(16, 185, 129, 0.1)')}
+              title="Exportar dados em CSV"
+            >
+              📥 CSV
             </button>
           </div>
         )}
