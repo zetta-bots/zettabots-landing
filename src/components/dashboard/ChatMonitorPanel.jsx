@@ -192,15 +192,17 @@ const ChatMonitorPanel = ({
               </button>
             </div>
 
-            <div style={{ 
-              flex: 1, 
-              overflowY: 'auto', 
-              padding: '2rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              background: 'radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.03), transparent)'
-            }}>
+            <div
+              className="custom-scroll"
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                background: 'radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.03), transparent)'
+              }}>
               {chatMessagesLoading ? (
                 <SkeletonMessageLoader />
               ) : chatMessages.length === 0 ? (
