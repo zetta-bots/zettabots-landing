@@ -735,6 +735,7 @@ export default function Dashboard() {
           session={session} 
           systemPrompt={prompt} 
           knowledgeFiles={knowledgeFiles} 
+          selectedInstance={selectedInstance}
         />
       </main>
 

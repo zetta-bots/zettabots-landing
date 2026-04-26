@@ -1,13 +1,3 @@
-import React from 'react';
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Tooltip as RechartsTooltip,
-  Legend
-} from 'recharts';
-
 const AdminPanel = ({ 
   adminStats, 
   adminExtending, 
@@ -34,59 +24,76 @@ const AdminPanel = ({
   ];
 
   return (
-    <div className="tab-panel" style={{ animation: 'fadeIn 0.3s ease' }}>
+    <div className="tab-panel reveal-item">
       
       {/* Header Premium */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#fff' }}>👑 Central de Comando Admin</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Controle total sobre o ecossistema ZettaBots.</p>
+          <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: '800', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ filter: 'drop-shadow(0 0 8px #fbbf24)' }}>👑</span> Central de Comando Master
+          </h2>
+          <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Gestão estratégica e monitoramento global do ecossistema.</p>
         </div>
         <button 
           onClick={() => fetchAdminStats()}
           style={{ 
-            background: 'rgba(255,255,255,0.05)', 
-            border: '1px solid rgba(255,255,255,0.1)', 
+            background: 'rgba(255,255,255,0.03)', 
+            border: '1px solid rgba(255,255,255,0.08)', 
             color: '#fff', 
-            padding: '10px 20px', 
-            borderRadius: '12px', 
+            padding: '12px 24px', 
+            borderRadius: '14px', 
             cursor: 'pointer',
-            fontWeight: 600
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            transition: 'all 0.3s'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
         >
-          🔄 Sincronizar Tudo
+          🔄 Sincronizar Rede
         </button>
       </div>
 
       {/* Cards de Métricas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
           {[
-            { label: 'MRR Total', value: adminStats ? `R$ ${(adminStats.mrr || 0).toLocaleString('pt-BR')}` : '—', color: '#10b981', icon: '💰' },
-            { label: 'Clientes Ativos', value: adminStats?.totalActive ?? '—', color: '#8b5cf6', icon: '👥' },
-            { label: 'Taxa Trial', value: adminStats ? `${Math.round((adminStats.totalTrial / (adminStats.totalClients || 1)) * 100)}%` : '—', color: '#3b82f6', icon: '🧪' },
-            { label: 'Bloqueados', value: adminStats?.totalBlocked ?? '—', color: '#ef4444', icon: '🚫' },
-          ].map(c => (
-            <div key={c.label} className="glass-card" style={{ padding: '1.2rem', display: 'flex', flexDirection: 'column', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>{c.icon}</span>
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '0.65rem', fontWeight: 700 }}>{c.label}</span>
+            { label: 'MRR TOTAL', value: adminStats ? `R$ ${(adminStats.mrr || 0).toLocaleString('pt-BR')}` : '—', color: '#10b981', icon: '💰', shadow: 'rgba(16, 185, 129, 0.2)' },
+            { label: 'CLIENTES ATIVOS', value: adminStats?.totalActive ?? '—', color: '#a78bfa', icon: '👥', shadow: 'rgba(167, 139, 250, 0.2)' },
+            { label: 'CONVERSÃO TRIAL', value: adminStats ? `${Math.round((adminStats.totalTrial / (adminStats.totalClients || 1)) * 100)}%` : '—', color: '#3b82f6', icon: '🧪', shadow: 'rgba(59, 130, 246, 0.2)' },
+            { label: 'BLOQUEADOS', value: adminStats?.totalBlocked ?? '—', color: '#ef4444', icon: '🚫', shadow: 'rgba(239, 68, 68, 0.2)' },
+          ].map((c, idx) => (
+            <div key={c.label} className="glass-card" style={{ 
+              padding: '1.5rem', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'center',
+              border: '1px solid rgba(255,255,255,0.03)',
+              animation: `revealUp 0.4s ease-out forwards ${idx * 0.1}s`,
+              opacity: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ fontSize: '1.2rem', width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.icon}</div>
+                <span style={{ color: '#64748b', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '0.05em' }}>{c.label}</span>
               </div>
-              <div style={{ color: c.color, fontSize: '1.4rem', fontWeight: 800 }}>{c.value}</div>
+              <div style={{ color: c.color, fontSize: '1.6rem', fontWeight: '900', filter: `drop-shadow(0 0 10px ${c.shadow})` }}>{c.value}</div>
             </div>
           ))}
         </div>
 
-        <div className="glass-card" style={{ padding: '1.2rem', minHeight: '200px' }}>
-          <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#fff' }}>Distribuição de Receita</h4>
-          <div style={{ height: '160px' }}>
+        <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+          <h4 style={{ margin: '0 0 1rem', fontSize: '0.85rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.05em' }}>DISTRIBUIÇÃO DE RECEITA</h4>
+          <div style={{ flex: 1, position: 'relative' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={chartData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="value">
-                  {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />)}
+                <Pie data={chartData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={8} dataKey="value" stroke="none">
+                  {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
-                <RechartsTooltip contentStyle={{ background: '#0f172a', border: 'none', borderRadius: '8px', fontSize: '12px' }} />
-                <Legend iconType="circle" verticalAlign="middle" align="right" layout="vertical" wrapperStyle={{ fontSize: '10px' }} />
+                <RechartsTooltip 
+                  contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }} 
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend iconType="circle" verticalAlign="middle" align="right" layout="vertical" wrapperStyle={{ fontSize: '11px', fontWeight: '600', paddingLeft: '20px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -95,19 +102,47 @@ const AdminPanel = ({
 
       {/* Alertas de Expiração */}
       {adminStats?.expiringSoon?.length > 0 && (
-        <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 16, padding: '1.2rem', marginBottom: '1.5rem' }}>
-          <div style={{ color: '#f59e0b', fontWeight: 800, marginBottom: '1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            ⚠️ ALERTA DE EXPIRAÇÃO (PRÓX. 7 DIAS)
+        <div style={{ 
+          background: 'rgba(245, 158, 11, 0.03)', 
+          border: '1px solid rgba(245, 158, 11, 0.1)', 
+          borderRadius: '24px', 
+          padding: '1.5rem', 
+          marginBottom: '20px',
+          animation: 'revealUp 0.5s ease-out'
+        }}>
+          <div style={{ color: '#f59e0b', fontWeight: '900', marginBottom: '1.25rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '1.1rem' }}>⚠️</span> ALERTA DE RENOVAÇÃO (PRÓXIMOS 7 DIAS)
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
             {adminStats.expiringSoon.map(c => (
-              <div key={c.email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '10px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{c.full_name || c.email.split('@')[0]}</span>
-                  <span style={{ color: '#f59e0b', fontSize: '0.7rem' }}>Expira {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}</span>
+              <div key={c.email} style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                background: 'rgba(255,255,255,0.02)', 
+                padding: '12px 16px', 
+                borderRadius: '16px',
+                border: '1px solid rgba(255,255,255,0.03)'
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{c.full_name || c.email.split('@')[0]}</span>
+                  <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '600' }}>Expira em {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}</span>
                 </div>
-                <button onClick={() => handleAdminExtend(c.email, 7)} style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.7rem', cursor: 'pointer' }}>
-                  +7 dias
+                <button 
+                  onClick={() => handleAdminExtend(c.email, 7)} 
+                  style={{ 
+                    background: '#f59e0b', 
+                    color: '#fff', 
+                    border: 'none', 
+                    padding: '8px 14px', 
+                    borderRadius: '10px', 
+                    fontSize: '0.75rem', 
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
+                  }}
+                >
+                  +7 DIAS
                 </button>
               </div>
             ))}
@@ -116,20 +151,45 @@ const AdminPanel = ({
       )}
 
       {/* Tabela de Gestão */}
-      <div className="glass-card" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h3 style={{ fontSize: '1.1rem', margin: 0, color: '#fff' }}>📋 Gestão de Clientes</h3>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <input
-              value={adminSearch} 
-              onChange={e => setAdminSearch(e.target.value)}
-              placeholder="Buscar por nome ou e-mail..."
-              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '8px 12px', fontSize: '0.8rem', width: 220 }}
-            />
+      <div className="glass-card" style={{ padding: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#fff' }}>📋 Gestão de Operações</h3>
+            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Monitore e controle o acesso de cada instância.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+              <input
+                value={adminSearch} 
+                onChange={e => setAdminSearch(e.target.value)}
+                placeholder="Nome ou e-mail..."
+                style={{ 
+                  background: 'rgba(0,0,0,0.2)', 
+                  border: '1px solid rgba(255,255,255,0.08)', 
+                  borderRadius: '12px', 
+                  color: '#fff', 
+                  padding: '10px 12px 10px 35px', 
+                  fontSize: '0.85rem', 
+                  width: '240px',
+                  outline: 'none',
+                  transition: 'all 0.3s'
+                }} 
+              />
+            </div>
             <select
               value={adminPlanFilter} 
               onChange={e => setAdminPlanFilter(e.target.value)}
-              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', padding: '8px 12px', fontSize: '0.8rem', cursor: 'pointer' }}
+              style={{ 
+                background: 'rgba(0,0,0,0.2)', 
+                border: '1px solid rgba(255,255,255,0.08)', 
+                borderRadius: '12px', 
+                color: '#fff', 
+                padding: '10px 16px', 
+                fontSize: '0.85rem', 
+                cursor: 'pointer',
+                outline: 'none'
+              }}
             >
               <option value="all">Todos os Planos</option>
               <option value="trial">Trial</option>
@@ -142,14 +202,14 @@ const AdminPanel = ({
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 10px' }}>
             <thead>
-              <tr style={{ color: 'var(--color-text-muted)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 1 }}>
-                <th style={{ textAlign: 'left', padding: '0 1rem' }}>Cliente</th>
-                <th style={{ textAlign: 'left', padding: '0 1rem' }}>Plano</th>
-                <th style={{ textAlign: 'left', padding: '0 1rem' }}>Status</th>
-                <th style={{ textAlign: 'left', padding: '0 1rem' }}>Expiração</th>
-                <th style={{ textAlign: 'center', padding: '0 1rem' }}>Ações</th>
+              <tr style={{ color: '#475569', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>CLIENTE / IDENTIDADE</th>
+                <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>PLANO ATIVO</th>
+                <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>STATUS</th>
+                <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>EXPIRAÇÃO</th>
+                <th style={{ textAlign: 'center', padding: '0 1.5rem' }}>AÇÕES RÁPIDAS</th>
               </tr>
             </thead>
             <tbody>
@@ -161,52 +221,85 @@ const AdminPanel = ({
                   return matchS && matchP;
                 })
                 .map((c, i) => {
-                  const PLAN_COLOR = { start: '#6366f1', pro: '#8b5cf6', enterprise: '#f59e0b', trial: '#3b82f6', blocked: '#ef4444' };
+                  const PLAN_COLOR = { start: '#6366f1', pro: '#a78bfa', enterprise: '#fbbf24', trial: '#3b82f6', blocked: '#ef4444' };
                   const color = PLAN_COLOR[c.plan_type] || '#888';
                   const exp = c.plan_expires_at ? new Date(c.plan_expires_at) : null;
                   const expired = exp && exp < new Date();
 
                   return (
-                    <tr key={i} style={{ background: 'rgba(255,255,255,0.01)' }}>
-                      <td style={{ padding: '1rem', borderRadius: '12px 0 0 12px' }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.full_name || 'Sem Nome'}</div>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{c.email}</div>
+                    <tr key={i} className="reveal-item" style={{ 
+                      background: 'rgba(255,255,255,0.01)',
+                      transition: 'all 0.2s',
+                    }}>
+                      <td style={{ padding: '1.25rem 1.5rem', borderRadius: '16px 0 0 16px', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)', borderLeft: '1px solid rgba(255,255,255,0.02)' }}>
+                        <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff' }}>{c.full_name || 'Usuário Zetta'}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{c.email}</div>
                       </td>
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{ color, background: `${color}15`, border: `1px solid ${color}33`, padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 800 }}>
+                      <td style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                        <span style={{ 
+                          color, 
+                          background: `${color}10`, 
+                          border: `1px solid ${color}30`, 
+                          padding: '6px 12px', 
+                          borderRadius: '8px', 
+                          fontSize: '0.7rem', 
+                          fontWeight: '900',
+                          letterSpacing: '0.05em'
+                        }}>
                           {c.plan_type.toUpperCase()}
                         </span>
                       </td>
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: c.is_active ? '#10b981' : '#ef4444' }} />
-                          <span style={{ color: c.is_active ? '#10b981' : '#ef4444', fontWeight: 600 }}>{c.is_active ? 'Ativo' : 'Bloqueado'}</span>
+                      <td style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
+                          <span style={{ 
+                            width: '8px', 
+                            height: '8px', 
+                            borderRadius: '50%', 
+                            background: c.is_active ? '#10b981' : '#ef4444',
+                            boxShadow: `0 0 10px ${c.is_active ? '#10b981' : '#ef4444'}`
+                          }} />
+                          <span style={{ color: c.is_active ? '#10b981' : '#ef4444', fontWeight: '800' }}>{c.is_active ? 'ATIVO' : 'BLOQUEADO'}</span>
                         </div>
                       </td>
-                      <td style={{ padding: '1rem', color: expired ? '#ef4444' : '#fff', fontSize: '0.8rem' }}>
+                      <td style={{ padding: '1.25rem 1.5rem', color: expired ? '#ef4444' : '#fff', fontSize: '0.85rem', fontWeight: '700', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                         {exp ? exp.toLocaleDateString('pt-BR') : '—'}
                       </td>
-                      <td style={{ padding: '1rem', borderRadius: '0 12px 12px 0' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <td style={{ padding: '1.25rem 1.5rem', borderRadius: '0 16px 16px 0', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.02)' }}>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                           <button
                             onClick={() => handleAdminToggleStatus(c.email, c.is_active)}
                             style={{ 
-                              background: c.is_active ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)', 
+                              background: c.is_active ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)', 
                               color: c.is_active ? '#ef4444' : '#10b981', 
-                              border: 'none', 
-                              padding: '6px 12px', 
-                              borderRadius: '8px', 
+                              border: `1px solid ${c.is_active ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`, 
+                              padding: '8px 16px', 
+                              borderRadius: '10px', 
                               cursor: 'pointer',
-                              fontSize: '0.7rem',
-                              fontWeight: 'bold',
-                              minWidth: '85px'
+                              fontSize: '0.75rem',
+                              fontWeight: '900',
+                              minWidth: '100px',
+                              transition: 'all 0.3s'
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = c.is_active ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = c.is_active ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'}
                           >
-                            {c.is_active ? 'PAUSAR' : 'ATIVAR'}
+                            {c.is_active ? 'DESATIVAR' : 'REATIVAR'}
                           </button>
                           <button
                             onClick={() => handleAdminExtend(c.email, 7)}
-                            style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold' }}
+                            style={{ 
+                              background: 'rgba(255, 255, 255, 0.03)', 
+                              color: '#94a3b8', 
+                              border: '1px solid rgba(255, 255, 255, 0.08)', 
+                              padding: '8px 16px', 
+                              borderRadius: '10px', 
+                              cursor: 'pointer', 
+                              fontSize: '0.75rem', 
+                              fontWeight: '900',
+                              transition: 'all 0.3s'
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)', e.currentTarget.style.color = '#f59e0b', e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)', e.currentTarget.style.color = '#94a3b8', e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)')}
                           >
                             🎁 +7 DIAS
                           </button>

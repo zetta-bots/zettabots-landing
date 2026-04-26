@@ -73,93 +73,193 @@ const ChatMonitorPanel = ({
   const hasChats = chats && chats.length > 0;
 
   return (
-    <div className="chat-monitor-container">
-      <div className="chat-list-panel">
-        <div className="panel-header"><h3>Conversas Ativas</h3></div>
-        {chatsLoading ? (
-          <SkeletonChatLoader />
-        ) : !hasChats ? (
-          <div style={{
-            padding: '2rem 1.5rem',
-            textAlign: 'center',
-            color: '#a1a1aa',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%'
-          }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💬</div>
-            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '600', color: '#fff' }}>
-              Nenhuma conversa ativa
-            </p>
-            <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
-              Quando contatos enviarem mensagens, aparecerão aqui
-            </p>
-          </div>
-        ) : (
-          <div className="conversations-scroll">
-              {chats.map((chat, i) => (
-                <div
-                  className={`chat-item reveal-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
-                  key={i}
-                  style={{ animationDelay: `${i * 0.05}s` }}
-                  onClick={() => {
-                    setSelectedChat(chat);
-                    fetchChatMessages(chat.remoteJid || chat.id);
-                  }}
-                >
-                  <div className="chat-item-header">
-                    <span className="chat-name">{chat.user}</span>
-                    <span className="chat-time">{chat.time}</span>
-                  </div>
-                  <p className="chat-status">{chat.lastMsg}</p>
+    <div className="chat-monitor-container reveal-item" style={{ 
+      display: 'grid', 
+      gridTemplateColumns: '350px 1fr', 
+      gap: '20px', 
+      height: '700px',
+      marginTop: '10px'
+    }}>
+      {/* Lista de Conversas */}
+      <div className="glass-card" style={{ 
+        padding: 0, 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.05)'
+      }}>
+        <div style={{ 
+          padding: '1.5rem', 
+          background: 'rgba(255,255,255,0.02)', 
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '800' }}>Conversas Ativas</h3>
+          <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '700' }}>{hasChats ? chats.length : 0} ONLINE</span>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+          {chatsLoading ? (
+            <SkeletonChatLoader />
+          ) : !hasChats ? (
+            <div style={{ padding: '3rem 1rem', textAlign: 'center', opacity: 0.5 }}>
+              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>💬</div>
+              <p style={{ fontSize: '0.85rem', fontWeight: '600' }}>Nenhuma conversa ativa</p>
+            </div>
+          ) : (
+            chats.map((chat, i) => (
+              <div
+                key={i}
+                className={`reveal-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedChat(chat);
+                  fetchChatMessages(chat.remoteJid || chat.id);
+                }}
+                style={{
+                  padding: '16px',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  marginBottom: '8px',
+                  transition: 'all 0.3s ease',
+                  background: selectedChat?.id === chat.id ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
+                  border: selectedChat?.id === chat.id ? '1px solid rgba(124, 58, 237, 0.3)' : '1px solid transparent',
+                  animationDelay: `${i * 0.05}s`
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontWeight: '700', fontSize: '0.9rem', color: selectedChat?.id === chat.id ? '#a78bfa' : '#fff' }}>
+                    {chat.user}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{chat.time}</span>
                 </div>
-              ))}
-          </div>
-        )}
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '0.8rem', 
+                  color: '#94a3b8',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  fontWeight: '500'
+                }}>
+                  {chat.lastMsg}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-      <div className="chat-window-panel">
+
+      {/* Janela de Chat */}
+      <div className="glass-card" style={{ 
+        padding: 0, 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        background: 'rgba(15, 23, 42, 0.4)',
+        border: '1px solid rgba(255,255,255,0.05)'
+      }}>
         {selectedChat ? (
           <>
-            <div className="chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4>{selectedChat.user}</h4>
+            <div style={{ 
+              padding: '1.25rem 2rem', 
+              background: 'rgba(255,255,255,0.02)', 
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>{selectedChat.user}</h4>
+              </div>
               <button
-                className={`btn-${isAIPaused ? 'danger' : 'secondary'}`}
                 onClick={handleToggleAI}
-                style={{ fontSize: '0.7rem', padding: '0.4rem 0.8rem' }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  background: isAIPaused ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                  color: isAIPaused ? '#f87171' : '#34d399',
+                  border: `1px solid ${isAIPaused ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
+                }}
               >
                 {isAIPaused ? '🚫 IA PAUSADA' : '🤖 IA ATIVA'}
               </button>
             </div>
-            <div className="messages-container">
+
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto', 
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              background: 'radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.03), transparent)'
+            }}>
               {chatMessagesLoading ? (
                 <SkeletonMessageLoader />
               ) : chatMessages.length === 0 ? (
-                <div className="chat-empty-state">
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
-                  <p>Nenhuma mensagem nesta conversa</p>
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3 }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+                  <p style={{ fontWeight: '600' }}>Nenhuma mensagem encontrada</p>
                 </div>
               ) : (
                 chatMessages.map((msg, i) => (
-                  <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
+                  <div 
+                    key={i} 
+                    className="reveal-item"
+                    style={{ 
+                      alignSelf: msg.fromMe ? 'flex-end' : 'flex-start',
+                      maxWidth: '70%',
+                      padding: '12px 18px',
+                      borderRadius: msg.fromMe ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      background: msg.fromMe ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'rgba(255, 255, 255, 0.05)',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      lineHeight: '1.5',
+                      boxShadow: msg.fromMe ? '0 4px 15px rgba(124, 58, 237, 0.2)' : 'none',
+                      border: msg.fromMe ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+                      position: 'relative'
+                    }}
+                  >
                     {['image', 'audio'].includes(msg.type)
                       ? <MediaMessage msg={msg} instanceName={selectedInstance} />
                       : msg.text
                     }
-                    <span className="message-time">{msg.time}</span>
+                    <div style={{ 
+                      fontSize: '0.65rem', 
+                      opacity: 0.5, 
+                      marginTop: '6px', 
+                      textAlign: 'right',
+                      fontWeight: '700'
+                    }}>
+                      {msg.time}
+                    </div>
                   </div>
                 ))
               )}
             </div>
           </>
         ) : (
-          <div className="chat-empty-state">
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>👋</div>
-            <p style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-              Selecione uma conversa
+          <div style={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: '3rem',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 20px rgba(124, 58, 237, 0.4))' }}>🛰️</div>
+            <h3 style={{ margin: '0 0 1rem', fontSize: '1.5rem', fontWeight: '800' }}>Central de Monitoramento</h3>
+            <p style={{ margin: 0, color: '#94a3b8', maxWidth: '400px', lineHeight: '1.6', fontSize: '1rem' }}>
+              Selecione uma conversa ao lado para visualizar a interação da Sarah com seus clientes em tempo real.
             </p>
-            <p>Para monitorar as respostas da IA Sarah em tempo real</p>
           </div>
         )}
       </div>

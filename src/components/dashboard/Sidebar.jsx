@@ -2,102 +2,157 @@ import React from 'react';
 
 const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout, isGlobalPaused, handleGlobalEmergency }) => {
   return (
-    <aside className="dashboard-sidebar">
-      <div className="sidebar-header">
-        <div className="premium-logo-container">
-          <img src="/images/logo.png" alt="ZettaBots" />
-        </div>
-        <div className="brand-info">
-          <h2>ZettaBots</h2>
-          <p>IA de Vendas</p>
+    <aside className="dashboard-sidebar reveal-item" style={{ 
+      background: 'rgba(15, 23, 42, 0.4)', 
+      backdropFilter: 'blur(30px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+      borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+      width: '280px',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      position: 'sticky',
+      top: 0
+    }}>
+      <div className="sidebar-header" style={{ padding: '2.5rem 2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ 
+            width: '45px', 
+            height: '45px', 
+            borderRadius: '14px', 
+            background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            boxShadow: '0 8px 20px rgba(124, 58, 237, 0.3)',
+            fontSize: '1.5rem'
+          }}>
+            🤖
+          </div>
+          <div className="brand-info">
+            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '900', letterSpacing: '-0.03em', color: '#fff' }}>ZettaBots</h2>
+            <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: '800', color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>IA DE VENDAS</p>
+          </div>
         </div>
       </div>
-      <nav className="sidebar-nav">
-        <button 
-          className={`nav-item ${activeTab === 'status' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('status')}
-        >
-          <span className="icon">📊</span> Dashboard
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'leads' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('leads')}
-        >
-          <span className="icon">👤</span> Meus Leads
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'mensagens' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('mensagens')}
-        >
-          <span className="icon">💬</span> Monitor de Chat
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'bot' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('bot')}
-        >
-          <span className="icon">🧠</span> Cérebro da IA
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'financeiro' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('financeiro')}
-        >
-          <span className="icon">💰</span> Financeiro
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'integracoes' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('integracoes')}
-        >
-          <span className="icon">🔌</span> Integrações
-        </button>
-        <button 
-          className={`nav-item ${activeTab === 'conexao' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('conexao')}
-        >
-          <span className="icon">🔗</span> Conexão
-        </button>
+
+      <nav className="sidebar-nav" style={{ flex: 1, padding: '0 1.25rem' }}>
+        {[
+          { id: 'status', label: 'Dashboard', icon: '📊' },
+          { id: 'leads', label: 'Meus Leads', icon: '👤' },
+          { id: 'mensagens', label: 'Monitor de Chat', icon: '💬' },
+          { id: 'bot', label: 'Cérebro da IA', icon: '🧠' },
+          { id: 'financeiro', label: 'Financeiro', icon: '💰' },
+          { id: 'integracoes', label: 'Integrações', icon: '🔌' },
+          { id: 'conexao', label: 'Conexão', icon: '🔗' }
+        ].map((item, i) => (
+          <button 
+            key={item.id}
+            className={`nav-item ${activeTab === item.id ? 'active' : ''}`} 
+            onClick={() => setActiveTab(item.id)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              margin: '4px 0',
+              borderRadius: '14px',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              background: activeTab === item.id ? 'rgba(124, 58, 237, 0.15)' : 'transparent',
+              color: activeTab === item.id ? '#a78bfa' : '#64748b',
+              fontWeight: '700',
+              fontSize: '0.9rem',
+              animation: `revealUp 0.4s ease-out forwards ${i * 0.05}s`,
+              opacity: 0
+            }}
+            onMouseEnter={(e) => !activeTab === item.id && (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)', e.currentTarget.style.color = '#94a3b8')}
+            onMouseLeave={(e) => !activeTab === item.id && (e.currentTarget.style.background = 'transparent', e.currentTarget.style.color = '#64748b')}
+          >
+            <span style={{ fontSize: '1.2rem', filter: activeTab === item.id ? 'drop-shadow(0 0 5px rgba(124, 58, 237, 0.5))' : 'grayscale(1)' }}>{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
         
         {isAdmin && (
           <button 
             className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} 
             onClick={() => setActiveTab('admin')} 
             style={{
-              marginTop: '1rem', 
-              borderTop: '1px solid rgba(255,255,255,0.05)', 
-              paddingTop: '1rem', 
-              color: '#fbbf24'
+              width: '100%',
+              padding: '12px 16px',
+              marginTop: '1.5rem',
+              borderTop: '1px solid rgba(255,255,255,0.05)',
+              paddingTop: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              cursor: 'pointer',
+              background: 'transparent',
+              color: '#fbbf24',
+              fontWeight: '800',
+              fontSize: '0.85rem',
+              border: 'none'
             }}
           >
-            <span className="icon">👑</span> Painel Admin
+            <span style={{ fontSize: '1.2rem' }}>👑</span> Painel Admin
           </button>
         )}
-        <div style={{ marginTop: '2rem', padding: '0 1rem' }}>
+
+        <div style={{ marginTop: '2.5rem', padding: '0 0.5rem' }}>
           <button 
-            className={`nav-item emergency-btn ${isGlobalPaused ? 'active' : ''}`} 
             onClick={handleGlobalEmergency}
             style={{ 
               width: '100%', 
-              background: isGlobalPaused ? '#ef4444' : 'rgba(239, 68, 68, 0.1)', 
+              background: isGlobalPaused ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(239, 68, 68, 0.1)', 
               color: isGlobalPaused ? '#fff' : '#ef4444', 
-              border: isGlobalPaused ? 'none' : '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '12px',
-              padding: '0.8rem',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: '16px',
+              padding: '14px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '10px',
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              transition: 'all 0.3s ease',
-              boxShadow: isGlobalPaused ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none'
+              fontWeight: '800',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              boxShadow: isGlobalPaused ? '0 10px 25px rgba(239, 68, 68, 0.4)' : 'none'
             }}
+            onMouseEnter={(e) => !isGlobalPaused && (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)', e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => !isGlobalPaused && (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)', e.currentTarget.style.transform = 'translateY(0)')}
           >
-            <span className="icon">{isGlobalPaused ? '🚨' : '🆘'}</span>
-            {isGlobalPaused ? 'MODO PÂNICO ATIVO' : 'BOTÃO DE EMERGÊNCIA'}
+            <span>{isGlobalPaused ? '🚨' : '🆘'}</span>
+            {isGlobalPaused ? 'PÂNICO ATIVADO' : 'BOTÃO DE PÂNICO'}
           </button>
         </div>
       </nav>
-      <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogout}>
-          <span className="icon">🚪</span> Sair
+
+      <div style={{ padding: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <button 
+          onClick={handleLogout}
+          style={{
+            width: '100%',
+            padding: '12px',
+            borderRadius: '12px',
+            background: 'transparent',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            color: '#64748b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            transition: 'all 0.3s'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)', e.currentTarget.style.color = '#ef4444', e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent', e.currentTarget.style.color = '#64748b', e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)')}
+        >
+          <span>🚪</span> Sair da Conta
         </button>
       </div>
     </aside>
