@@ -143,38 +143,63 @@ export default async function handler(req, res) {
       case 'get-chats':
         try {
           const realName = await getCorrectInstance(instanceName);
+          let raw = [];
 
-          // Fetch chats from Evolution API
-          const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
-          const d = await r.json();
-          let raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
+          // Strategy 1: Try /chat/fetchChats endpoint
+          try {
+            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
+            if (r.ok) {
+              const d = await r.json();
+              raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
+            }
+          } catch (e1) {
+            console.log(`Strategy 1 failed for ${realName}:`, e1.message);
+          }
 
-          // If no chats from Evolution API, try to get from direct messages endpoint as fallback
+          // Strategy 2: Try /chat/findAllChats endpoint
           if (raw.length === 0) {
             try {
-              const msgRes = await fetch(`${url}/message/fetchMessages/${realName}?limit=100`, fetchOptions);
-              const msgData = await msgRes.json();
-              const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
-
-              // Extract unique chat participants from messages
-              if (messages.length > 0) {
-                const uniqueChats = {};
-                messages.forEach(msg => {
-                  const jid = msg.remoteJid || msg.from;
-                  if (jid && !uniqueChats[jid]) {
-                    uniqueChats[jid] = {
-                      id: jid,
-                      remoteJid: jid,
-                      name: msg.pushName || jid.split('@')[0],
-                      lastMsg: msg.text || msg.body || '[Mensagem de mídia]',
-                      timestamp: msg.messageTimestamp || msg.timestamp
-                    };
-                  }
-                });
-                raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+              const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
+              if (r.ok) {
+                const d = await r.json();
+                raw = Array.isArray(d) ? d : (d.chats || d.data || []);
               }
-            } catch (msgErr) {
-              console.log('Message fallback error:', msgErr.message);
+            } catch (e2) {
+              console.log(`Strategy 2 failed for ${realName}:`, e2.message);
+            }
+          }
+
+          // Strategy 3: Extract from messages as fallback
+          if (raw.length === 0) {
+            try {
+              const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ where: {}, take: 100 })
+              });
+              if (msgRes.ok) {
+                const msgData = await msgRes.json();
+                const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
+
+                if (messages.length > 0) {
+                  const uniqueChats = {};
+                  messages.forEach(msg => {
+                    const jid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+                    if (jid && !uniqueChats[jid]) {
+                      uniqueChats[jid] = {
+                        id: jid,
+                        remoteJid: jid,
+                        name: msg.pushName || msg.senderName || jid.split('@')[0],
+                        lastMsg: msg.text || msg.body || msg.message?.conversation || '[Mensagem]',
+                        timestamp: msg.messageTimestamp || msg.timestamp || Date.now()
+                      };
+                    }
+                  });
+                  raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+              }
+            } catch (e3) {
+              console.log(`Strategy 3 failed for ${realName}:`, e3.message);
             }
           }
 
