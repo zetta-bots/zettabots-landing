@@ -157,14 +157,15 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
           </div>
 
           {/* Input Premium */}
-          <form onSubmit={handleSendMessage} style={{ padding: '25px', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <div style={{ 
-              display: 'flex', 
-              gap: '12px',
+          <form onSubmit={handleSendMessage} style={{ padding: '12px 16px', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{
+              display: 'flex',
+              gap: '8px',
               background: 'rgba(255, 255, 255, 0.03)',
-              padding: '8px',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              padding: '6px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              alignItems: 'center'
             }}>
               <input
                 type="text"
@@ -175,9 +176,9 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
                   flex: 1,
                   background: 'transparent',
                   border: 'none',
-                  padding: '10px 12px',
+                  padding: '8px 10px',
                   color: '#fff',
-                  fontSize: '0.95rem',
+                  fontSize: '0.9rem',
                   outline: 'none'
                 }}
               />
@@ -187,23 +188,25 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
                 style={{
                   background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
                   border: 'none',
-                  borderRadius: '12px',
-                  width: '44px',
-                  height: '44px',
+                  borderRadius: '10px',
+                  width: '36px',
+                  height: '36px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'transform 0.2s',
-                  opacity: isTyping ? 0.5 : 1
+                  opacity: isTyping ? 0.5 : 1,
+                  fontSize: '1rem',
+                  flexShrink: 0
                 }}
-                onMouseEnter={(e) => !isTyping && (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseEnter={(e) => !isTyping && (e.currentTarget.style.transform = 'scale(1.08)')}
                 onMouseLeave={(e) => !isTyping && (e.currentTarget.style.transform = 'scale(1)')}
               >
                 🚀
               </button>
             </div>
-            <p style={{ margin: '12px 0 0', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
+            <p style={{ margin: '8px 0 0', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
               Sarah está usando a base de conhecimento atualizada ⚡
             </p>
           </form>
