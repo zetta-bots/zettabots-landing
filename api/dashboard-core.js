@@ -84,8 +84,68 @@ export default async function handler(req, res) {
 
         return found ? found.name : name;
       } catch (e) {
-        console.error(`[getCorrectInstance] Error:`, e.message);
         return name;
+      }
+    };
+
+    const syncContactsFromMessages = async (messages, instanceName) => {
+      try {
+        if (!Array.isArray(messages) || messages.length === 0) return;
+
+        const uniqueContacts = new Map();
+
+        messages.forEach(msg => {
+          const remoteJid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+          if (!remoteJid) return;
+
+          const phone = remoteJid.replace(/@.+$/, '').trim();
+          if (!phone || uniqueContacts.has(phone)) return;
+
+          const pushName = msg.pushName || msg.senderName || msg.notifyName || null;
+          const senderName = msg.senderName || msg.pushName || null;
+
+          let name = pushName || senderName || null;
+          if (!name && remoteJid.includes('@g.us')) {
+            name = msg.chatName || null;
+          }
+          if (!name) {
+            name = phone.replace(/^\+?55/, '').slice(-10);
+          }
+
+          uniqueContacts.set(phone, {
+            phone,
+            name: name || `Contato ${phone}`,
+            instance_name: instanceName,
+            stage: 'lead',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        });
+
+        if (uniqueContacts.size === 0) return;
+
+        const contactsList = Array.from(uniqueContacts.values());
+
+        const upsertPayload = contactsList.map(c => ({
+          instance_name: c.instance_name,
+          phone: c.phone,
+          name: c.name,
+          stage: c.stage,
+          created_at: c.created_at,
+          updated_at: c.updated_at
+        }));
+
+        await fetch(`${sbUrl}/rest/v1/crm_leads?on_conflict=instance_name,phone`, {
+          method: 'POST',
+          headers: {
+            'apikey': sbKey,
+            'Authorization': `Bearer ${sbKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(upsertPayload)
+        });
+      } catch (e) {
       }
     };
 
@@ -505,34 +565,36 @@ export default async function handler(req, res) {
           // Ensure raw is always an array before using it
           if (!Array.isArray(raw)) raw = [];
 
+          const mappedMessages = raw.reverse().slice(0, 50).map(m => {
+            const msg = m.message || {};
+            let text = msg.conversation || msg.extendedTextMessage?.text || '';
+            let type = 'text';
+            let mimetype = '';
+
+            if (msg.imageMessage) { text = '📷 Foto'; type = 'image'; mimetype = msg.imageMessage.mimetype; }
+            else if (msg.audioMessage) { text = '🎤 Áudio'; type = 'audio'; mimetype = msg.audioMessage.mimetype; }
+            else if (msg.videoMessage) { text = '🎥 Vídeo'; type = 'video'; mimetype = msg.videoMessage.mimetype; }
+            else if (msg.documentMessage) { text = '📄 Documento'; type = 'document'; mimetype = msg.documentMessage.mimetype; }
+            else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; mimetype = msg.stickerMessage.mimetype; }
+            else if (!text) text = 'Mensagem de mídia/sistema';
+
+            return {
+              id: m.key?.id,
+              text,
+              type,
+              mimetype,
+              fromMe: m.key?.fromMe,
+              time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
+            }
+          });
+
+          syncContactsFromMessages(raw, instanceName);
 
           return res.status(200).json({
             success: true,
-            messages: raw.reverse().slice(0, 50).map(m => {
-              const msg = m.message || {};
-              let text = msg.conversation || msg.extendedTextMessage?.text || '';
-              let type = 'text';
-              let mimetype = '';
-
-              if (msg.imageMessage) { text = '📷 Foto'; type = 'image'; mimetype = msg.imageMessage.mimetype; }
-              else if (msg.audioMessage) { text = '🎤 Áudio'; type = 'audio'; mimetype = msg.audioMessage.mimetype; }
-              else if (msg.videoMessage) { text = '🎥 Vídeo'; type = 'video'; mimetype = msg.videoMessage.mimetype; }
-              else if (msg.documentMessage) { text = '📄 Documento'; type = 'document'; mimetype = msg.documentMessage.mimetype; }
-              else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; mimetype = msg.stickerMessage.mimetype; }
-              else if (!text) text = 'Mensagem de mídia/sistema';
-
-              return {
-                id: m.key?.id,
-                text,
-                type,
-                mimetype,
-                fromMe: m.key?.fromMe,
-                time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
-              }
-            })
+            messages: mappedMessages
           });
         } catch (e) {
-          console.error(`[get-messages] Error:`, e.message);
           return res.status(200).json({ success: true, messages: [] });
         }
 
