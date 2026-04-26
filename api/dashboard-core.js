@@ -93,13 +93,17 @@ export default async function handler(req, res) {
         if (!Array.isArray(messages) || messages.length === 0) return;
 
         const uniqueContacts = new Map();
+        let processedCount = 0;
 
-        messages.forEach(msg => {
+        for (const msg of messages) {
+          if (!msg) continue;
+          processedCount++;
+
           const remoteJid = msg.remoteJid || msg.from || msg.key?.remoteJid;
-          if (!remoteJid) return;
+          if (!remoteJid) continue;
 
           const phone = remoteJid.replace(/@.+$/, '').trim();
-          if (!phone || uniqueContacts.has(phone)) return;
+          if (!phone || uniqueContacts.has(phone)) continue;
 
           const pushName = msg.pushName || msg.senderName || msg.notifyName || null;
           const senderName = msg.senderName || msg.pushName || null;
@@ -109,7 +113,8 @@ export default async function handler(req, res) {
             name = msg.chatName || null;
           }
           if (!name) {
-            name = phone.replace(/^\+?55/, '').slice(-10);
+            const cleaned = phone.replace(/^\+?55/, '').slice(-10);
+            name = cleaned.length > 0 ? cleaned : phone;
           }
 
           uniqueContacts.set(phone, {
@@ -120,7 +125,7 @@ export default async function handler(req, res) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
-        });
+        }
 
         if (uniqueContacts.size === 0) return;
 
@@ -841,6 +846,82 @@ export default async function handler(req, res) {
             success: false,
             error: error.message,
             contacts: []
+          });
+        }
+      }
+
+      case 'debug-sync-test': {
+        try {
+          const testMessages = [
+            {
+              remoteJid: '558188017179@s.whatsapp.net',
+              pushName: 'Test User 1',
+              messageTimestamp: Date.now() / 1000,
+              key: { id: 'test1', fromMe: false }
+            },
+            {
+              remoteJid: '5511987654321@s.whatsapp.net',
+              senderName: 'Test User 2',
+              messageTimestamp: Date.now() / 1000,
+              key: { id: 'test2', fromMe: false }
+            }
+          ];
+
+          const uniqueContacts = new Map();
+          for (const msg of testMessages) {
+            const remoteJid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+            if (!remoteJid) continue;
+
+            const phone = remoteJid.replace(/@.+$/, '').trim();
+            if (!phone || uniqueContacts.has(phone)) continue;
+
+            const pushName = msg.pushName || msg.senderName || msg.notifyName || null;
+            let name = pushName || phone;
+
+            uniqueContacts.set(phone, {
+              phone,
+              name: name || `Contato ${phone}`,
+              instance_name: instanceName,
+              stage: 'lead'
+            });
+          }
+
+          const contactsList = Array.from(uniqueContacts.values());
+          const upsertPayload = contactsList.map(c => ({
+            instance_name: c.instance_name,
+            phone: c.phone,
+            name: c.name,
+            stage: c.stage,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+
+          const sbRes = await fetch(`${sbUrl}/rest/v1/crm_leads?on_conflict=instance_name,phone`, {
+            method: 'POST',
+            headers: {
+              'apikey': sbKey,
+              'Authorization': `Bearer ${sbKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify(upsertPayload)
+          });
+
+          const responseText = await sbRes.text();
+
+          return res.status(200).json({
+            success: true,
+            message: 'Debug sync test',
+            supabaseStatus: sbRes.status,
+            supabaseResponse: responseText.substring(0, 500),
+            contactsToSync: contactsList.length,
+            payload: upsertPayload
+          });
+        } catch (error) {
+          return res.status(500).json({
+            success: false,
+            error: error.message,
+            stack: error.stack
           });
         }
       }
