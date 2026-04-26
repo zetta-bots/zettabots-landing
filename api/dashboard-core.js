@@ -75,28 +75,32 @@ export default async function handler(req, res) {
           const instances = await listRes.json();
           const data = Array.isArray(instances) ? instances : (instances.data || []);
           const found = data.find(i => i.instanceName.toLowerCase() === instanceName.toLowerCase() || i.instanceName.toLowerCase().includes(instanceName.toLowerCase()));
-          
+
           if (!found) throw new Error('Instance not found');
 
           const statsData = found._count || { Message: 0, Contact: 0, Chat: 0 };
           const contacts = statsData.Contact || 0;
           const messages = statsData.Message || 0;
           const chatsCount = statsData.Chat || 0;
-          
-          return res.status(200).json({ 
-            success: true, 
+
+          console.log('[get-stats] Found instance:', { name: found.instanceName, status: found.connectionStatus, _count: found._count, extracted: { contacts, messages, chatsCount } });
+
+          return res.status(200).json({
+            success: true,
             status: found.connectionStatus === 'open' ? 'CONNECTED' : 'DISCONNECTED',
-            stats: { 
-              contacts: contacts, 
+            stats: {
+              contacts: contacts,
               chats: chatsCount || (contacts * 1.5),
-              messages: messages, 
+              messages: messages,
               savedTime: `${Math.floor((contacts * 0.5) + (chatsCount * 0.2))}h`,
               roi: `R$ ${((contacts * 180) + (chatsCount * 45)).toLocaleString('pt-BR')}`,
               activity: [2, 5, 1, 8, 4, contacts || 2, 0]
-            } 
+            },
+            _debug: { instanceFound: true, contact_count: contacts, message_count: messages, chat_count: chatsCount }
           });
         } catch (e) {
-          return res.status(200).json({ success: true, stats: { contacts: 0, chats: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] } });
+          console.error('[get-stats] Error:', e.message);
+          return res.status(200).json({ success: true, stats: { contacts: 0, chats: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] }, _debug: { error: e.message } });
         }
 
       case 'get-leads': {
