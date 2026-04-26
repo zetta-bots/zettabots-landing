@@ -168,11 +168,15 @@ export default async function handler(req, res) {
       case 'create-payment': {
         try {
           if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
-          if (!process.env.MERCADOPAGO_ACCESS_TOKEN) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
+
+          const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
+          console.log('[create-payment] Token status:', token ? 'Loaded' : 'Missing', 'Token length:', token?.length || 0);
+
+          if (!token) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
 
           const mpModule = await import('mercadopago');
           const { Payment, MercadoPagoConfig } = mpModule;
-          const client = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+          const client = new MercadoPagoConfig({ accessToken: token });
           const payment = await new Payment(client).create({
             body: {
               transaction_amount: planPrice,
@@ -197,11 +201,15 @@ export default async function handler(req, res) {
       case 'create-checkout': {
         try {
           if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
-          if (!process.env.MERCADOPAGO_ACCESS_TOKEN) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
+
+          const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
+          console.log('[create-checkout] Token status:', token ? 'Loaded' : 'Missing', 'Token length:', token?.length || 0);
+
+          if (!token) return res.status(500).json({ error: 'Mercado Pago não configurado no servidor' });
 
           const mpModule = await import('mercadopago');
           const { Preference, MercadoPagoConfig } = mpModule;
-          const client = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+          const client = new MercadoPagoConfig({ accessToken: token });
           const preference = await new Preference(client).create({
             body: {
               items: [
