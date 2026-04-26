@@ -139,9 +139,9 @@ const AIConfigPanel = ({
                   IA EM MODO AVANÇADO
                 </div>
               </div>
-              <textarea 
-                className="prompt-editor" 
-                value={prompt} 
+              <textarea
+                className="prompt-editor custom-scroll"
+                value={prompt}
                 onChange={(e) => setPrompt(e.target.value)} 
                 placeholder="Ex: Você é a Sarah, a vendedora mais persuasiva do mundo..."
                 style={{ 
