@@ -24,20 +24,21 @@ const StatsPanel = ({ leads, stats }) => {
     { name: 'Dom', value: leads.length },
   ];
 
-  const activityData = (stats.activity || [10, 20, 30, 40, 50, 60, 70]).map((val, i) => ({
+  const activityData = (stats.activity || [0, 0, 0, 0, 0, 0, 0]).map((val, i) => ({
     name: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i],
     value: val
   }));
 
-  // Extrair as últimas 5 atividades reais baseadas nos leads
-  const recentActivities = [...leads]
+  // Extrair as últimas 5 atividades reais baseadas nos leads com verificação de segurança
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const recentActivities = [...safeLeads]
     .sort((a, b) => new Date(b.last_contact_at || b.created_at) - new Date(a.last_contact_at || a.created_at))
     .slice(0, 5)
     .map(lead => ({
       id: lead.id,
       title: lead.sentiment === 'hot' ? '🔥 Lead Quente capturado!' : '👤 Novo lead identificado',
-      desc: `${lead.name} (${lead.phone})`,
-      time: 'Recente',
+      desc: `${lead.name || 'Cliente'} (${lead.phone || 'Sem número'})`,
+      time: lead.last_contact_at ? new Date(lead.last_contact_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Recente',
       type: lead.sentiment === 'hot' ? 'danger' : 'success'
     }));
 
