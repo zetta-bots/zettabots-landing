@@ -281,7 +281,19 @@ export default async function handler(req, res) {
               const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
               if (r.ok) {
                 const d = await r.json();
-                raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
+                if (Array.isArray(d)) {
+                  raw = d;
+                } else if (d.chats) {
+                  raw = Array.isArray(d.chats) ? d.chats : [d.chats];
+                } else if (d.data) {
+                  raw = Array.isArray(d.data) ? d.data : [d.data];
+                } else if (d.remoteJid || d.id) {
+                  // Single chat object
+                  raw = [d];
+                } else {
+                  raw = [];
+                }
+                console.log(`[get-chats] Strategy 2 found ${raw.length} chats`);
               }
             } catch (e2) {
               console.log(`[get-chats] Strategy 2 failed:`, e2.message);
@@ -298,7 +310,18 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                raw = Array.isArray(d) ? d : (d.chats || d.data || []);
+                if (Array.isArray(d)) {
+                  raw = d;
+                } else if (d.chats) {
+                  raw = Array.isArray(d.chats) ? d.chats : [d.chats];
+                } else if (d.data) {
+                  raw = Array.isArray(d.data) ? d.data : [d.data];
+                } else if (d.remoteJid || d.id) {
+                  raw = [d];
+                } else {
+                  raw = [];
+                }
+                console.log(`[get-chats] Strategy 3 found ${raw.length} chats`);
               }
             } catch (e3) {
               console.log(`[get-chats] Strategy 3 failed:`, e3.message);
