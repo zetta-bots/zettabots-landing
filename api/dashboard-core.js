@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { action, instanceName, remoteJid } = req.body;
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-supabase-instances'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -758,6 +758,31 @@ export default async function handler(req, res) {
             error: error.message,
             contacts: []
           });
+        }
+      }
+
+      case 'debug-supabase-instances': {
+        try {
+          const instRes = await fetch(`${sbUrl}/rest/v1/instances?select=*`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          });
+          const instances = await instRes.json();
+
+          const leadsRes = await fetch(`${sbUrl}/rest/v1/leads?select=*&limit=5`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          });
+          const leads = await leadsRes.json();
+
+          return res.status(200).json({
+            success: true,
+            supabaseInstances: instances,
+            supabaseLeads: leads,
+            instanceCount: instances.length,
+            leadCount: leads.length,
+            message: 'This shows what data is stored in Supabase instances and leads tables'
+          });
+        } catch (e) {
+          return res.status(200).json({ success: false, error: e.message });
         }
       }
 
