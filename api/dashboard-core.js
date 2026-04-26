@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { action, instanceName, remoteJid } = req.body;
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-get-chats', 'test-get-chats', 'debug-supabase-instances'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-get-chats', 'test-get-chats', 'debug-supabase-instances', 'debug-get-messages'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -1045,6 +1045,101 @@ export default async function handler(req, res) {
             instanceCount: instances.length,
             leadCount: leads.length,
             message: 'This shows what data is stored in Supabase instances and leads tables'
+          });
+        } catch (e) {
+          return res.status(200).json({ success: false, error: e.message });
+        }
+      }
+
+      case 'debug-get-messages': {
+        try {
+          const realName = await getCorrectInstance(instanceName);
+          let { remoteJid } = req.body;
+
+          const debug = {
+            instanceName,
+            realName,
+            remoteJid,
+            strategies: {}
+          };
+
+          // Strategy 1: /chat/findMessages
+          try {
+            const r = await fetch(`${url}/chat/findMessages/${realName}`, {
+              method: 'POST',
+              headers: { 'apikey': key, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ where: { remoteJid }, take: 10 })
+            });
+            debug.strategies.strategy1 = {
+              endpoint: `/chat/findMessages/${realName}`,
+              status: r.status,
+              ok: r.ok,
+              rawResponse: null,
+              type: null
+            };
+
+            if (r.ok) {
+              const d = await r.json();
+              debug.strategies.strategy1.type = typeof d;
+              debug.strategies.strategy1.isArray = Array.isArray(d);
+              debug.strategies.strategy1.rawResponse = JSON.stringify(d).substring(0, 1000);
+            }
+          } catch (e) {
+            debug.strategies.strategy1 = { error: e.message };
+          }
+
+          // Strategy 2: /message/findMessages
+          try {
+            const r = await fetch(`${url}/message/findMessages/${realName}`, {
+              method: 'POST',
+              headers: { 'apikey': key, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ where: { remoteJid }, take: 10 })
+            });
+            debug.strategies.strategy2 = {
+              endpoint: `/message/findMessages/${realName}`,
+              status: r.status,
+              ok: r.ok,
+              rawResponse: null,
+              type: null
+            };
+
+            if (r.ok) {
+              const d = await r.json();
+              debug.strategies.strategy2.type = typeof d;
+              debug.strategies.strategy2.isArray = Array.isArray(d);
+              debug.strategies.strategy2.rawResponse = JSON.stringify(d).substring(0, 1000);
+            }
+          } catch (e) {
+            debug.strategies.strategy2 = { error: e.message };
+          }
+
+          // Strategy 3: /message/fetchMessages
+          try {
+            const r = await fetch(`${url}/message/fetchMessages/${realName}?jid=${encodeURIComponent(remoteJid)}&limit=10`, {
+              headers: { 'apikey': key }
+            });
+            debug.strategies.strategy3 = {
+              endpoint: `/message/fetchMessages/${realName}`,
+              status: r.status,
+              ok: r.ok,
+              rawResponse: null,
+              type: null
+            };
+
+            if (r.ok) {
+              const d = await r.json();
+              debug.strategies.strategy3.type = typeof d;
+              debug.strategies.strategy3.isArray = Array.isArray(d);
+              debug.strategies.strategy3.rawResponse = JSON.stringify(d).substring(0, 1000);
+            }
+          } catch (e) {
+            debug.strategies.strategy3 = { error: e.message };
+          }
+
+          return res.status(200).json({
+            success: true,
+            debug,
+            message: 'This shows the RAW responses from Evolution API for message queries'
           });
         } catch (e) {
           return res.status(200).json({ success: false, error: e.message });
