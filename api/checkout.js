@@ -37,10 +37,10 @@ export default async function handler(req, res) {
           description: 'Assinatura ZettaBots Pro (30 dias)',
           payment_method_id: 'pix',
           payer: {
-            email: email || 'contato@zettabots.com',
+            email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br',
             first_name: name || 'Cliente ZettaBots'
           },
-          external_reference: recordId
+          external_reference: String(recordId)
         })
       });
 

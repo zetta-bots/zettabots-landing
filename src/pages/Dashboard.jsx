@@ -475,10 +475,10 @@ export default function Dashboard() {
           setShowSubModal(false)
         }
       } else {
-        showToast('Erro ao gerar cobrança', 'error')
+        showToast('Erro: ' + (data.error || 'Falha ao gerar cobrança'), 'error')
       }
     } catch (err) {
-      showToast('Erro de conexão com Mercado Pago', 'error')
+      showToast('Erro de conexão: ' + err.message, 'error')
     } finally {
       setCheckoutLoading(false)
     }
