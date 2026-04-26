@@ -306,7 +306,11 @@ export default function Dashboard() {
   }
 
   const fetchChatMessages = async (remoteJid) => {
-    if (!remoteJid) return
+    console.log('[fetchChatMessages] Starting with remoteJid:', remoteJid, 'selectedInstance:', selectedInstance)
+    if (!remoteJid) {
+      console.log('[fetchChatMessages] No remoteJid provided')
+      return
+    }
     setChatMessagesLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
@@ -315,7 +319,13 @@ export default function Dashboard() {
         body: JSON.stringify({ action: 'get-messages', instanceName: selectedInstance, remoteJid })
       })
       const data = await res.json()
-      if (data.success) setChatMessages(data.messages || [])
+      console.log('[fetchChatMessages] Response:', data)
+      if (data.success) {
+        console.log('[fetchChatMessages] Setting messages:', data.messages)
+        setChatMessages(data.messages || [])
+      } else {
+        console.log('[fetchChatMessages] Success is false')
+      }
     } catch (err) {
       console.error('ERRO MSG:', err)
       setChatMessages([])
