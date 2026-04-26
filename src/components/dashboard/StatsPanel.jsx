@@ -70,8 +70,8 @@ const StatsPanel = ({ leads, stats }) => {
         <div className="stat-card gradient-purple">
           <div className="stat-content">
             <span className="stat-label">Leads Capturados</span>
-            <span className="stat-value">{leads.length || stats.contacts}</span>
-            <div className="stat-bar"><div className="stat-bar-fill" style={{ width: `${Math.min((leads.length || stats.contacts) * 10, 100)}%` }}></div></div>
+            <span className="stat-value">{safeLeads.length || stats.contacts}</span>
+            <div className="stat-bar"><div className="stat-bar-fill" style={{ width: `${Math.min((safeLeads.length || stats.contacts) * 10, 100)}%` }}></div></div>
           </div>
           <div className="stat-icon">👤</div>
         </div>
