@@ -106,34 +106,90 @@ export default async function handler(req, res) {
       case 'get-leads': {
         try {
           const realName = await getCorrectInstance(instanceName);
+          let leads = [];
 
-          // First try Supabase for leads
-          const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(realName)}&select=id`, {
-            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-          });
-          const instData = await instRes.json();
+          // Strategy 1: Try to get contacts from Evolution API
+          try {
+            const contactRes = await fetch(`${url}/contact/fetchContacts?instanceName=${realName}&limit=50`, fetchOptions);
+            if (contactRes.ok) {
+              const contactData = await contactRes.json();
+              const contacts = Array.isArray(contactData) ? contactData : (contactData.contacts || contactData.data || []);
 
-          if (instData && instData.length > 0) {
-            const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=50`, {
-              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-            });
-            const sbLeads = await sbLeadsRes.json() || [];
+              if (contacts.length > 0) {
+                leads = contacts.slice(0, 50).map(c => ({
+                  name: c.name || c.pushName || 'Contato',
+                  phone: c.id || c.jid || '---',
+                  status: 'Ativo',
+                  date: new Date().toLocaleDateString('pt-BR')
+                }));
+              }
+            }
+          } catch (e1) {
+            console.log(`[get-leads] Strategy 1 failed:`, e1.message);
+          }
 
-            if (sbLeads.length > 0) {
-              return res.status(200).json({
-                success: true,
-                leads: sbLeads.map(r => ({
-                  name: r.name || r.phone || 'Lead',
-                  phone: r.phone || '---',
-                  status: r.status || 'Novo',
-                  date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
-                }))
+          // Strategy 2: Extract from messages if no contacts found
+          if (leads.length === 0) {
+            try {
+              const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ where: {}, take: 100 })
               });
+              if (msgRes.ok) {
+                const msgData = await msgRes.json();
+                const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
+
+                if (messages.length > 0) {
+                  const uniqueLeads = {};
+                  messages.forEach(msg => {
+                    const jid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+                    if (jid && !uniqueLeads[jid]) {
+                      uniqueLeads[jid] = {
+                        name: msg.pushName || msg.senderName || jid.split('@')[0],
+                        phone: jid,
+                        status: 'Ativo',
+                        date: msg.messageTimestamp ? new Date(msg.messageTimestamp * 1000).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
+                      };
+                    }
+                  });
+                  leads = Object.values(uniqueLeads).sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+              }
+            } catch (e2) {
+              console.log(`[get-leads] Strategy 2 failed:`, e2.message);
             }
           }
 
-          // Fallback: return empty (no leads in Supabase yet)
-          return res.status(200).json({ success: true, leads: [] });
+          // Strategy 3: Try Supabase as last resort
+          if (leads.length === 0) {
+            try {
+              const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(realName)}&select=id`, {
+                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+              });
+              const instData = await instRes.json();
+
+              if (instData && instData.length > 0) {
+                const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=50`, {
+                  headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                });
+                const sbLeads = await sbLeadsRes.json() || [];
+
+                if (sbLeads.length > 0) {
+                  leads = sbLeads.map(r => ({
+                    name: r.name || r.phone || 'Lead',
+                    phone: r.phone || '---',
+                    status: r.status || 'Novo',
+                    date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
+                  }));
+                }
+              }
+            } catch (e3) {
+              console.log(`[get-leads] Strategy 3 failed:`, e3.message);
+            }
+          }
+
+          return res.status(200).json({ success: true, leads });
         } catch (e) {
           console.error('[get-leads] Error:', e.message);
           return res.status(200).json({ success: true, leads: [], _debug: { error: e.message } });
@@ -145,15 +201,15 @@ export default async function handler(req, res) {
           const realName = await getCorrectInstance(instanceName);
           let raw = [];
 
-          // Strategy 1: Try /chat/fetchChats endpoint
+          // Strategy 1: Try /chat/fetchChats endpoint with limit
           try {
-            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
+            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}&limit=50`, fetchOptions);
             if (r.ok) {
               const d = await r.json();
               raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
             }
           } catch (e1) {
-            console.log(`Strategy 1 failed for ${realName}:`, e1.message);
+            console.log(`[get-chats] Strategy 1 failed:`, e1.message);
           }
 
           // Strategy 2: Try /chat/findAllChats endpoint
@@ -162,14 +218,31 @@ export default async function handler(req, res) {
               const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
               if (r.ok) {
                 const d = await r.json();
-                raw = Array.isArray(d) ? d : (d.chats || d.data || []);
+                raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
               }
             } catch (e2) {
-              console.log(`Strategy 2 failed for ${realName}:`, e2.message);
+              console.log(`[get-chats] Strategy 2 failed:`, e2.message);
             }
           }
 
-          // Strategy 3: Extract from messages as fallback
+          // Strategy 3: Try /chat/findChats endpoint
+          if (raw.length === 0) {
+            try {
+              const r = await fetch(`${url}/chat/findChats/${realName}`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ where: {}, take: 50 })
+              });
+              if (r.ok) {
+                const d = await r.json();
+                raw = Array.isArray(d) ? d : (d.chats || d.data || []);
+              }
+            } catch (e3) {
+              console.log(`[get-chats] Strategy 3 failed:`, e3.message);
+            }
+          }
+
+          // Strategy 4: Extract from messages as fallback
           if (raw.length === 0) {
             try {
               const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
@@ -196,12 +269,15 @@ export default async function handler(req, res) {
                     }
                   });
                   raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                  console.log(`[get-chats] Strategy 4 success: ${raw.length} chats from messages`);
                 }
               }
-            } catch (e3) {
-              console.log(`Strategy 3 failed for ${realName}:`, e3.message);
+            } catch (e4) {
+              console.log(`[get-chats] Strategy 4 failed:`, e4.message);
             }
           }
+
+          console.log(`[get-chats] Final result for ${realName}: ${raw.length} chats`);
 
           return res.status(200).json({
             success: true,
@@ -213,7 +289,7 @@ export default async function handler(req, res) {
             }))
           });
         } catch (e) {
-          console.error(`get-chats error for ${instanceName}:`, e.message);
+          console.error(`[get-chats] Error for ${instanceName}:`, e.message);
           return res.status(200).json({ success: true, chats: [] });
         }
 
