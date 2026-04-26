@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { action, instanceName, remoteJid } = req.body;
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-get-chats', 'debug-supabase-instances'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-get-chats', 'test-get-chats', 'debug-supabase-instances'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -796,6 +796,124 @@ export default async function handler(req, res) {
             error: error.message,
             contacts: []
           });
+        }
+      }
+
+      case 'test-get-chats': {
+        try {
+          const realName = await getCorrectInstance(instanceName);
+
+          // Simulate the exact get-chats logic
+          let raw = [];
+
+          // Strategy 1
+          try {
+            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
+            if (r.ok) {
+              const d = await r.json();
+              raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
+            }
+          } catch (e) {}
+
+          // Strategy 2
+          if (raw.length === 0) {
+            try {
+              const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
+              if (r.ok) {
+                const d = await r.json();
+                if (Array.isArray(d)) {
+                  raw = d;
+                } else if (d.chats) {
+                  raw = Array.isArray(d.chats) ? d.chats : [d.chats];
+                } else if (d.data) {
+                  raw = Array.isArray(d.data) ? d.data : [d.data];
+                } else if (d.remoteJid || d.id) {
+                  raw = [d];
+                }
+              }
+            } catch (e) {}
+          }
+
+          // Strategy 3
+          if (raw.length === 0) {
+            try {
+              const r = await fetch(`${url}/chat/findChats/${realName}`, {
+                ...fetchOptions,
+                method: 'POST',
+                body: JSON.stringify({ where: {}, take: 50 })
+              });
+              if (r.ok) {
+                const d = await r.json();
+                if (Array.isArray(d)) {
+                  raw = d;
+                } else if (d.chats) {
+                  raw = Array.isArray(d.chats) ? d.chats : [d.chats];
+                } else if (d.data) {
+                  raw = Array.isArray(d.data) ? d.data : [d.data];
+                } else if (d.remoteJid || d.id) {
+                  raw = [d];
+                }
+              }
+            } catch (e) {}
+          }
+
+          // Strategy 4
+          try {
+            const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
+              ...fetchOptions,
+              method: 'POST',
+              body: JSON.stringify({ where: {}, take: 100 })
+            });
+            if (msgRes.ok) {
+              const msgData = await msgRes.json();
+              const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
+
+              if (messages.length > 0) {
+                const uniqueChats = {};
+                raw.forEach(c => {
+                  const jid = c.remoteJid || c.id;
+                  if (jid && !uniqueChats[jid]) {
+                    uniqueChats[jid] = c;
+                  }
+                });
+
+                messages.forEach(msg => {
+                  const jid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+                  if (jid) {
+                    if (!uniqueChats[jid]) {
+                      uniqueChats[jid] = {
+                        id: jid,
+                        remoteJid: jid,
+                        name: msg.pushName || msg.senderName || jid.split('@')[0],
+                        lastMsg: msg.text || msg.body || msg.message?.conversation || '[Mensagem]',
+                        timestamp: msg.messageTimestamp || msg.timestamp || Date.now()
+                      };
+                    }
+                  }
+                });
+
+                raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+              }
+            }
+          } catch (e) {}
+
+          const finalResult = raw.slice(0, 20).map(c => ({
+            id: c.id || c.remoteJid,
+            user: c.name || c.pushName || (c.id ? c.id.split('@')[0] : 'Cliente'),
+            lastMsg: c.lastMsg || 'Monitorado via IA',
+            time: 'Ativo'
+          }));
+
+          return res.status(200).json({
+            success: true,
+            input: instanceName,
+            realName,
+            rawChatsFound: raw.length,
+            finalFormatted: finalResult,
+            message: 'This is exactly what get-chats endpoint returns'
+          });
+        } catch (e) {
+          return res.status(200).json({ success: false, error: e.message });
         }
       }
 
