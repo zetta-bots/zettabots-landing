@@ -277,18 +277,23 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-finance', instanceName, email: session.email })
       })
-      
+
       if (!res.ok) {
-        const errorData = await res.json();
-        if (errorData.error?.includes('token not configured')) {
-          console.warn('Finance: Mercado Pago não configurado na Vercel');
+        try {
+          const errorData = await res.json();
+          if (errorData.error?.includes('token not configured')) {
+            console.warn('Finance: Mercado Pago não configurado na Vercel');
+            return;
+          }
+        } catch {
+          console.warn('Finance: erro ao fazer fetch (possível 404 em desenvolvimento)');
           return;
         }
       }
 
       const data = await res.json()
       if (data.success) setFinanceData(data)
-    } catch (err) { 
+    } catch (err) {
       console.error('ERRO FINANCE:', err);
     }
   }
@@ -730,12 +735,12 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'financeiro' && (
-          <div key="finance-tab" style={{ width: '100%', height: '100%' }}>
+          <div key="finance-tab">
             {!isAdmin ? (
-              <FinancePanel 
-                financeData={financeData} 
-                session={session} 
-                setShowSubModal={setShowSubModal} 
+              <FinancePanel
+                financeData={financeData}
+                session={session}
+                setShowSubModal={setShowSubModal}
               />
             ) : (
               adminStats ? (

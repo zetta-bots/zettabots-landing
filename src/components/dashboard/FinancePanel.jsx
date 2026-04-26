@@ -1,20 +1,30 @@
 import React from 'react';
 
 const FinancePanel = ({ financeData, session, setShowSubModal }) => {
-  if (!session) return <div className="tab-panel">Sessão não encontrada...</div>;
+  if (!session) {
+    return (
+      <div className="tab-panel" style={{ padding: '2rem' }}>
+        <p style={{ color: '#ef4444' }}>Sessão não encontrada. Por favor, faça login novamente.</p>
+      </div>
+    );
+  }
+
+  if (!financeData) {
+    return (
+      <div className="tab-panel" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+        <div className="spinner" style={{ margin: '0 auto' }}></div>
+        <p style={{ marginTop: '1rem', color: '#64748b' }}>Carregando sua assinatura...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="tab-panel reveal-item" style={{ animationDelay: '0.1s' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
-        
+
         {/* Card de Assinatura Principal */}
         <div className="glass-card" style={{ padding: '2.5rem', border: '1px solid rgba(124, 58, 237, 0.1)', position: 'relative', overflow: 'hidden' }}>
-          {!financeData ? (
-            <div style={{ textAlign: 'center', padding: '4rem' }}>
-              <div className="spinner"></div>
-              <p style={{ marginTop: '1rem', color: '#64748b' }}>Carregando sua assinatura...</p>
-            </div>
-          ) : (
+          {financeData && (
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                 <div>
