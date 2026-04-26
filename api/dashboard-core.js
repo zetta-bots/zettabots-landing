@@ -104,51 +104,39 @@ export default async function handler(req, res) {
         }
 
       case 'get-leads': {
-        let realName;
         try {
-          realName = await getCorrectInstance(instanceName);
-          const contactRes = await fetch(`${url}/contact/fetchContacts?instanceName=${realName}`, fetchOptions);
-          const contactData = await contactRes.json();
-          const contacts = Array.isArray(contactData) ? contactData : (contactData.data || []);
+          const realName = await getCorrectInstance(instanceName);
 
-          if (contacts.length > 0) {
-            return res.status(200).json({
-              success: true,
-              leads: contacts.slice(0, 50).map(c => ({
-                name: c.name || c.pushName || 'Lead Ativo',
-                phone: c.id ? c.id.split('@')[0] : 'Sem número',
-                status: 'Interagindo',
-                date: 'Hoje'
-              }))
+          // First try Supabase for leads
+          const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(realName)}&select=id`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          });
+          const instData = await instRes.json();
+
+          if (instData && instData.length > 0) {
+            const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=50`, {
+              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
             });
-          }
-          throw new Error('No contacts in Evolution');
-        } catch (e) {
-          try {
-            if (!realName) realName = await getCorrectInstance(instanceName);
-            const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(realName)}&select=id`, {
-               headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-            });
-            const instData = await instRes.json();
-            let sbLeads = [];
-            if (instData && instData.length > 0) {
-               const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=20`, {
-                  headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-               });
-               sbLeads = await sbLeadsRes.json() || [];
+            const sbLeads = await sbLeadsRes.json() || [];
+
+            if (sbLeads.length > 0) {
+              return res.status(200).json({
+                success: true,
+                leads: sbLeads.map(r => ({
+                  name: r.name || r.phone || 'Lead',
+                  phone: r.phone || '---',
+                  status: r.status || 'Novo',
+                  date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
+                }))
+              });
             }
-            return res.status(200).json({
-              success: true,
-              leads: sbLeads.map(r => ({
-                name: r.name || 'Lead do Supabase',
-                phone: r.phone || '---',
-                status: r.status || 'Novo',
-                date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
-              }))
-            });
-          } catch (innerErr) {
-            return res.status(200).json({ success: true, leads: [] });
           }
+
+          // Fallback: return empty (no leads in Supabase yet)
+          return res.status(200).json({ success: true, leads: [] });
+        } catch (e) {
+          console.error('[get-leads] Error:', e.message);
+          return res.status(200).json({ success: true, leads: [], _debug: { error: e.message } });
         }
       }
 
