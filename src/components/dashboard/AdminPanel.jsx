@@ -114,13 +114,13 @@ const AdminPanel = ({
             <span style={{ fontSize: '1.1rem' }}>⚠️</span> ALERTA DE RENOVAÇÃO (PRÓXIMOS 7 DIAS)
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
-            {adminStats.expiringSoon.map(c => (
-              <div key={c.email} style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between', 
-                background: 'rgba(255,255,255,0.02)', 
-                padding: '12px 16px', 
+            {(adminStats?.expiringSoon || []).map(c => (
+              <div key={c.email} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255,255,255,0.02)',
+                padding: '12px 16px',
                 borderRadius: '16px',
                 border: '1px solid rgba(255,255,255,0.03)'
               }}>
@@ -128,15 +128,15 @@ const AdminPanel = ({
                   <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#fff' }}>{c.full_name || c.email.split('@')[0]}</span>
                   <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '600' }}>Expira em {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}</span>
                 </div>
-                <button 
-                  onClick={() => handleAdminExtend(c.email, 7)} 
-                  style={{ 
-                    background: '#f59e0b', 
-                    color: '#fff', 
-                    border: 'none', 
-                    padding: '8px 14px', 
-                    borderRadius: '10px', 
-                    fontSize: '0.75rem', 
+                <button
+                  onClick={() => handleAdminExtend(c.email, 7)}
+                  style={{
+                    background: '#f59e0b',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '8px 14px',
+                    borderRadius: '10px',
+                    fontSize: '0.75rem',
                     fontWeight: '800',
                     cursor: 'pointer',
                     boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
