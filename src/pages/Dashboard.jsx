@@ -18,6 +18,7 @@ import IntegrationsPanel from '../components/dashboard/IntegrationsPanel'
 import ConnectionPanel from '../components/dashboard/ConnectionPanel'
 import AdminPanel from '../components/dashboard/AdminPanel'
 import AIConfigPanel from '../components/dashboard/AIConfigPanel'
+import SettingsPanel from '../components/dashboard/SettingsPanel'
 import SubModal from '../components/dashboard/SubModal'
 import FastTestChat from '../components/dashboard/FastTestChat'
 
@@ -838,16 +839,23 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'admin' && isAdmin && (
-          <AdminPanel 
-            adminStats={adminStats} 
-            adminExtending={adminExtending} 
-            handleAdminExtend={handleAdminExtend} 
+          <AdminPanel
+            adminStats={adminStats}
+            adminExtending={adminExtending}
+            handleAdminExtend={handleAdminExtend}
             handleAdminToggleStatus={handleAdminToggleStatus}
-            adminSearch={adminSearch} 
-            setAdminSearch={setAdminSearch} 
-            adminPlanFilter={adminPlanFilter} 
-            setAdminPlanFilter={setAdminPlanFilter} 
+            adminSearch={adminSearch}
+            setAdminSearch={setAdminSearch}
+            adminPlanFilter={adminPlanFilter}
+            setAdminPlanFilter={setAdminPlanFilter}
             fetchAdminStats={fetchAdminStats}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsPanel
+            session={session}
+            showToast={showToast}
           />
         )}
 
