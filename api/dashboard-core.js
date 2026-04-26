@@ -850,6 +850,68 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'debug-message-structure': {
+        try {
+          const realName = await getCorrectInstance(instanceName);
+          let { remoteJid } = req.body;
+          if (!remoteJid) {
+            return res.status(200).json({ success: false, error: 'remoteJid required' });
+          }
+
+          let jidToUse = remoteJid;
+          if (!jidToUse.includes('@')) {
+            const cleaned = jidToUse.replace(/\D/g, '');
+            jidToUse = cleaned.length > 10 ? `${cleaned}@g.us` : `${cleaned}@s.whatsapp.net`;
+          }
+
+          const r = await fetch(`${url}/chat/findMessages/${realName}`, {
+            method: 'POST',
+            headers: { 'apikey': key, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ where: { remoteJid: jidToUse }, take: 5 })
+          });
+
+          if (!r.ok) {
+            return res.status(200).json({ success: false, error: 'Evolution API failed' });
+          }
+
+          const d = await r.json();
+          let raw = [];
+          if (Array.isArray(d)) {
+            raw = d;
+          } else if (d && d.messages && d.messages.records && Array.isArray(d.messages.records)) {
+            raw = d.messages.records;
+          } else if (d && d.messages && Array.isArray(d.messages)) {
+            raw = d.messages;
+          } else if (d && d.data && Array.isArray(d.data)) {
+            raw = d.data;
+          }
+
+          return res.status(200).json({
+            success: true,
+            messageCount: raw.length,
+            firstMessage: raw[0] ? {
+              remoteJid: raw[0].remoteJid,
+              from: raw[0].from,
+              key_remoteJid: raw[0].key?.remoteJid,
+              pushName: raw[0].pushName,
+              senderName: raw[0].senderName,
+              notifyName: raw[0].notifyName,
+              chatName: raw[0].chatName,
+              allKeys: Object.keys(raw[0]).slice(0, 20)
+            } : null,
+            sampleMessages: raw.slice(0, 2).map(m => ({
+              jid: m.remoteJid || m.from || m.key?.remoteJid,
+              name: m.pushName || m.senderName || m.notifyName,
+            }))
+          });
+        } catch (error) {
+          return res.status(500).json({
+            success: false,
+            error: error.message
+          });
+        }
+      }
+
       case 'debug-sync-test': {
         try {
           const testMessages = [
