@@ -461,6 +461,35 @@ export default async function handler(req, res) {
             }
           }
 
+          // Strategy 4: Try searching ALL messages without JID filter (to see if ANY messages exist)
+          if (raw.length === 0) {
+            try {
+              const r = await fetch(`${url}/message/findMessages/${realName}`, {
+                method: 'POST',
+                headers: fetchOptions.headers,
+                body: JSON.stringify({ where: {}, take: 100 })
+              });
+              if (r.ok) {
+                const d = await r.json();
+                const allMsgs = Array.isArray(d) ? d : (d.messages || d.data || []);
+                console.log(`[get-messages] Strategy 4 found ${allMsgs.length} total messages. Looking for jid: ${jidToUse}`);
+
+                // Filter by JID if we have messages
+                if (allMsgs.length > 0) {
+                  raw = allMsgs.filter(m => {
+                    const msgJid = m.remoteJid || m.from || m.key?.remoteJid;
+                    const match = msgJid === jidToUse || msgJid?.includes(jidToUse.split('@')[0]);
+                    if (match) console.log(`[get-messages] Message JID: ${msgJid} MATCHED`);
+                    return match;
+                  });
+                  console.log(`[get-messages] Strategy 4: Filtered to ${raw.length} messages matching ${jidToUse}`);
+                }
+              }
+            } catch (e4) {
+              console.log(`[get-messages] Strategy 4 failed:`, e4.message);
+            }
+          }
+
           console.log(`[get-messages] Found ${raw.length} messages for ${jidToUse}`);
 
           return res.status(200).json({
