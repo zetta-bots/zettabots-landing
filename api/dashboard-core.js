@@ -422,11 +422,16 @@ export default async function handler(req, res) {
             });
             if (r.ok) {
               const d = await r.json();
-              console.log(`[get-messages] Strategy 1 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
-              if (d && d.messages) {
-                console.log(`[get-messages] Strategy 1 d.messages type: ${typeof d.messages}, isArray: ${Array.isArray(d.messages)}, value: ${JSON.stringify(d.messages).substring(0, 200)}`);
+              // Handle nested structure: { messages: { records: [...], total, pages } }
+              if (Array.isArray(d)) {
+                raw = d;
+              } else if (d && d.messages && d.messages.records && Array.isArray(d.messages.records)) {
+                raw = d.messages.records;
+              } else if (d && d.messages && Array.isArray(d.messages)) {
+                raw = d.messages;
+              } else if (d && d.data && Array.isArray(d.data)) {
+                raw = d.data;
               }
-              raw = Array.isArray(d) ? d : (d && d.messages ? (Array.isArray(d.messages) ? d.messages : []) : (d && d.data ? d.data : []));
               console.log(`[get-messages] Strategy 1 extracted ${raw.length} messages`);
             }
           } catch (e1) {
@@ -443,8 +448,15 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                console.log(`[get-messages] Strategy 2 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
-                raw = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+                if (Array.isArray(d)) {
+                  raw = d;
+                } else if (d && d.messages && d.messages.records && Array.isArray(d.messages.records)) {
+                  raw = d.messages.records;
+                } else if (d && d.messages && Array.isArray(d.messages)) {
+                  raw = d.messages;
+                } else if (d && d.data && Array.isArray(d.data)) {
+                  raw = d.data;
+                }
                 console.log(`[get-messages] Strategy 2 extracted ${raw.length} messages`);
               }
             } catch (e2) {
@@ -461,8 +473,15 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                console.log(`[get-messages] Strategy 3 response type: ${typeof d}, isArray: ${Array.isArray(d)}, keys: ${d ? Object.keys(d).join(',') : 'null'}`);
-                raw = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+                if (Array.isArray(d)) {
+                  raw = d;
+                } else if (d && d.messages && d.messages.records && Array.isArray(d.messages.records)) {
+                  raw = d.messages.records;
+                } else if (d && d.messages && Array.isArray(d.messages)) {
+                  raw = d.messages;
+                } else if (d && d.data && Array.isArray(d.data)) {
+                  raw = d.data;
+                }
                 console.log(`[get-messages] Strategy 3 extracted ${raw.length} messages`);
               }
             } catch (e3) {
@@ -480,7 +499,16 @@ export default async function handler(req, res) {
               });
               if (r.ok) {
                 const d = await r.json();
-                const allMsgs = Array.isArray(d) ? d : (d && d.messages ? d.messages : (d && d.data ? d.data : []));
+                let allMsgs = [];
+                if (Array.isArray(d)) {
+                  allMsgs = d;
+                } else if (d && d.messages && d.messages.records && Array.isArray(d.messages.records)) {
+                  allMsgs = d.messages.records;
+                } else if (d && d.messages && Array.isArray(d.messages)) {
+                  allMsgs = d.messages;
+                } else if (d && d.data && Array.isArray(d.data)) {
+                  allMsgs = d.data;
+                }
                 console.log(`[get-messages] Strategy 4 found ${allMsgs.length} total messages. Looking for jid: ${jidToUse}`);
 
                 // Filter by JID if we have messages
