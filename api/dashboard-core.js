@@ -409,6 +409,7 @@ export default async function handler(req, res) {
             const cleaned = jidToUse.replace(/\D/g, '');
             jidToUse = cleaned.length > 10 ? `${cleaned}@g.us` : `${cleaned}@s.whatsapp.net`;
           }
+          console.log(`[get-messages] Input remoteJid: ${remoteJid}, Final jidToUse: ${jidToUse}`);
 
           let raw = [];
 
