@@ -29,3 +29,4 @@ scratch/
 
 # Logs
 *.log
+.vercel
