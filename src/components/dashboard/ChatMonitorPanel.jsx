@@ -25,47 +25,70 @@ const MediaMessage = ({ msg, instanceName }) => {
   return <span>{msg.text}</span>;
 };
 
-const ChatMonitorPanel = ({ 
-  chats, 
-  selectedChat, 
-  setSelectedChat, 
-  fetchChatMessages, 
-  isAIPaused, 
-  handleToggleAI, 
-  chatMessages, 
-  selectedInstance 
+const ChatMonitorPanel = ({
+  chats,
+  selectedChat,
+  setSelectedChat,
+  fetchChatMessages,
+  isAIPaused,
+  handleToggleAI,
+  chatMessages,
+  selectedInstance
 }) => {
+  const hasChats = chats && chats.length > 0;
+
   return (
     <div className="chat-monitor-container">
       <div className="chat-list-panel">
         <div className="panel-header"><h3>Conversas Ativas</h3></div>
-        <div className="conversations-scroll">
-          {chats.map((chat, i) => (
-            <div 
-              className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`} 
-              key={i} 
-              onClick={() => {
-                setSelectedChat(chat); 
-                fetchChatMessages(chat.id);
-              }}
-            >
-              <div className="chat-item-header">
-                <span className="chat-name">{chat.user}</span>
-                <span className="chat-time">{chat.time}</span>
+        {!hasChats ? (
+          <div style={{
+            padding: '2rem 1.5rem',
+            textAlign: 'center',
+            color: '#a1a1aa',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%'
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💬</div>
+            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: '600', color: '#fff' }}>
+              Nenhuma conversa ativa
+            </p>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
+              Quando contatos enviarem mensagens, aparecerão aqui
+            </p>
+          </div>
+        ) : (
+          <div className="conversations-scroll">
+            {chats.map((chat, i) => (
+              <div
+                className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
+                key={i}
+                onClick={() => {
+                  setSelectedChat(chat);
+                  fetchChatMessages(chat.id);
+                }}
+              >
+                <div className="chat-item-header">
+                  <span className="chat-name">{chat.user}</span>
+                  <span className="chat-time">{chat.time}</span>
+                </div>
+                <p className="chat-status">{chat.lastMsg}</p>
               </div>
-              <p className="chat-status">{chat.lastMsg}</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="chat-window-panel">
         {selectedChat ? (
           <>
             <div className="chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4>{selectedChat.user}</h4>
-              <button 
-                className={`btn-${isAIPaused ? 'danger' : 'secondary'}`} 
-                onClick={handleToggleAI} 
+              <button
+                className={`btn-${isAIPaused ? 'danger' : 'secondary'}`}
+                onClick={handleToggleAI}
                 style={{ fontSize: '0.7rem', padding: '0.4rem 0.8rem' }}
               >
                 {isAIPaused ? '🚫 IA PAUSADA' : '🤖 IA ATIVA'}
@@ -74,8 +97,8 @@ const ChatMonitorPanel = ({
             <div className="messages-container">
               {chatMessages.map((msg, i) => (
                 <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
-                  {['image', 'audio'].includes(msg.type) 
-                    ? <MediaMessage msg={msg} instanceName={selectedInstance} /> 
+                  {['image', 'audio'].includes(msg.type)
+                    ? <MediaMessage msg={msg} instanceName={selectedInstance} />
                     : msg.text
                   }
                   <span className="message-time">{msg.time}</span>
@@ -86,7 +109,11 @@ const ChatMonitorPanel = ({
           </>
         ) : (
           <div className="chat-empty-state">
-            <p>Selecione uma conversa para monitorar a IA.</p>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>👋</div>
+            <p style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+              Selecione uma conversa
+            </p>
+            <p>Para monitorar as respostas da IA Sarah em tempo real</p>
           </div>
         )}
       </div>
