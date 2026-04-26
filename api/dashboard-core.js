@@ -328,23 +328,33 @@ export default async function handler(req, res) {
             }
           }
 
-          // Strategy 4: Extract from messages as fallback
-          if (raw.length === 0) {
-            try {
-              const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
-                ...fetchOptions,
-                method: 'POST',
-                body: JSON.stringify({ where: {}, take: 100 })
-              });
-              if (msgRes.ok) {
-                const msgData = await msgRes.json();
-                const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
+          // Strategy 4: Extract from messages (always run to combine with other strategies)
+          try {
+            const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
+              ...fetchOptions,
+              method: 'POST',
+              body: JSON.stringify({ where: {}, take: 100 })
+            });
+            if (msgRes.ok) {
+              const msgData = await msgRes.json();
+              const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
 
-                if (messages.length > 0) {
-                  const uniqueChats = {};
-                  messages.forEach(msg => {
-                    const jid = msg.remoteJid || msg.from || msg.key?.remoteJid;
-                    if (jid && !uniqueChats[jid]) {
+              if (messages.length > 0) {
+                const uniqueChats = {};
+
+                // Merge existing chats with message-based chats
+                raw.forEach(c => {
+                  const jid = c.remoteJid || c.id;
+                  if (jid && !uniqueChats[jid]) {
+                    uniqueChats[jid] = c;
+                  }
+                });
+
+                // Add/merge with message-based chats
+                messages.forEach(msg => {
+                  const jid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+                  if (jid) {
+                    if (!uniqueChats[jid]) {
                       uniqueChats[jid] = {
                         id: jid,
                         remoteJid: jid,
@@ -352,15 +362,20 @@ export default async function handler(req, res) {
                         lastMsg: msg.text || msg.body || msg.message?.conversation || '[Mensagem]',
                         timestamp: msg.messageTimestamp || msg.timestamp || Date.now()
                       };
+                    } else if (!uniqueChats[jid].lastMsg || !uniqueChats[jid].timestamp) {
+                      // Enhance existing chat with message data
+                      uniqueChats[jid].lastMsg = msg.text || msg.body || msg.message?.conversation || uniqueChats[jid].lastMsg;
+                      uniqueChats[jid].timestamp = msg.messageTimestamp || msg.timestamp || uniqueChats[jid].timestamp;
                     }
-                  });
-                  raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                  console.log(`[get-chats] Strategy 4 success: ${raw.length} chats from messages`);
-                }
+                  }
+                });
+
+                raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                console.log(`[get-chats] Strategy 4 merged: ${raw.length} total chats from messages`);
               }
-            } catch (e4) {
-              console.log(`[get-chats] Strategy 4 failed:`, e4.message);
             }
+          } catch (e4) {
+            console.log(`[get-chats] Strategy 4 failed:`, e4.message);
           }
 
           console.log(`[get-chats] Final result for ${realName}: ${raw.length} chats`);
