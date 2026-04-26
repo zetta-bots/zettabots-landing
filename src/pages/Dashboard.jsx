@@ -123,10 +123,10 @@ export default function Dashboard() {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: method === 'pix' ? 'create-payment' : 'create-checkout',
-          recordId: session.recordId || session.id, 
-          email: session.email, 
+          recordId: session.recordId || session.id,
+          email: session.email,
           name: session.name,
           payment_method: method,
           instanceName: selectedInstance,
@@ -134,6 +134,18 @@ export default function Dashboard() {
           planName: planName
         })
       })
+
+      if (!res.ok) {
+        try {
+          const errorData = await res.json();
+          showToast('Erro: ' + (errorData.error || 'Falha ao gerar cobrança'), 'error');
+          return;
+        } catch {
+          showToast('Erro ao processar pagamento (possível erro em desenvolvimento)', 'error');
+          return;
+        }
+      }
+
       const data = await res.json()
       if (data.success) {
         if (method === 'card') {
@@ -163,6 +175,12 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-all-instances', instanceName: selectedInstance, email })
       })
+
+      if (!res.ok) {
+        console.warn('All instances fetch failed:', res.status);
+        return;
+      }
+
       const data = await res.json()
       if (data.success) setAllInstances(data.instances)
     } catch (err) { console.error('ERRO ADMIN:', err) }
@@ -178,6 +196,12 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-admin-stats', instanceName: selectedInstance, email })
       })
+
+      if (!res.ok) {
+        console.warn('Admin stats fetch failed:', res.status);
+        return;
+      }
+
       const data = await res.json()
       if (data.success) setAdminStats(data)
     } catch (err) { console.error('ADMIN STATS:', err) }
@@ -261,6 +285,12 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-stats', instanceName })
       })
+
+      if (!res.ok) {
+        console.warn('Stats fetch failed:', res.status);
+        return;
+      }
+
       const data = await res.json()
       if (data.success) {
         setStats(data.stats)
@@ -308,6 +338,13 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ instanceName })
       })
+
+      if (!res.ok) {
+        console.warn('QR code fetch failed:', res.status);
+        setQrStatus('DISCONNECTED');
+        return;
+      }
+
       const data = await res.json()
       if (data._debug) console.warn('[get-qr debug]', data._debug)
       if (data.status === 'CONNECTED') {
@@ -345,6 +382,13 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-chats', instanceName })
       })
+
+      if (!res.ok) {
+        console.warn('Chats fetch failed:', res.status);
+        setChats([]);
+        return;
+      }
+
       const data = await res.json()
       if (data.success) {
         setChats(data.chats || [])
@@ -366,6 +410,13 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-messages', instanceName: selectedInstance, remoteJid })
       })
+
+      if (!res.ok) {
+        console.warn('Messages fetch failed:', res.status);
+        setChatMessages([]);
+        return;
+      }
+
       const data = await res.json()
       if (data.success) {
         setChatMessages(data.messages || [])
@@ -386,6 +437,13 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-contacts', instanceName })
       })
+
+      if (!res.ok) {
+        console.warn('Leads fetch failed:', res.status);
+        setLeads([]);
+        return;
+      }
+
       const data = await res.json()
       if (data.success) {
         const newLeads = data.contacts || [];
@@ -396,8 +454,8 @@ export default function Dashboard() {
         setLeadsContactCount(data.contactCount || data.totalContactsFromApi || 0)
         setLeadsMessage(data.message || null)
       }
-    } catch (err) { 
-      console.error('LEADS ERROR:', err) 
+    } catch (err) {
+      console.error('LEADS ERROR:', err)
     } finally {
       setLeadsLoading(false)
     }
