@@ -90,9 +90,12 @@ export default async function handler(req, res) {
 
     const syncContactsFromMessages = async (messages, instanceName) => {
       try {
-        if (!Array.isArray(messages) || messages.length === 0) return;
+        if (!Array.isArray(messages) || messages.length === 0) {
+          return;
+        }
 
         const uniqueContacts = new Map();
+        let foundContacts = 0;
 
         for (const msg of messages) {
           if (!msg) continue;
@@ -103,6 +106,7 @@ export default async function handler(req, res) {
           const phone = remoteJid.replace(/@.+$/, '').trim();
           if (!phone || uniqueContacts.has(phone)) continue;
 
+          foundContacts++;
           const pushName = msg.pushName || msg.senderName || msg.notifyName || null;
           const senderName = msg.senderName || msg.pushName || null;
 
@@ -125,10 +129,11 @@ export default async function handler(req, res) {
           });
         }
 
-        if (uniqueContacts.size === 0) return;
+        if (uniqueContacts.size === 0) {
+          return;
+        }
 
         const contactsList = Array.from(uniqueContacts.values());
-
         const upsertPayload = contactsList.map(c => ({
           instance_name: c.instance_name,
           phone: c.phone,
@@ -138,7 +143,7 @@ export default async function handler(req, res) {
           updated_at: c.updated_at
         }));
 
-        await fetch(`${sbUrl}/rest/v1/crm_leads?on_conflict=instance_name,phone`, {
+        const sbRes = await fetch(`${sbUrl}/rest/v1/crm_leads?on_conflict=instance_name,phone`, {
           method: 'POST',
           headers: {
             'apikey': sbKey,
@@ -146,8 +151,13 @@ export default async function handler(req, res) {
             'Content-Type': 'application/json',
             'Prefer': 'resolution=merge-duplicates'
           },
-          body: JSON.stringify(upsertPayload)
+          body: JSON.stringify(upsertPayload),
+          timeout: 5000
         });
+
+        if (!sbRes.ok) {
+          await sbRes.text().catch(() => {});
+        }
       } catch (e) {
       }
     };
@@ -591,7 +601,7 @@ export default async function handler(req, res) {
             }
           });
 
-          syncContactsFromMessages(raw, instanceName);
+          syncContactsFromMessages(raw, realName);
 
           return res.status(200).json({
             success: true,
