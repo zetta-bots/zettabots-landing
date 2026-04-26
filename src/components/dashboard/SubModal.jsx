@@ -21,16 +21,34 @@ const SubModal = ({
   };
 
   return (
-    <div className="modal-overlay" style={{ background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)', zIndex: 9999 }} onClick={() => { setShowSubModal(false); setCheckoutPix(null); }}>
+    <div 
+      className="modal-overlay" 
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'rgba(0,0,0,0.85)', 
+        backdropFilter: 'blur(8px)', 
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }} 
+      onClick={() => { setShowSubModal(false); setCheckoutPix(null); }}
+    >
       <div 
         className="glass-card reveal-item" 
         style={{ 
-          width: '90%', 
+          width: '100%',
           maxWidth: '550px', 
-          padding: '2rem',
+          padding: '2.5rem',
           position: 'relative',
-          border: '1px solid rgba(255,255,255,0.08)',
-          background: '#0e0e1a'
+          border: '1px solid rgba(124, 58, 237, 0.2)',
+          background: '#0e0e1a',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
         }} 
         onClick={e => e.stopPropagation()}
       >
