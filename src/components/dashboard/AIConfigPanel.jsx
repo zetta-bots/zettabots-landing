@@ -280,7 +280,5 @@ const AIConfigPanel = ({
     </div>
   );
 };
-  );
-};
 
 export default AIConfigPanel;
