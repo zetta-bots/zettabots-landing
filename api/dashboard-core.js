@@ -297,25 +297,75 @@ export default async function handler(req, res) {
         try {
           const realName = await getCorrectInstance(instanceName);
           let { remoteJid } = req.body;
-          if (remoteJid && !remoteJid.includes('@')) {
-            remoteJid = `${remoteJid.replace(/\D/g, '')}@s.whatsapp.net`;
+          if (!remoteJid) return res.status(200).json({ success: true, messages: [] });
+
+          // Ensure remoteJid is in correct format
+          let jidToUse = remoteJid;
+          if (!jidToUse.includes('@')) {
+            const cleaned = jidToUse.replace(/\D/g, '');
+            jidToUse = cleaned.length > 10 ? `${cleaned}@g.us` : `${cleaned}@s.whatsapp.net`;
           }
 
-          const r = await fetch(`${url}/chat/findMessages/${realName}`, {
-            method: 'POST',
-            headers: fetchOptions.headers,
-            body: JSON.stringify({ where: { remoteJid }, take: 30 })
-          });
-          const d = await r.json();
-          const raw = Array.isArray(d) ? d : (d.messages || []);
-          return res.status(200).json({ 
-            success: true, 
-            messages: raw.reverse().map(m => {
+          let raw = [];
+
+          // Strategy 1: Try /chat/findMessages endpoint
+          try {
+            const r = await fetch(`${url}/chat/findMessages/${realName}`, {
+              method: 'POST',
+              headers: fetchOptions.headers,
+              body: JSON.stringify({ where: { remoteJid: jidToUse }, take: 50 })
+            });
+            if (r.ok) {
+              const d = await r.json();
+              raw = Array.isArray(d) ? d : (d.messages || d.data || []);
+            }
+          } catch (e1) {
+            console.log(`[get-messages] Strategy 1 failed:`, e1.message);
+          }
+
+          // Strategy 2: Try /message/findMessages endpoint
+          if (raw.length === 0) {
+            try {
+              const r = await fetch(`${url}/message/findMessages/${realName}`, {
+                method: 'POST',
+                headers: fetchOptions.headers,
+                body: JSON.stringify({ where: { remoteJid: jidToUse }, take: 50 })
+              });
+              if (r.ok) {
+                const d = await r.json();
+                raw = Array.isArray(d) ? d : (d.messages || d.data || []);
+              }
+            } catch (e2) {
+              console.log(`[get-messages] Strategy 2 failed:`, e2.message);
+            }
+          }
+
+          // Strategy 3: Try /message/fetchMessages endpoint
+          if (raw.length === 0) {
+            try {
+              const r = await fetch(`${url}/message/fetchMessages/${realName}?jid=${encodeURIComponent(jidToUse)}&limit=50`, {
+                ...fetchOptions,
+                method: 'GET'
+              });
+              if (r.ok) {
+                const d = await r.json();
+                raw = Array.isArray(d) ? d : (d.messages || d.data || []);
+              }
+            } catch (e3) {
+              console.log(`[get-messages] Strategy 3 failed:`, e3.message);
+            }
+          }
+
+          console.log(`[get-messages] Found ${raw.length} messages for ${jidToUse}`);
+
+          return res.status(200).json({
+            success: true,
+            messages: raw.reverse().slice(0, 50).map(m => {
               const msg = m.message || {};
               let text = msg.conversation || msg.extendedTextMessage?.text || '';
               let type = 'text';
-
               let mimetype = '';
+
               if (msg.imageMessage) { text = '📷 Foto'; type = 'image'; mimetype = msg.imageMessage.mimetype; }
               else if (msg.audioMessage) { text = '🎤 Áudio'; type = 'audio'; mimetype = msg.audioMessage.mimetype; }
               else if (msg.videoMessage) { text = '🎥 Vídeo'; type = 'video'; mimetype = msg.videoMessage.mimetype; }
@@ -323,10 +373,18 @@ export default async function handler(req, res) {
               else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; mimetype = msg.stickerMessage.mimetype; }
               else if (!text) text = 'Mensagem de mídia/sistema';
 
-              return { id: m.key?.id, text, type, mimetype, fromMe: m.key?.fromMe, time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '' }
+              return {
+                id: m.key?.id,
+                text,
+                type,
+                mimetype,
+                fromMe: m.key?.fromMe,
+                time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
+              }
             })
           });
         } catch (e) {
+          console.error(`[get-messages] Error:`, e.message);
           return res.status(200).json({ success: true, messages: [] });
         }
 
