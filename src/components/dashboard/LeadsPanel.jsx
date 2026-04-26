@@ -130,41 +130,74 @@ const LeadsPanel = ({ leads, loading = false, contactCount = 0, message = null }
               <tbody>
                 {leads.map((lead, i) => (
                   <tr key={i} className="reveal-item" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', animationDelay: `${i * 0.05}s` }}>
-                    <td style={{ padding: '1rem', fontWeight: '600' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <td style={{ padding: '1.25rem 1rem', fontWeight: '600' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{
-                          width: '32px',
-                          height: '32px',
+                          width: '36px',
+                          height: '36px',
                           borderRadius: '50%',
                           background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: '700'
+                          fontSize: '0.8rem',
+                          fontWeight: '700',
+                          flexShrink: 0
                         }}>
                           {(lead.name || '?').charAt(0).toUpperCase()}
                         </div>
-                        {lead.name}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ color: '#fff' }}>{lead.name}</span>
+                          {lead.ai_notes && (
+                            <span style={{ 
+                              fontSize: '0.7rem', 
+                              color: '#a1a1aa', 
+                              fontWeight: '400',
+                              maxWidth: '200px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }} title={lead.ai_notes}>
+                              ✨ {lead.ai_notes}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: '1rem', color: '#a1a1aa', fontSize: '0.9rem' }}>
                       {lead.phone}
                     </td>
                     <td style={{ padding: '1rem' }}>
-                      <span style={{
-                        padding: '4px 10px',
-                        background: 'rgba(16, 185, 129, 0.1)',
-                        color: '#10b981',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        fontWeight: '600'
-                      }}>
-                        {lead.status}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          padding: '4px 10px',
+                          background: lead.sentiment === 'hot' ? 'rgba(239, 68, 68, 0.1)' : lead.sentiment === 'cold' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: lead.sentiment === 'hot' ? '#f87171' : lead.sentiment === 'cold' ? '#60a5fa' : '#a1a1aa',
+                          borderRadius: '6px',
+                          fontSize: '0.7rem',
+                          fontWeight: '800',
+                          textTransform: 'uppercase',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          {lead.sentiment === 'hot' ? '🔥 QUENTE' : lead.sentiment === 'cold' ? '❄️ FRIO' : '😐 NEUTRO'}
+                        </span>
+                        <span style={{
+                          padding: '4px 10px',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10b981',
+                          borderRadius: '6px',
+                          fontSize: '0.7rem',
+                          fontWeight: '700',
+                          textTransform: 'capitalize'
+                        }}>
+                          {lead.stage || 'lead'}
+                        </span>
+                      </div>
                     </td>
                     <td style={{ padding: '1rem', color: '#a1a1aa', fontSize: '0.85rem' }}>
-                      {lead.date}
+                      {lead.date || new Date(lead.last_contact_at).toLocaleDateString('pt-BR')}
                     </td>
                   </tr>
                 ))}
