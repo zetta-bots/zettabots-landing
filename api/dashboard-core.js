@@ -178,7 +178,10 @@ export default async function handler(req, res) {
               email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br',
               first_name: name || 'Cliente ZettaBots'
             },
-            external_reference: String(recordId)
+            external_reference: String(recordId),
+            metadata: {
+              plan_type: planLabel.toLowerCase()
+            }
           }
         });
         return res.status(200).json({ success: true, payment });

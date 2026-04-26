@@ -171,11 +171,12 @@ export default async function handler(req, res) {
       const userId = payment.external_reference;
       if (!userId) return;
 
+      const planType = payment.metadata?.plan_type || 'pro';
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + 1);
 
       await patchProfile(sbUrl, sbKey, userId, {
-        plan_type: 'pro',
+        plan_type: planType,
         plan_expires_at: expiresAt.toISOString(),
         is_active: true,
       });

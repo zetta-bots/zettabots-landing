@@ -268,15 +268,27 @@ export default function Dashboard() {
   }
 
   const fetchFinance = async (instanceName) => {
+    if (!session?.email) return;
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-finance', instanceName, email: session.email })
       })
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (errorData.error?.includes('token not configured')) {
+          console.warn('Finance: Mercado Pago não configurado na Vercel');
+          return;
+        }
+      }
+
       const data = await res.json()
       if (data.success) setFinanceData(data)
-    } catch (err) { console.error('ERRO FINANCE:', err) }
+    } catch (err) { 
+      console.error('ERRO FINANCE:', err);
+    }
   }
 
   const fetchQrCode = async (instanceName) => {
