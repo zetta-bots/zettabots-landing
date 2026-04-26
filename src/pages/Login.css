@@ -79,6 +79,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  align-items: stretch;
 }
 
 .input-group {
@@ -146,7 +148,6 @@
   transition: all 0.3s ease;
   box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
   width: 100%;
-  margin: 0 auto;
 }
 
 .btn-primary:hover:not(:disabled) {
