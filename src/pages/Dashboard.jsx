@@ -13,6 +13,7 @@ import StatsPanel from '../components/dashboard/StatsPanel'
 import LeadsPanel from '../components/dashboard/LeadsPanel'
 import ChatMonitorPanel from '../components/dashboard/ChatMonitorPanel'
 import FinancePanel from '../components/dashboard/FinancePanel'
+import FinancialDashboard from '../components/dashboard/FinancialDashboard'
 import IntegrationsPanel from '../components/dashboard/IntegrationsPanel'
 import ConnectionPanel from '../components/dashboard/ConnectionPanel'
 import AdminPanel from '../components/dashboard/AdminPanel'
@@ -643,11 +644,18 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'financeiro' && (
-          <FinancePanel 
-            financeData={financeData} 
-            session={session} 
-            setShowSubModal={setShowSubModal} 
-          />
+          isAdmin ? (
+            <FinancialDashboard
+              adminStats={adminStats}
+              session={session}
+            />
+          ) : (
+            <FinancePanel
+              financeData={financeData}
+              session={session}
+              setShowSubModal={setShowSubModal}
+            />
+          )
         )}
 
         {activeTab === 'integracoes' && (
