@@ -443,6 +443,17 @@ export default async function handler(req, res) {
 
       case 'debug-chats': {
         try {
+          // First, get all instances
+          const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
+          const instances = await listRes.json();
+          const data = Array.isArray(instances) ? instances : (instances.data || []);
+
+          const availableInstances = data.map(i => ({
+            name: i.name,
+            status: i.connectionStatus,
+            phone: i.phone
+          }));
+
           const realName = await getCorrectInstance(instanceName);
           const results = {};
 
@@ -476,11 +487,18 @@ export default async function handler(req, res) {
               body: JSON.stringify({ where: {}, take: 10 })
             });
             results.strategy4_response = { status: r.status, ok: r.ok };
-            const data = await r.json();
-            results.strategy4_sample = Array.isArray(data) ? data.slice(0, 1) : (data.messages ? data.messages.slice(0, 1) : data);
+            const msgData = await r.json();
+            results.strategy4_sample = Array.isArray(msgData) ? msgData.slice(0, 1) : (msgData.messages ? msgData.messages.slice(0, 1) : msgData);
           } catch (e) { results.strategy4 = { error: e.message }; }
 
-          return res.status(200).json({ success: true, debug: results, instanceName, realName });
+          return res.status(200).json({
+            success: true,
+            input: instanceName,
+            realName,
+            availableInstances,
+            totalInstances: availableInstances.length,
+            debug: results
+          });
         } catch (e) {
           return res.status(200).json({ success: false, error: e.message });
         }
