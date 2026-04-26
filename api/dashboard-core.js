@@ -24,6 +24,8 @@ export default async function handler(req, res) {
         const instances = await listRes.json();
         const data = Array.isArray(instances) ? instances : (instances.data || []);
 
+        if (data.length === 0) return name;
+
         // Normalize string for matching
         const normalize = (str) => {
           if (!str) return '';
@@ -41,31 +43,17 @@ export default async function handler(req, res) {
         // Strategy 1: Exact match on instance.name
         found = data.find(i => i.name && normalize(i.name) === normalizedInput);
 
-        // Strategy 2: Check if input matches ownerJid, phone, or other fields
+        // Strategy 2: Partial match on name
         if (!found) {
-          found = data.find(i => {
-            const phoneNorm = normalize(i.phone || '');
-            const jidNorm = normalize(i.ownerJid || '');
-            const integrationNorm = normalize(i.integration || '');
-            return phoneNorm === normalizedInput || jidNorm === normalizedInput || integrationNorm === normalizedInput;
-          });
+          found = data.find(i => i.name && normalize(i.name).includes(normalizedInput));
         }
 
-        // Strategy 3: Partial substring match
+        // Strategy 3: Match by phone
         if (!found) {
-          found = data.find(i =>
-            (i.name && normalize(i.name).includes(normalizedInput)) ||
-            (i.phone && normalize(i.phone).includes(normalizedInput)) ||
-            (i.integration && normalize(i.integration).includes(normalizedInput))
-          );
+          found = data.find(i => i.phone && normalize(i.phone) === normalizedInput);
         }
 
-        // Strategy 4: Reverse match - input contains instance name
-        if (!found) {
-          found = data.find(i => i.name && normalizedInput.includes(normalize(i.name)));
-        }
-
-        // Strategy 5: Try getting from Supabase as alternative
+        // Strategy 4: Supabase lookup by name → match by phone
         if (!found) {
           try {
             const sbRes = await fetch(
@@ -74,10 +62,9 @@ export default async function handler(req, res) {
             );
             if (sbRes.ok) {
               const sbData = await sbRes.json();
-              if (sbData && sbData.length > 0) {
-                const sbInstance = sbData[0];
-                // Try to find matching Evolution instance by phone
-                found = data.find(i => i.phone && normalize(i.phone) === normalize(sbInstance.phone));
+              if (sbData && sbData.length > 0 && sbData[0].phone) {
+                // Found in Supabase, now match by phone in Evolution
+                found = data.find(i => i.phone && normalize(i.phone) === normalize(sbData[0].phone));
               }
             }
           } catch (e) {
@@ -85,8 +72,17 @@ export default async function handler(req, res) {
           }
         }
 
-        console.log(`[getCorrectInstance] Input: "${name}" → Found: "${found?.name || 'NOT FOUND'}" (phone: ${found?.phone || 'N/A'})`);
-        console.log(`[getCorrectInstance] Available:`, data.map(i => `${i.name}(${i.phone})`).join(' | '));
+        // Strategy 5: Fallback - use first connected instance (if only 1 other besides default)
+        if (!found && data.length === 2) {
+          found = data.find(i => i.name !== 'ZettaBots' && i.connectionStatus === 'open');
+        }
+
+        // Last resort: use first open connection
+        if (!found) {
+          found = data.find(i => i.connectionStatus === 'open');
+        }
+
+        console.log(`[getCorrectInstance] Input: "${name}" → Found: "${found?.name || 'NOT FOUND'}" (phone: ${found?.phone})`);
 
         return found ? found.name : name;
       } catch (e) {
