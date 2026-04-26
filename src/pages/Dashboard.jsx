@@ -715,8 +715,14 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'financeiro' && (
-          <div className="tab-panel reveal-item" key="finance-tab-root">
-            {isAdmin ? (
+          <div key="finance-tab" style={{ width: '100%', height: '100%' }}>
+            {!isAdmin ? (
+              <FinancePanel 
+                financeData={financeData} 
+                session={session} 
+                setShowSubModal={setShowSubModal} 
+              />
+            ) : (
               adminStats ? (
                 <FinancialDashboard adminStats={adminStats} session={session} />
               ) : (
@@ -725,12 +731,6 @@ export default function Dashboard() {
                   <p style={{ marginTop: '1rem' }}>Carregando dados mestre...</p>
                 </div>
               )
-            ) : (
-              <FinancePanel
-                financeData={financeData}
-                session={session}
-                setShowSubModal={setShowSubModal}
-              />
             )}
           </div>
         )}
