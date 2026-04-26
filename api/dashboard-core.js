@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { action, instanceName, remoteJid } = req.body;
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-supabase-instances'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-get-chats', 'debug-supabase-instances'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -781,6 +781,69 @@ export default async function handler(req, res) {
             error: error.message,
             contacts: []
           });
+        }
+      }
+
+      case 'debug-get-chats': {
+        try {
+          const realName = await getCorrectInstance(instanceName);
+          const debug = {};
+
+          // Strategy 1
+          debug.strategy1 = { attempted: true };
+          try {
+            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
+            debug.strategy1.status = r.status;
+            const d = await r.json();
+            debug.strategy1.response = d;
+          } catch (e) {
+            debug.strategy1.error = e.message;
+          }
+
+          // Strategy 2
+          debug.strategy2 = { attempted: true };
+          try {
+            const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
+            debug.strategy2.status = r.status;
+            const d = await r.json();
+            debug.strategy2.rawType = Array.isArray(d) ? 'array' : typeof d;
+            debug.strategy2.isArray = Array.isArray(d);
+            debug.strategy2.hasChats = !!d.chats;
+            debug.strategy2.hasData = !!d.data;
+            debug.strategy2.hasRemoteJid = !!d.remoteJid;
+            debug.strategy2.sampleResponse = JSON.stringify(d).substring(0, 500);
+          } catch (e) {
+            debug.strategy2.error = e.message;
+          }
+
+          // Strategy 3
+          debug.strategy3 = { attempted: true };
+          try {
+            const r = await fetch(`${url}/chat/findChats/${realName}`, {
+              ...fetchOptions,
+              method: 'POST',
+              body: JSON.stringify({ where: {}, take: 50 })
+            });
+            debug.strategy3.status = r.status;
+            const d = await r.json();
+            debug.strategy3.rawType = Array.isArray(d) ? 'array' : typeof d;
+            debug.strategy3.isArray = Array.isArray(d);
+            debug.strategy3.hasChats = !!d.chats;
+            debug.strategy3.hasData = !!d.data;
+            debug.strategy3.sampleResponse = JSON.stringify(d).substring(0, 500);
+          } catch (e) {
+            debug.strategy3.error = e.message;
+          }
+
+          return res.status(200).json({
+            success: true,
+            input: instanceName,
+            realName,
+            debug,
+            message: 'This shows exactly what each strategy returns and how it should be processed'
+          });
+        } catch (e) {
+          return res.status(200).json({ success: false, error: e.message });
         }
       }
 
