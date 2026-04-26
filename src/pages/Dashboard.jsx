@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [qrTimer, setQrTimer] = useState(40)
   const [chats, setChats] = useState([])
   const [leads, setLeads] = useState([])
+  const [leadsContactCount, setLeadsContactCount] = useState(0)
+  const [leadsMessage, setLeadsMessage] = useState(null)
   const [stats, setStats] = useState({ chats: 0, contacts: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] })
   const [financeData, setFinanceData] = useState(null)
   const [selectedChat, setSelectedChat] = useState(null)
@@ -303,13 +305,17 @@ export default function Dashboard() {
 
   const fetchLeads = async (instanceName) => {
     try {
-      const res = await fetch('/api/dashboard-core', {
+      const res = await fetch('/api/get-contacts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'get-leads', instanceName, email: session.email })
+        body: JSON.stringify({ instanceName })
       })
       const data = await res.json()
-      if (data.success) setLeads(data.leads || [])
+      if (data.success) {
+        setLeads(data.contacts || [])
+        setLeadsContactCount(data.contactCount || data.totalContactsFromApi || 0)
+        setLeadsMessage(data.message || null)
+      }
     } catch (err) { console.error('LEADS ERROR:', err) }
   }
 
@@ -611,7 +617,11 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'leads' && (
-          <LeadsPanel leads={leads} />
+          <LeadsPanel
+            leads={leads}
+            contactCount={leadsContactCount}
+            message={leadsMessage}
+          />
         )}
 
         {activeTab === 'mensagens' && (

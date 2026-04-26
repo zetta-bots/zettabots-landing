@@ -1,41 +1,144 @@
 import React from 'react';
 
-const LeadsPanel = ({ leads }) => {
+const LeadsPanel = ({ leads, contactCount = 0, message = null }) => {
+  const hasLeads = leads && leads.length > 0;
+
   return (
     <div className="tab-panel">
       <div className="glass-card">
-        <h3>Lista de Leads Capturados</h3>
-        <div style={{ marginTop: '1.5rem', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
-                <th style={{ padding: '1rem', color: '#a1a1aa' }}>NOME</th>
-                <th style={{ padding: '1rem', color: '#a1a1aa' }}>WHATSAPP</th>
-                <th style={{ padding: '1rem', color: '#a1a1aa' }}>STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <td style={{ padding: '1rem', fontWeight: '600' }}>{lead.name}</td>
-                  <td style={{ padding: '1rem', color: '#a1a1aa' }}>{lead.phone}</td>
-                  <td style={{ padding: '1rem' }}>
-                    <span style={{ padding: '4px 8px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '6px', fontSize: '0.7rem' }}>
-                      {lead.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {leads.length === 0 && (
-                <tr>
-                  <td colSpan="3" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>
-                    Aguardando primeiros leads...
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Lista de Leads Capturados</h3>
+            <p style={{ margin: '4px 0 0', color: '#a1a1aa', fontSize: '0.85rem' }}>
+              {hasLeads ? `${leads.length} lead${leads.length !== 1 ? 's' : ''} ativo${leads.length !== 1 ? 's' : ''}` : 'Nenhum lead ainda'}
+            </p>
+          </div>
+          {contactCount > 0 && !hasLeads && (
+            <span style={{
+              background: 'rgba(124, 58, 237, 0.1)',
+              color: '#a78bfa',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: '600'
+            }}>
+              {contactCount} contato{contactCount !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
+
+        {!hasLeads ? (
+          <div style={{
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            borderRadius: '12px',
+            background: 'rgba(124, 58, 237, 0.05)',
+            border: '1px solid rgba(124, 58, 237, 0.1)'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📲</div>
+            <h4 style={{ margin: '0 0 0.5rem', color: '#fff', fontSize: '1rem' }}>
+              {contactCount > 0 ? 'Contatos Aguardando' : 'Nenhum Lead Ainda'}
+            </h4>
+            <p style={{ margin: 0, color: '#a1a1aa', fontSize: '0.9rem', lineHeight: '1.6' }}>
+              {message || (contactCount > 0
+                ? `Você tem ${contactCount} contato${contactCount !== 1 ? 's' : ''} aguardando sincronização. Eles aparecerão aqui quando enviarem a primeira mensagem para sua IA.`
+                : 'Os contatos que enviam mensagens para sua IA aparecerão aqui. Comece compartilhando seu número WhatsApp!')}
+            </p>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                color: '#a1a1aa'
+              }}>
+                ✓ Nome e número
+              </span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                color: '#a1a1aa'
+              }}>
+                ✓ Data de contato
+              </span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                color: '#a1a1aa'
+              }}>
+                ✓ Status
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginTop: '1.5rem', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>NOME</th>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>WHATSAPP</th>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>STATUS</th>
+                  <th style={{ padding: '1rem', color: '#a1a1aa', fontWeight: '600', fontSize: '0.75rem' }}>DATA</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', hover: 'background' }}>
+                    <td style={{ padding: '1rem', fontWeight: '600' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: '700'
+                        }}>
+                          {(lead.name || '?').charAt(0).toUpperCase()}
+                        </div>
+                        {lead.name}
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem', color: '#a1a1aa', fontSize: '0.9rem' }}>
+                      {lead.phone}
+                    </td>
+                    <td style={{ padding: '1rem' }}>
+                      <span style={{
+                        padding: '4px 10px',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        color: '#10b981',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: '600'
+                      }}>
+                        {lead.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem', color: '#a1a1aa', fontSize: '0.85rem' }}>
+                      {lead.date}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
