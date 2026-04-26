@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Header = ({ 
-  isAdmin, 
-  session, 
-  activeTab, 
-  allInstances, 
-  selectedInstance, 
+const Header = ({
+  isAdmin,
+  session,
+  activeTab,
+  allInstances,
+  selectedInstance,
   setSelectedInstance,
   notifications = [],
   markAsRead
 }) => {
+  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const notificationRef = useRef(null);
@@ -135,10 +137,10 @@ const Header = ({
 
               {/* Menu Items */}
               <div style={{ padding: '0.75rem' }}>
-                <a href="/dashboard?tab=settings" onClick={() => setShowUserMenu(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '1rem 1.25rem', borderRadius: '16px', background: 'transparent', color: '#e2e8f0', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem', fontWeight: '600' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <button onClick={() => { setShowUserMenu(false); navigate('/dashboard?tab=settings'); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '1rem 1.25rem', borderRadius: '16px', background: 'transparent', color: '#e2e8f0', border: 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem', fontWeight: '600', textAlign: 'left', width: '100%' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: '1rem' }}>⚙️</span>
                   Configurações
-                </a>
+                </button>
                 <a href="https://docs.zettabots.ia.br" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '1rem 1.25rem', borderRadius: '16px', background: 'transparent', color: '#e2e8f0', textDecoration: 'none', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem', fontWeight: '600' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: '1rem' }}>📚</span>
                   Documentação
