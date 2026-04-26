@@ -13,15 +13,18 @@ import {
 } from 'recharts';
 
 const StatsPanel = ({ leads, stats }) => {
+  // Extrair as últimas 5 atividades reais baseadas nos leads com verificação de segurança
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  
   // Dados simulados para o gráfico de leads (baseados no total de leads atual)
   const leadsData = [
-    { name: 'Seg', value: Math.floor(leads.length * 0.1) },
-    { name: 'Ter', value: Math.floor(leads.length * 0.2) },
-    { name: 'Qua', value: Math.floor(leads.length * 0.4) },
-    { name: 'Qui', value: Math.floor(leads.length * 0.6) },
-    { name: 'Sex', value: Math.floor(leads.length * 0.8) },
-    { name: 'Sáb', value: Math.floor(leads.length * 0.9) },
-    { name: 'Dom', value: leads.length },
+    { name: 'Seg', value: Math.floor(safeLeads.length * 0.1) },
+    { name: 'Ter', value: Math.floor(safeLeads.length * 0.2) },
+    { name: 'Qua', value: Math.floor(safeLeads.length * 0.4) },
+    { name: 'Qui', value: Math.floor(safeLeads.length * 0.6) },
+    { name: 'Sex', value: Math.floor(safeLeads.length * 0.8) },
+    { name: 'Sáb', value: Math.floor(safeLeads.length * 0.9) },
+    { name: 'Dom', value: safeLeads.length },
   ];
 
   const activityData = (stats.activity || [0, 0, 0, 0, 0, 0, 0]).map((val, i) => ({
@@ -29,8 +32,7 @@ const StatsPanel = ({ leads, stats }) => {
     value: val
   }));
 
-  // Extrair as últimas 5 atividades reais baseadas nos leads com verificação de segurança
-  const safeLeads = Array.isArray(leads) ? leads : [];
+  // Extrair as últimas 5 atividades reais baseadas nos leads
   const recentActivities = [...safeLeads]
     .sort((a, b) => new Date(b.last_contact_at || b.created_at) - new Date(a.last_contact_at || a.created_at))
     .slice(0, 5)
