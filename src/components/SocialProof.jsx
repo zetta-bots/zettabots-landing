@@ -4,7 +4,7 @@ import './SocialProof.css'
 const EVENTS = [
   { city: 'São Paulo', action: 'acabou de ativar um robô Sarah' },
   { city: 'Rio de Janeiro', action: 'gerou 15 novos leads na última hora' },
-  { city: 'Belo Horizonte', action: 'migrou para o Plano Agência' },
+  { city: 'Belo Horizonte', action: 'migrou para o Plano Enterprise' },
   { city: 'Curitiba', action: 'realizou uma venda via PIX agora' },
   { city: 'Salvador', action: 'conectou uma nova instância' },
   { city: 'Fortaleza', action: 'recebeu 50 mensagens em 10 minutos' }
