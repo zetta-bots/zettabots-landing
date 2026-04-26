@@ -857,6 +857,77 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'chat-test': {
+        try {
+          const { message, systemPrompt, history } = req.body;
+          const GROQ_KEY = process.env.GROQ_API_KEY;
+
+          // 1. Buscar base de conhecimento (RAG)
+          let knowledgeBase = '';
+          const { data: kbData } = await fetch(
+            `${sbUrl}/rest/v1/knowledge_base?instance_name=eq.${encodeURIComponent(instanceName)}&status=eq.active&select=extracted_text`,
+            { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
+          ).then(r => r.json()).catch(() => ({ data: [] }));
+          
+          if (Array.isArray(kbData) && kbData.length > 0) {
+            knowledgeBase = kbData.map(item => item.extracted_text).join('\n---\n');
+          }
+
+          // 2. Montar o Contexto Final
+          let finalPrompt = systemPrompt || 'Você é a Sarah, assistente virtual da ZettaBots.';
+          if (knowledgeBase) {
+            finalPrompt += '\n\nBASE DE CONHECIMENTO (Use estes dados para responder):\n' + knowledgeBase;
+          }
+
+          // 3. Chamar a Groq com lógica de Retry e Fallback
+          const callGroq = async (modelName, attempt = 1) => {
+            try {
+              const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${GROQ_KEY}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: modelName,
+                  messages: [
+                    { role: 'system', content: finalPrompt },
+                    ...(history || []).map(m => ({ role: m.role, content: m.content })),
+                    { role: 'user', content: message }
+                  ],
+                  temperature: 0.7,
+                  max_tokens: 1024
+                })
+              });
+
+              const data = await groqRes.json();
+
+              // Se for erro de Rate Limit (429) e tivermos tentativas
+              if (groqRes.status === 429 && attempt <= 3) {
+                const waitTime = attempt * 2000;
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                const nextModel = attempt === 3 ? 'llama-3.1-8b-instant' : modelName;
+                return callGroq(nextModel, attempt + 1);
+              }
+
+              if (data.choices && data.choices[0]) {
+                return { response: data.choices[0].message.content, modelUsed: modelName };
+              } else {
+                throw new Error(data.error?.message || 'Erro na resposta da Groq');
+              }
+            } catch (err) {
+              if (attempt <= 2) return callGroq(modelName, attempt + 1);
+              throw err;
+            }
+          };
+
+          const result = await callGroq('llama-3.3-70b-versatile');
+          return res.status(200).json(result);
+        } catch (error) {
+          return res.status(500).json({ error: error.message });
+        }
+      }
+
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }

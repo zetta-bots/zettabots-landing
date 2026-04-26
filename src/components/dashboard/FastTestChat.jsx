@@ -27,10 +27,11 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
     setIsTyping(true);
 
     try {
-      const response = await fetch('/api/chat-test', {
+      const response = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+          action: 'chat-test',
           message: userMessage, 
           systemPrompt: systemPrompt,
           instanceName: selectedInstance,
