@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [selectedInstance, setSelectedInstance] = useState(null)
   const [session, setSession] = useState(null)
   const [activeTab, setActiveTab] = useState('status')
+  const [renderError, setRenderError] = useState(null)
   const [prompt, setPrompt] = useState('')
   const [saving, setSaving] = useState(false)
   const [qrCode, setQrCode] = useState(null)
@@ -659,6 +660,13 @@ export default function Dashboard() {
       />
 
       <main className="dashboard-main">
+        {renderError && (
+          <div className="glass-card" style={{ border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', marginBottom: '2rem' }}>
+            <h4 style={{ margin: '0 0 10px' }}>⚠️ Erro Interno</h4>
+            <p style={{ margin: 0, fontSize: '0.85rem' }}>{renderError}</p>
+            <button onClick={() => setRenderError(null)} style={{ marginTop: '10px', background: '#ef4444', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}>Tentar Novamente</button>
+          </div>
+        )}
         <Header 
           isAdmin={isAdmin} 
           session={session} 

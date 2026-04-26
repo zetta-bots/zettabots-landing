@@ -45,8 +45,8 @@ const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout, isGlobalPause
               animation: `revealUp 0.4s ease-out forwards ${i * 0.05}s`,
               opacity: 0
             }}
-            onMouseEnter={(e) => !activeTab === item.id && (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)', e.currentTarget.style.color = '#94a3b8')}
-            onMouseLeave={(e) => !activeTab === item.id && (e.currentTarget.style.background = 'transparent', e.currentTarget.style.color = '#64748b')}
+            onMouseEnter={(e) => activeTab !== item.id && (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)', e.currentTarget.style.color = '#94a3b8')}
+            onMouseLeave={(e) => activeTab !== item.id && (e.currentTarget.style.background = 'transparent', e.currentTarget.style.color = '#64748b')}
           >
             <span style={{ fontSize: '1.2rem', filter: activeTab === item.id ? 'drop-shadow(0 0 5px rgba(124, 58, 237, 0.5))' : 'grayscale(1)' }}>{item.icon}</span>
             {item.label}
