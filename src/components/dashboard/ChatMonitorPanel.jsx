@@ -25,14 +25,34 @@ const MediaMessage = ({ msg, instanceName }) => {
   return <span>{msg.text}</span>;
 };
 
+const SkeletonChatLoader = () => (
+  <div style={{ padding: '0.5rem' }}>
+    {[1, 2, 3].map(i => (
+      <div
+        key={i}
+        style={{
+          padding: '1rem',
+          marginBottom: '0.5rem',
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '8px',
+          animation: 'pulse 2s infinite',
+          height: '70px'
+        }}
+      />
+    ))}
+  </div>
+);
+
 const ChatMonitorPanel = ({
   chats,
+  chatsLoading,
   selectedChat,
   setSelectedChat,
   fetchChatMessages,
   isAIPaused,
   handleToggleAI,
   chatMessages,
+  chatMessagesLoading,
   selectedInstance
 }) => {
   const hasChats = chats && chats.length > 0;
@@ -41,7 +61,9 @@ const ChatMonitorPanel = ({
     <div className="chat-monitor-container">
       <div className="chat-list-panel">
         <div className="panel-header"><h3>Conversas Ativas</h3></div>
-        {!hasChats ? (
+        {chatsLoading ? (
+          <SkeletonChatLoader />
+        ) : !hasChats ? (
           <div style={{
             padding: '2rem 1.5rem',
             textAlign: 'center',
@@ -95,16 +117,40 @@ const ChatMonitorPanel = ({
               </button>
             </div>
             <div className="messages-container">
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
-                  {['image', 'audio'].includes(msg.type)
-                    ? <MediaMessage msg={msg} instanceName={selectedInstance} />
-                    : msg.text
-                  }
-                  <span className="message-time">{msg.time}</span>
+              {chatMessagesLoading ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  gap: '8px',
+                  color: '#a1a1aa'
+                }}>
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#7c3aed',
+                    animation: 'pulse 1.5s infinite'
+                  }} />
+                  <span style={{ fontSize: '0.9rem' }}>Carregando histórico...</span>
                 </div>
-              ))}
-              {chatMessages.length === 0 && <div className="chat-empty-state">Carregando histórico...</div>}
+              ) : chatMessages.length === 0 ? (
+                <div className="chat-empty-state">
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+                  <p>Nenhuma mensagem nesta conversa</p>
+                </div>
+              ) : (
+                chatMessages.map((msg, i) => (
+                  <div key={i} className={`message ${msg.fromMe ? 'sent' : 'received'} ${msg.type || 'text'}`}>
+                    {['image', 'audio'].includes(msg.type)
+                      ? <MediaMessage msg={msg} instanceName={selectedInstance} />
+                      : msg.text
+                    }
+                    <span className="message-time">{msg.time}</span>
+                  </div>
+                ))
+              )}
             </div>
           </>
         ) : (

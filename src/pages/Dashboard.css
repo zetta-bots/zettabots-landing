@@ -862,3 +862,8 @@ h1, h2, h3, h4, .brand-info h2 {
 }
 .instance-selector-mini:hover { background: rgba(255,255,255,0.1); border-color: var(--color-primary); }
 .instance-selector-mini option { background: #1a1a1a; color: #fff; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}

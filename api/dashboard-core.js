@@ -143,31 +143,52 @@ export default async function handler(req, res) {
       case 'get-chats':
         try {
           const realName = await getCorrectInstance(instanceName);
+
+          // Fetch chats from Evolution API
           const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
           const d = await r.json();
-          let raw = Array.isArray(d) ? d : (d.chats || d.data || []);
-          
+          let raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
+
+          // If no chats from Evolution API, try to get from direct messages endpoint as fallback
           if (raw.length === 0) {
-            const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id,phone,name`, {
-              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-            });
-            const instData = await instRes.json();
-            if (instData && instData.length > 0) {
-              const record = instData[0];
-              let phone = record.phone || '';
-              if (phone && !phone.includes('@')) phone = `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
-              raw = [{ id: phone || record.id, name: record.name || 'Lead Ativo', lastMsg: 'Monitorado via IA' }];
+            try {
+              const msgRes = await fetch(`${url}/message/fetchMessages/${realName}?limit=100`, fetchOptions);
+              const msgData = await msgRes.json();
+              const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
+
+              // Extract unique chat participants from messages
+              if (messages.length > 0) {
+                const uniqueChats = {};
+                messages.forEach(msg => {
+                  const jid = msg.remoteJid || msg.from;
+                  if (jid && !uniqueChats[jid]) {
+                    uniqueChats[jid] = {
+                      id: jid,
+                      remoteJid: jid,
+                      name: msg.pushName || jid.split('@')[0],
+                      lastMsg: msg.text || msg.body || '[Mensagem de mídia]',
+                      timestamp: msg.messageTimestamp || msg.timestamp
+                    };
+                  }
+                });
+                raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+              }
+            } catch (msgErr) {
+              console.log('Message fallback error:', msgErr.message);
             }
           }
 
-          return res.status(200).json({ 
-            success: true, 
+          return res.status(200).json({
+            success: true,
             chats: raw.slice(0, 20).map(c => ({
-              id: c.id || c.remoteJid, user: c.name || c.pushName || (c.id ? c.id.split('@')[0] : 'Cliente'), 
-              lastMsg: c.lastMsg || 'Monitorado via IA', time: 'Ativo'
+              id: c.id || c.remoteJid,
+              user: c.name || c.pushName || (c.id ? c.id.split('@')[0] : 'Cliente'),
+              lastMsg: c.lastMsg || 'Monitorado via IA',
+              time: 'Ativo'
             }))
           });
         } catch (e) {
+          console.error(`get-chats error for ${instanceName}:`, e.message);
           return res.status(200).json({ success: true, chats: [] });
         }
 

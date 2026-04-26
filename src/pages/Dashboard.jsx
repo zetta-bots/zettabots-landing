@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [qrStatus, setQrStatus] = useState('loading')
   const [qrTimer, setQrTimer] = useState(40)
   const [chats, setChats] = useState([])
+  const [chatsLoading, setChatsLoading] = useState(false)
   const [leads, setLeads] = useState([])
   const [leadsContactCount, setLeadsContactCount] = useState(0)
   const [leadsMessage, setLeadsMessage] = useState(null)
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const [financeData, setFinanceData] = useState(null)
   const [selectedChat, setSelectedChat] = useState(null)
   const [chatMessages, setChatMessages] = useState([])
+  const [chatMessagesLoading, setChatMessagesLoading] = useState(false)
   const [webhookUrl, setWebhookUrl] = useState('')
   const [notificationEmail, setNotificationEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
@@ -279,6 +281,7 @@ export default function Dashboard() {
   }, [qrStatus, qrTimer])
 
   const fetchChats = async (instanceName) => {
+    setChatsLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -287,11 +290,17 @@ export default function Dashboard() {
       })
       const data = await res.json()
       if (data.success) setChats(data.chats || [])
-    } catch (err) { console.error('ERRO CHATS:', err) }
+    } catch (err) {
+      console.error('ERRO CHATS:', err)
+      setChats([])
+    } finally {
+      setChatsLoading(false)
+    }
   }
 
   const fetchChatMessages = async (remoteJid) => {
     if (!remoteJid) return
+    setChatMessagesLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -300,7 +309,12 @@ export default function Dashboard() {
       })
       const data = await res.json()
       if (data.success) setChatMessages(data.messages || [])
-    } catch (err) { console.error('ERRO MSG:', err) }
+    } catch (err) {
+      console.error('ERRO MSG:', err)
+      setChatMessages([])
+    } finally {
+      setChatMessagesLoading(false)
+    }
   }
 
   const fetchLeads = async (instanceName) => {
@@ -625,15 +639,17 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'mensagens' && (
-          <ChatMonitorPanel 
-            chats={chats} 
-            selectedChat={selectedChat} 
-            setSelectedChat={setSelectedChat} 
-            fetchChatMessages={fetchChatMessages} 
-            isAIPaused={isAIPaused} 
-            handleToggleAI={handleToggleAI} 
-            chatMessages={chatMessages} 
-            selectedInstance={selectedInstance} 
+          <ChatMonitorPanel
+            chats={chats}
+            chatsLoading={chatsLoading}
+            selectedChat={selectedChat}
+            setSelectedChat={setSelectedChat}
+            fetchChatMessages={fetchChatMessages}
+            isAIPaused={isAIPaused}
+            handleToggleAI={handleToggleAI}
+            chatMessages={chatMessages}
+            chatMessagesLoading={chatMessagesLoading}
+            selectedInstance={selectedInstance}
           />
         )}
 
