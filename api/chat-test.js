@@ -31,32 +31,53 @@ export default async function handler(req, res) {
       finalPrompt += '\n\nBASE DE CONHECIMENTO (Use estes dados para responder):\n' + knowledgeBase;
     }
 
-    // 3. Chamar a Groq
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: finalPrompt },
-          ...(history || []).map(m => ({ role: m.role, content: m.content })),
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7
-      })
-    });
+    // 3. Chamar a Groq com lógica de Retry e Fallback
+    const callGroq = async (modelName, attempt = 1) => {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GROQ_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: 'system', content: finalPrompt },
+              ...(history || []).map(m => ({ role: m.role, content: m.content })),
+              { role: 'user', content: message }
+            ],
+            temperature: 0.7,
+            max_tokens: 1024
+          })
+        });
 
-    const data = await groqRes.json();
-    
-    if (data.choices && data.choices[0]) {
-      return res.status(200).json({ response: data.choices[0].message.content });
-    } else {
-      console.error('Groq Error:', data);
-      return res.status(500).json({ error: 'Erro na resposta da Groq' });
-    }
+        const data = await groqRes.json();
+
+        // Se for erro de Rate Limit (429) e tivermos tentativas
+        if (groqRes.status === 429 && attempt <= 3) {
+          const waitTime = attempt * 2000; // Espera 2s, 4s, 6s...
+          console.warn(`Rate limit atingido. Tentativa ${attempt}. Esperando ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          // Se for a última tentativa, tenta o modelo menor que tem limite maior
+          const nextModel = attempt === 3 ? 'llama-3.1-8b-instant' : modelName;
+          return callGroq(nextModel, attempt + 1);
+        }
+
+        if (data.choices && data.choices[0]) {
+          return { response: data.choices[0].message.content, modelUsed: modelName };
+        } else {
+          throw new Error(data.error?.message || 'Erro na resposta da Groq');
+        }
+      } catch (err) {
+        if (attempt <= 2) return callGroq(modelName, attempt + 1);
+        throw err;
+      }
+    };
+
+    const result = await callGroq('llama-3.3-70b-versatile');
+    return res.status(200).json(result);
 
   } catch (error) {
     console.error('Chat Test Error:', error);
