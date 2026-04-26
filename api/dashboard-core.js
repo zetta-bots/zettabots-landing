@@ -93,13 +93,11 @@ export default async function handler(req, res) {
         if (!Array.isArray(messages) || messages.length === 0) return;
 
         const uniqueContacts = new Map();
-        let processedCount = 0;
 
         for (const msg of messages) {
           if (!msg) continue;
-          processedCount++;
 
-          const remoteJid = msg.remoteJid || msg.from || msg.key?.remoteJid;
+          const remoteJid = msg.key?.remoteJid || msg.remoteJid || msg.from;
           if (!remoteJid) continue;
 
           const phone = remoteJid.replace(/@.+$/, '').trim();
