@@ -281,7 +281,6 @@ export default function Dashboard() {
   }, [qrStatus, qrTimer])
 
   const fetchChats = async (instanceName) => {
-    console.log('[fetchChats] Starting with instanceName:', instanceName)
     setChatsLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
@@ -290,12 +289,8 @@ export default function Dashboard() {
         body: JSON.stringify({ action: 'get-chats', instanceName })
       })
       const data = await res.json()
-      console.log('[fetchChats] Response:', data)
       if (data.success) {
-        console.log('[fetchChats] Setting chats:', data.chats)
         setChats(data.chats || [])
-      } else {
-        console.log('[fetchChats] Success is false')
       }
     } catch (err) {
       console.error('ERRO CHATS:', err)
@@ -306,11 +301,7 @@ export default function Dashboard() {
   }
 
   const fetchChatMessages = async (remoteJid) => {
-    console.log('[fetchChatMessages] Starting with remoteJid:', remoteJid, 'selectedInstance:', selectedInstance)
-    if (!remoteJid) {
-      console.log('[fetchChatMessages] No remoteJid provided')
-      return
-    }
+    if (!remoteJid) return
     setChatMessagesLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
@@ -319,12 +310,8 @@ export default function Dashboard() {
         body: JSON.stringify({ action: 'get-messages', instanceName: selectedInstance, remoteJid })
       })
       const data = await res.json()
-      console.log('[fetchChatMessages] Response:', data)
       if (data.success) {
-        console.log('[fetchChatMessages] Setting messages:', data.messages)
         setChatMessages(data.messages || [])
-      } else {
-        console.log('[fetchChatMessages] Success is false')
       }
     } catch (err) {
       console.error('ERRO MSG:', err)

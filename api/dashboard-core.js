@@ -399,9 +399,7 @@ export default async function handler(req, res) {
         try {
           const realName = await getCorrectInstance(instanceName);
           let { remoteJid } = req.body;
-          console.log(`[get-messages] instanceName: ${instanceName}, realName: ${realName}, remoteJid: ${remoteJid}`);
           if (!remoteJid) {
-            console.log(`[get-messages] No remoteJid provided`);
             return res.status(200).json({ success: true, messages: [] });
           }
 
@@ -411,7 +409,6 @@ export default async function handler(req, res) {
             const cleaned = jidToUse.replace(/\D/g, '');
             jidToUse = cleaned.length > 10 ? `${cleaned}@g.us` : `${cleaned}@s.whatsapp.net`;
           }
-          console.log(`[get-messages] jidToUse: ${jidToUse}`);
 
           let raw = [];
 

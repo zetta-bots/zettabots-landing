@@ -55,7 +55,6 @@ const ChatMonitorPanel = ({
   chatMessagesLoading,
   selectedInstance
 }) => {
-  console.log('[ChatMonitorPanel] Rendered with props:', { chats: chats?.length, fetchChatMessages: !!fetchChatMessages, selectedInstance });
   const hasChats = chats && chats.length > 0;
 
   return (
@@ -90,9 +89,7 @@ const ChatMonitorPanel = ({
                 className={`chat-item ${selectedChat?.id === chat.id ? 'active' : ''}`}
                 key={i}
                 onClick={() => {
-                  console.log('[ChatMonitorPanel] Chat clicked:', chat);
                   setSelectedChat(chat);
-                  console.log('[ChatMonitorPanel] Calling fetchChatMessages with:', chat.remoteJid || chat.id);
                   fetchChatMessages(chat.remoteJid || chat.id);
                 }}
               >
