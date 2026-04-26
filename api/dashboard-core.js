@@ -1,10 +1,12 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
-  const { action, instanceName, remoteJid } = req.body;
+  const { action, instanceName, remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
+  const planPrice = parseFloat(amount || 247);
+  const planLabel = planName || 'Pro';
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -163,6 +165,52 @@ export default async function handler(req, res) {
     };
 
     switch (action) {
+      case 'create-payment': {
+        if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
+        const { Payment } = require('mercadopago');
+        const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+        const payment = await new Payment(client).create({
+          body: {
+            transaction_amount: planPrice,
+            description: `Assinatura ZettaBots ${planLabel} (30 dias)`,
+            payment_method_id: 'pix',
+            payer: {
+              email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br',
+              first_name: name || 'Cliente ZettaBots'
+            },
+            external_reference: String(recordId)
+          }
+        });
+        return res.status(200).json({ success: true, payment });
+      }
+      case 'create-checkout': {
+        if (!recordId) return res.status(400).json({ error: 'Identificador do cliente não encontrado' });
+        const { Preference } = require('mercadopago');
+        const client = new (require('mercadopago')).MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN });
+        const preference = await new Preference(client).create({
+          body: {
+            items: [
+              {
+                title: `Assinatura ZettaBots ${planLabel} (30 dias)`,
+                quantity: 1,
+                unit_price: planPrice,
+                currency_id: 'BRL'
+              }
+            ],
+            payer: {
+              email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br'
+            },
+            external_reference: String(recordId),
+            back_urls: {
+              success: 'https://zettabots.com.br/dashboard?status=success',
+              failure: 'https://zettabots.com.br/dashboard?status=failure',
+              pending: 'https://zettabots.com.br/dashboard?status=pending'
+            },
+            auto_return: 'approved'
+          }
+        });
+        return res.status(200).json({ success: true, url: preference.init_point });
+      }
       case 'get-finance':
         try {
           const { email } = req.body;
@@ -187,9 +235,10 @@ export default async function handler(req, res) {
 
           const status = profileData?.plan_type || 'trial';
           const planInfo = PLAN_DISPLAY[status] || PLAN_DISPLAY.trial;
+          const createdAt = profileData?.created_at ? new Date(profileData.created_at) : new Date();
           const nextBilling = profileData?.plan_expires_at
             ? new Date(profileData.plan_expires_at).toLocaleDateString('pt-BR')
-            : 'Sem Vencimento';
+            : new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR');
 
           return res.status(200).json({
             success: true,

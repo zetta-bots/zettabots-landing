@@ -115,6 +115,42 @@ export default function Dashboard() {
     if (activeTab === 'leads' && selectedInstance) fetchLeads(selectedInstance)
   }, [activeTab, selectedInstance])
 
+  const handleGeneratePix = async (method = 'pix', price = 247, planName = 'Pro') => {
+    try {
+      setCheckoutLoading(true)
+      const res = await fetch('/api/dashboard-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: method === 'pix' ? 'create-payment' : 'create-checkout',
+          recordId: session.recordId || session.id, 
+          email: session.email, 
+          name: session.name,
+          payment_method: method,
+          instanceName: selectedInstance,
+          amount: price,
+          planName: planName
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        if (method === 'card') {
+          window.open(data.url, '_blank')
+          showToast('Checkout aberto em nova aba!', 'success')
+        } else {
+          setCheckoutPix(data.payment.point_of_interaction.transaction_data)
+          showToast('Pix gerado com sucesso!', 'success')
+        }
+      } else {
+        showToast('Erro: ' + (data.error || 'Falha ao gerar cobrança'), 'error')
+      }
+    } catch (err) {
+      showToast('Erro de conexão: ' + err.message, 'error')
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
+
   const fetchAllInstances = async (emailOverride) => {
     try {
       const email = emailOverride || session?.email;
@@ -156,6 +192,7 @@ export default function Dashboard() {
         ...prev,
         clients: prev.clients.map(c => {
           if (c.email.toLowerCase() === targetEmail.toLowerCase()) {
+            const createdAt = c?.created_at ? new Date(c.created_at) : new Date();
             const newDate = new Date(c.plan_expires_at || new Date());
             newDate.setDate(newDate.getDate() + days);
             return { ...c, plan_expires_at: newDate.toISOString() };
