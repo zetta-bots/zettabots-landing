@@ -99,16 +99,17 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, stats: { contacts: 0, chats: 0, messages: 0, savedTime: '0h', roi: 'R$ 0', activity: [0,0,0,0,0,0,0] } });
         }
 
-      case 'get-leads':
+      case 'get-leads': {
+        let realName;
         try {
-          const realName = await getCorrectInstance(instanceName);
+          realName = await getCorrectInstance(instanceName);
           const contactRes = await fetch(`${url}/contact/fetchContacts?instanceName=${realName}`, fetchOptions);
           const contactData = await contactRes.json();
           const contacts = Array.isArray(contactData) ? contactData : (contactData.data || []);
 
           if (contacts.length > 0) {
-            return res.status(200).json({ 
-              success: true, 
+            return res.status(200).json({
+              success: true,
               leads: contacts.slice(0, 50).map(c => ({
                 name: c.name || c.pushName || 'Lead Ativo',
                 phone: c.id ? c.id.split('@')[0] : 'Sem número',
@@ -119,27 +120,33 @@ export default async function handler(req, res) {
           }
           throw new Error('No contacts in Evolution');
         } catch (e) {
-          const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${realName}&select=id`, {
-             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-          });
-          const instData = await instRes.json();
-          let sbLeads = [];
-          if (instData && instData.length > 0) {
-             const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=20`, {
-                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-             });
-             sbLeads = await sbLeadsRes.json() || [];
+          try {
+            if (!realName) realName = await getCorrectInstance(instanceName);
+            const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(realName)}&select=id`, {
+               headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+            });
+            const instData = await instRes.json();
+            let sbLeads = [];
+            if (instData && instData.length > 0) {
+               const sbLeadsRes = await fetch(`${sbUrl}/rest/v1/leads?instance_id=eq.${instData[0].id}&limit=20`, {
+                  headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+               });
+               sbLeads = await sbLeadsRes.json() || [];
+            }
+            return res.status(200).json({
+              success: true,
+              leads: sbLeads.map(r => ({
+                name: r.name || 'Lead do Supabase',
+                phone: r.phone || '---',
+                status: r.status || 'Novo',
+                date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
+              }))
+            });
+          } catch (innerErr) {
+            return res.status(200).json({ success: true, leads: [] });
           }
-          return res.status(200).json({ 
-            success: true, 
-            leads: sbLeads.map(r => ({
-              name: r.name || 'Lead do Supabase',
-              phone: r.phone || '---',
-              status: r.status || 'Novo',
-              date: r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : 'Recente'
-            }))
-          });
         }
+      }
 
       case 'get-chats':
         try {

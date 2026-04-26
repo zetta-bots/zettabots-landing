@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import * as pdfjsLib from 'pdfjs-dist'
 import './Dashboard.css'
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 // Dashboard Components
 import Sidebar from '../components/dashboard/Sidebar'
@@ -370,17 +373,14 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('knowledge_base')
         .select('*')
+        .eq('instance_name', selectedInstance)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      setKnowledgeBaseFiles(data || []);
+      setKnowledgeFiles(data || []);
     } catch (err) {
       console.error('Erro ao buscar base de conhecimento:', err);
     }
-  }
-
-  const setKnowledgeBaseFiles = (files) => {
-    setKnowledgeFiles(files);
   }
 
   const fetchNotifications = async () => {
@@ -491,10 +491,44 @@ export default function Dashboard() {
     showToast('Dados atualizados!', 'success');
   }
 
+  const extractTextFromFile = async (file) => {
+    try {
+      if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map(item => item.str).join(' ') + '\n';
+        }
+        return text.trim();
+      } else if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+        return await file.text();
+      } else if (file.type === 'application/msword' || file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+        showToast('⚠️ DOC/DOCX requer processamento adicional. Por enquanto, use TXT ou PDF.', 'info');
+        return '';
+      } else {
+        return '';
+      }
+    } catch (err) {
+      console.error('Erro ao extrair texto:', err);
+      throw new Error(`Não foi possível extrair texto: ${err.message}`);
+    }
+  };
+
   const handleUploadKnowledge = async (file) => {
     if (!session) return;
     setSaving(true);
     try {
+      const extractedText = await extractTextFromFile(file);
+
+      if (!extractedText) {
+        showToast('⚠️ Nenhum texto encontrado no arquivo. Verifique o formato.', 'warning');
+        setSaving(false);
+        return;
+      }
+
       const fileName = `${Date.now()}_${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('knowledge_base')
@@ -506,18 +540,20 @@ export default function Dashboard() {
         .from('knowledge_base')
         .insert([{
           user_id: session.id || session.user_id,
+          instance_name: selectedInstance,
           file_name: file.name,
           file_path: uploadData.path,
           file_size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-          status: 'processing'
+          extracted_text: extractedText,
+          status: 'active'
         }]);
 
       if (dbError) throw dbError;
 
-      showToast('Arquivo enviado! Treinando IA...', 'success');
+      showToast('✅ Arquivo processado e ativo! IA já tem acesso.', 'success');
       fetchKnowledgeBase();
     } catch (err) {
-      showToast('Erro no upload: ' + err.message, 'error');
+      showToast('❌ Erro no upload: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
