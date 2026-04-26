@@ -52,33 +52,37 @@ const StatsPanel = ({ leads, stats }) => {
   return (
     <div className="tab-panel">
       <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon purple">👤</div>
-          <div className="stat-info">
+        <div className="stat-card gradient-purple">
+          <div className="stat-content">
             <span className="stat-label">Leads Capturados</span>
             <span className="stat-value">{leads.length || stats.contacts}</span>
+            <div className="stat-bar"><div className="stat-bar-fill" style={{ width: `${Math.min((leads.length || stats.contacts) * 10, 100)}%` }}></div></div>
           </div>
+          <div className="stat-icon">👤</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon blue">💬</div>
-          <div className="stat-info">
+        <div className="stat-card gradient-blue">
+          <div className="stat-content">
             <span className="stat-label">Conversas Ativas</span>
             <span className="stat-value">{stats.chats}</span>
+            <div className="stat-bar"><div className="stat-bar-fill" style={{ width: `${Math.min(stats.chats * 10, 100)}%` }}></div></div>
           </div>
+          <div className="stat-icon">💬</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon green">🕒</div>
-          <div className="stat-info">
+        <div className="stat-card gradient-green">
+          <div className="stat-content">
             <span className="stat-label">Tempo Economizado</span>
             <span className="stat-value">{stats.savedTime}</span>
+            <div className="stat-sub">por semana</div>
           </div>
+          <div className="stat-icon">🕒</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon orange">💰</div>
-          <div className="stat-info">
+        <div className="stat-card gradient-orange">
+          <div className="stat-content">
             <span className="stat-label">ROI Estimado</span>
             <span className="stat-value">{stats.roi}</span>
+            <div className="stat-sub">monetário</div>
           </div>
+          <div className="stat-icon">💰</div>
         </div>
       </div>
 
