@@ -610,6 +610,14 @@ export default function Dashboard() {
 
   return (
     <div className={`dashboard-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
+      {/* Overlay para fechar menu mobile ao clicar fora */}
+      {mobileMenuOpen && (
+        <div 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1500 }}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <header className="mobile-header">
         <div className="premium-logo-container mini">
           <img src="/images/logo.png" alt="ZettaBots" />
@@ -621,7 +629,10 @@ export default function Dashboard() {
 
       <Sidebar 
         activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          if (window.innerWidth <= 1024) setMobileMenuOpen(false);
+        }} 
         isAdmin={isAdmin} 
         handleLogout={handleLogout}
         isGlobalPaused={isGlobalPaused}
