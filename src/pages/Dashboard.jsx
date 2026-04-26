@@ -111,7 +111,8 @@ export default function Dashboard() {
     if (activeTab === 'status' && selectedInstance) fetchStats(selectedInstance)
     if (activeTab === 'conexao' && selectedInstance) fetchQrCode(selectedInstance)
     if (activeTab === 'mensagens' && selectedInstance) fetchChats(selectedInstance)
-    if (activeTab === 'financeiro' && selectedInstance) fetchFinance(selectedInstance)
+    if (activeTab === 'financeiro' && selectedInstance && !isAdmin) fetchFinance(selectedInstance)
+    if (activeTab === 'financeiro' && isAdmin) fetchAdminStats(session?.email)
     if (activeTab === 'leads' && selectedInstance) fetchLeads(selectedInstance)
   }, [activeTab, selectedInstance])
 
@@ -714,18 +715,16 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'financeiro' && (
-          <div className="tab-panel reveal-item">
+          <div className="tab-panel reveal-item" key="finance-tab-root">
             {isAdmin ? (
-              <div key="admin-finance">
-                {adminStats ? (
-                  <FinancialDashboard adminStats={adminStats} session={session} />
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '4rem' }}>
-                    <div className="spinner"></div>
-                    <p style={{ marginTop: '1rem', color: '#64748b' }}>Carregando métricas de faturamento...</p>
-                  </div>
-                )}
-              </div>
+              adminStats ? (
+                <FinancialDashboard adminStats={adminStats} session={session} />
+              ) : (
+                <div style={{ textAlign: 'center', padding: '5rem' }}>
+                  <div className="spinner"></div>
+                  <p style={{ marginTop: '1rem' }}>Carregando dados mestre...</p>
+                </div>
+              )
             ) : (
               <FinancePanel
                 financeData={financeData}
