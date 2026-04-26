@@ -455,6 +455,31 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, messages: [] });
         }
 
+      case 'list-instances': {
+        try {
+          const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
+          const instances = await listRes.json();
+          const data = Array.isArray(instances) ? instances : (instances.data || []);
+
+          const formattedInstances = data.map(i => ({
+            name: i.name,
+            phone: i.phone,
+            status: i.connectionStatus,
+            ownerJid: i.ownerJid,
+            integration: i.integration,
+            _fullData: i
+          }));
+
+          return res.status(200).json({
+            success: true,
+            instances: formattedInstances,
+            total: formattedInstances.length
+          });
+        } catch (e) {
+          return res.status(200).json({ success: false, error: e.message });
+        }
+      }
+
       case 'debug-chats': {
         try {
           // First, get all instances
