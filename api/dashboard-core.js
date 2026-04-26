@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const { action, instanceName, remoteJid } = req.body;
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'debug-chats', 'debug-get-chats', 'test-get-chats', 'debug-supabase-instances', 'debug-get-messages'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -68,7 +68,6 @@ export default async function handler(req, res) {
               }
             }
           } catch (e) {
-            console.log(`[getCorrectInstance] Supabase lookup failed:`, e.message);
           }
         }
 
@@ -82,7 +81,6 @@ export default async function handler(req, res) {
           found = data.find(i => i.connectionStatus === 'open');
         }
 
-        console.log(`[getCorrectInstance] Input: "${name}" → Found: "${found?.name || 'NOT FOUND'}" (phone: ${found?.phone})`);
 
         return found ? found.name : name;
       } catch (e) {
@@ -146,7 +144,6 @@ export default async function handler(req, res) {
           const messages = statsData.Message || 0;
           const chatsCount = statsData.Chat || 0;
 
-          console.log('[get-stats] Found instance:', { name: found.instanceName, status: found.connectionStatus, _count: found._count, extracted: { contacts, messages, chatsCount } });
 
           return res.status(200).json({
             success: true,
@@ -188,7 +185,6 @@ export default async function handler(req, res) {
               }
             }
           } catch (e1) {
-            console.log(`[get-leads] Strategy 1 failed:`, e1.message);
           }
 
           // Strategy 2: Extract from messages if no contacts found
@@ -220,7 +216,6 @@ export default async function handler(req, res) {
                 }
               }
             } catch (e2) {
-              console.log(`[get-leads] Strategy 2 failed:`, e2.message);
             }
           }
 
@@ -248,7 +243,6 @@ export default async function handler(req, res) {
                 }
               }
             } catch (e3) {
-              console.log(`[get-leads] Strategy 3 failed:`, e3.message);
             }
           }
 
@@ -272,7 +266,6 @@ export default async function handler(req, res) {
               raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
             }
           } catch (e1) {
-            console.log(`[get-chats] Strategy 1 failed:`, e1.message);
           }
 
           // Strategy 2: Try /chat/findAllChats endpoint
@@ -293,10 +286,8 @@ export default async function handler(req, res) {
                 } else {
                   raw = [];
                 }
-                console.log(`[get-chats] Strategy 2 found ${raw.length} chats`);
               }
             } catch (e2) {
-              console.log(`[get-chats] Strategy 2 failed:`, e2.message);
             }
           }
 
@@ -321,10 +312,8 @@ export default async function handler(req, res) {
                 } else {
                   raw = [];
                 }
-                console.log(`[get-chats] Strategy 3 found ${raw.length} chats`);
               }
             } catch (e3) {
-              console.log(`[get-chats] Strategy 3 failed:`, e3.message);
             }
           }
 
@@ -371,14 +360,11 @@ export default async function handler(req, res) {
                 });
 
                 raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                console.log(`[get-chats] Strategy 4 merged: ${raw.length} total chats from messages`);
               }
             }
           } catch (e4) {
-            console.log(`[get-chats] Strategy 4 failed:`, e4.message);
           }
 
-          console.log(`[get-chats] Final result for ${realName}: ${raw.length} chats`);
 
           return res.status(200).json({
             success: true,
@@ -409,7 +395,6 @@ export default async function handler(req, res) {
             const cleaned = jidToUse.replace(/\D/g, '');
             jidToUse = cleaned.length > 10 ? `${cleaned}@g.us` : `${cleaned}@s.whatsapp.net`;
           }
-          console.log(`[get-messages] Input remoteJid: ${remoteJid}, Final jidToUse: ${jidToUse}`);
 
           let raw = [];
 
@@ -432,10 +417,8 @@ export default async function handler(req, res) {
               } else if (d && d.data && Array.isArray(d.data)) {
                 raw = d.data;
               }
-              console.log(`[get-messages] Strategy 1 extracted ${raw.length} messages`);
             }
           } catch (e1) {
-            console.log(`[get-messages] Strategy 1 failed:`, e1.message);
           }
 
           // Strategy 2: Try /message/findMessages endpoint
@@ -457,10 +440,8 @@ export default async function handler(req, res) {
                 } else if (d && d.data && Array.isArray(d.data)) {
                   raw = d.data;
                 }
-                console.log(`[get-messages] Strategy 2 extracted ${raw.length} messages`);
               }
             } catch (e2) {
-              console.log(`[get-messages] Strategy 2 failed:`, e2.message);
             }
           }
 
@@ -482,10 +463,8 @@ export default async function handler(req, res) {
                 } else if (d && d.data && Array.isArray(d.data)) {
                   raw = d.data;
                 }
-                console.log(`[get-messages] Strategy 3 extracted ${raw.length} messages`);
               }
             } catch (e3) {
-              console.log(`[get-messages] Strategy 3 failed:`, e3.message);
             }
           }
 
@@ -509,28 +488,23 @@ export default async function handler(req, res) {
                 } else if (d && d.data && Array.isArray(d.data)) {
                   allMsgs = d.data;
                 }
-                console.log(`[get-messages] Strategy 4 found ${allMsgs.length} total messages. Looking for jid: ${jidToUse}`);
 
                 // Filter by JID if we have messages
                 if (allMsgs.length > 0) {
                   raw = allMsgs.filter(m => {
                     const msgJid = m.remoteJid || m.from || m.key?.remoteJid;
                     const match = msgJid === jidToUse || msgJid?.includes(jidToUse.split('@')[0]);
-                    if (match) console.log(`[get-messages] Message JID: ${msgJid} MATCHED`);
                     return match;
                   });
-                  console.log(`[get-messages] Strategy 4: Filtered to ${raw.length} messages matching ${jidToUse}`);
                 }
               }
             } catch (e4) {
-              console.log(`[get-messages] Strategy 4 failed:`, e4.message);
             }
           }
 
           // Ensure raw is always an array before using it
           if (!Array.isArray(raw)) raw = [];
 
-          console.log(`[get-messages] Found ${raw.length} messages for ${jidToUse}`);
 
           return res.status(200).json({
             success: true,
@@ -581,69 +555,6 @@ export default async function handler(req, res) {
             success: true,
             instances: formattedInstances,
             total: formattedInstances.length
-          });
-        } catch (e) {
-          return res.status(200).json({ success: false, error: e.message });
-        }
-      }
-
-      case 'debug-chats': {
-        try {
-          // First, get all instances
-          const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
-          const instances = await listRes.json();
-          const data = Array.isArray(instances) ? instances : (instances.data || []);
-
-          const availableInstances = data.map(i => ({
-            name: i.name,
-            status: i.connectionStatus,
-            phone: i.phone
-          }));
-
-          const realName = await getCorrectInstance(instanceName);
-          const results = {};
-
-          // Test Strategy 1
-          try {
-            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
-            results.strategy1 = { status: r.status, ok: r.ok, data: await r.json() };
-          } catch (e) { results.strategy1 = { error: e.message }; }
-
-          // Test Strategy 2
-          try {
-            const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
-            results.strategy2 = { status: r.status, ok: r.ok, data: await r.json() };
-          } catch (e) { results.strategy2 = { error: e.message }; }
-
-          // Test Strategy 3
-          try {
-            const r = await fetch(`${url}/chat/findChats/${realName}`, {
-              ...fetchOptions,
-              method: 'POST',
-              body: JSON.stringify({ where: {}, take: 50 })
-            });
-            results.strategy3 = { status: r.status, ok: r.ok, data: await r.json() };
-          } catch (e) { results.strategy3 = { error: e.message }; }
-
-          // Test Strategy 4 - Messages
-          try {
-            const r = await fetch(`${url}/message/findMessages/${realName}`, {
-              ...fetchOptions,
-              method: 'POST',
-              body: JSON.stringify({ where: {}, take: 10 })
-            });
-            results.strategy4_response = { status: r.status, ok: r.ok };
-            const msgData = await r.json();
-            results.strategy4_sample = Array.isArray(msgData) ? msgData.slice(0, 1) : (msgData.messages ? msgData.messages.slice(0, 1) : msgData);
-          } catch (e) { results.strategy4 = { error: e.message }; }
-
-          return res.status(200).json({
-            success: true,
-            input: instanceName,
-            realName,
-            availableInstances,
-            totalInstances: availableInstances.length,
-            debug: results
           });
         } catch (e) {
           return res.status(200).json({ success: false, error: e.message });
@@ -869,308 +780,6 @@ export default async function handler(req, res) {
             error: error.message,
             contacts: []
           });
-        }
-      }
-
-      case 'test-get-chats': {
-        try {
-          const realName = await getCorrectInstance(instanceName);
-
-          // Simulate the exact get-chats logic
-          let raw = [];
-
-          // Strategy 1
-          try {
-            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
-            if (r.ok) {
-              const d = await r.json();
-              raw = Array.isArray(d) ? d : (d.chats || d.data || d.result || []);
-            }
-          } catch (e) {}
-
-          // Strategy 2
-          if (raw.length === 0) {
-            try {
-              const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
-              if (r.ok) {
-                const d = await r.json();
-                if (Array.isArray(d)) {
-                  raw = d;
-                } else if (d.chats) {
-                  raw = Array.isArray(d.chats) ? d.chats : [d.chats];
-                } else if (d.data) {
-                  raw = Array.isArray(d.data) ? d.data : [d.data];
-                } else if (d.remoteJid || d.id) {
-                  raw = [d];
-                }
-              }
-            } catch (e) {}
-          }
-
-          // Strategy 3
-          if (raw.length === 0) {
-            try {
-              const r = await fetch(`${url}/chat/findChats/${realName}`, {
-                ...fetchOptions,
-                method: 'POST',
-                body: JSON.stringify({ where: {}, take: 50 })
-              });
-              if (r.ok) {
-                const d = await r.json();
-                if (Array.isArray(d)) {
-                  raw = d;
-                } else if (d.chats) {
-                  raw = Array.isArray(d.chats) ? d.chats : [d.chats];
-                } else if (d.data) {
-                  raw = Array.isArray(d.data) ? d.data : [d.data];
-                } else if (d.remoteJid || d.id) {
-                  raw = [d];
-                }
-              }
-            } catch (e) {}
-          }
-
-          // Strategy 4
-          try {
-            const msgRes = await fetch(`${url}/message/findMessages/${realName}`, {
-              ...fetchOptions,
-              method: 'POST',
-              body: JSON.stringify({ where: {}, take: 100 })
-            });
-            if (msgRes.ok) {
-              const msgData = await msgRes.json();
-              const messages = Array.isArray(msgData) ? msgData : (msgData.messages || msgData.data || []);
-
-              if (messages.length > 0) {
-                const uniqueChats = {};
-                raw.forEach(c => {
-                  const jid = c.remoteJid || c.id;
-                  if (jid && !uniqueChats[jid]) {
-                    uniqueChats[jid] = c;
-                  }
-                });
-
-                messages.forEach(msg => {
-                  const jid = msg.remoteJid || msg.from || msg.key?.remoteJid;
-                  if (jid) {
-                    if (!uniqueChats[jid]) {
-                      uniqueChats[jid] = {
-                        id: jid,
-                        remoteJid: jid,
-                        name: msg.pushName || msg.senderName || jid.split('@')[0],
-                        lastMsg: msg.text || msg.body || msg.message?.conversation || '[Mensagem]',
-                        timestamp: msg.messageTimestamp || msg.timestamp || Date.now()
-                      };
-                    }
-                  }
-                });
-
-                raw = Object.values(uniqueChats).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-              }
-            }
-          } catch (e) {}
-
-          const finalResult = raw.slice(0, 20).map(c => ({
-            id: c.id || c.remoteJid,
-            remoteJid: c.remoteJid || c.id,
-            user: c.name || c.pushName || (c.remoteJid ? c.remoteJid.split('@')[0] : (c.id ? c.id.split('@')[0] : 'Cliente')),
-            lastMsg: c.lastMsg || 'Monitorado via IA',
-            time: 'Ativo'
-          }));
-
-          return res.status(200).json({
-            success: true,
-            input: instanceName,
-            realName,
-            rawChatsFound: raw.length,
-            finalFormatted: finalResult,
-            message: 'This is exactly what get-chats endpoint returns'
-          });
-        } catch (e) {
-          return res.status(200).json({ success: false, error: e.message });
-        }
-      }
-
-      case 'debug-get-chats': {
-        try {
-          const realName = await getCorrectInstance(instanceName);
-          const debug = {};
-
-          // Strategy 1
-          debug.strategy1 = { attempted: true };
-          try {
-            const r = await fetch(`${url}/chat/fetchChats?instanceName=${realName}`, fetchOptions);
-            debug.strategy1.status = r.status;
-            const d = await r.json();
-            debug.strategy1.response = d;
-          } catch (e) {
-            debug.strategy1.error = e.message;
-          }
-
-          // Strategy 2
-          debug.strategy2 = { attempted: true };
-          try {
-            const r = await fetch(`${url}/chat/findAllChats/${realName}`, { ...fetchOptions, method: 'GET' });
-            debug.strategy2.status = r.status;
-            const d = await r.json();
-            debug.strategy2.rawType = Array.isArray(d) ? 'array' : typeof d;
-            debug.strategy2.isArray = Array.isArray(d);
-            debug.strategy2.hasChats = !!d.chats;
-            debug.strategy2.hasData = !!d.data;
-            debug.strategy2.hasRemoteJid = !!d.remoteJid;
-            debug.strategy2.sampleResponse = JSON.stringify(d).substring(0, 500);
-          } catch (e) {
-            debug.strategy2.error = e.message;
-          }
-
-          // Strategy 3
-          debug.strategy3 = { attempted: true };
-          try {
-            const r = await fetch(`${url}/chat/findChats/${realName}`, {
-              ...fetchOptions,
-              method: 'POST',
-              body: JSON.stringify({ where: {}, take: 50 })
-            });
-            debug.strategy3.status = r.status;
-            const d = await r.json();
-            debug.strategy3.rawType = Array.isArray(d) ? 'array' : typeof d;
-            debug.strategy3.isArray = Array.isArray(d);
-            debug.strategy3.hasChats = !!d.chats;
-            debug.strategy3.hasData = !!d.data;
-            debug.strategy3.sampleResponse = JSON.stringify(d).substring(0, 500);
-          } catch (e) {
-            debug.strategy3.error = e.message;
-          }
-
-          return res.status(200).json({
-            success: true,
-            input: instanceName,
-            realName,
-            debug,
-            message: 'This shows exactly what each strategy returns and how it should be processed'
-          });
-        } catch (e) {
-          return res.status(200).json({ success: false, error: e.message });
-        }
-      }
-
-      case 'debug-supabase-instances': {
-        try {
-          const instRes = await fetch(`${sbUrl}/rest/v1/instances?select=*`, {
-            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-          });
-          const instances = await instRes.json();
-
-          const leadsRes = await fetch(`${sbUrl}/rest/v1/leads?select=*&limit=5`, {
-            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-          });
-          const leads = await leadsRes.json();
-
-          return res.status(200).json({
-            success: true,
-            supabaseInstances: instances,
-            supabaseLeads: leads,
-            instanceCount: instances.length,
-            leadCount: leads.length,
-            message: 'This shows what data is stored in Supabase instances and leads tables'
-          });
-        } catch (e) {
-          return res.status(200).json({ success: false, error: e.message });
-        }
-      }
-
-      case 'debug-get-messages': {
-        try {
-          const realName = await getCorrectInstance(instanceName);
-          let { remoteJid } = req.body;
-
-          const debug = {
-            instanceName,
-            realName,
-            remoteJid,
-            strategies: {}
-          };
-
-          // Strategy 1: /chat/findMessages
-          try {
-            const r = await fetch(`${url}/chat/findMessages/${realName}`, {
-              method: 'POST',
-              headers: { 'apikey': key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ where: { remoteJid }, take: 10 })
-            });
-            debug.strategies.strategy1 = {
-              endpoint: `/chat/findMessages/${realName}`,
-              status: r.status,
-              ok: r.ok,
-              rawResponse: null,
-              type: null
-            };
-
-            if (r.ok) {
-              const d = await r.json();
-              debug.strategies.strategy1.type = typeof d;
-              debug.strategies.strategy1.isArray = Array.isArray(d);
-              debug.strategies.strategy1.rawResponse = JSON.stringify(d).substring(0, 1000);
-            }
-          } catch (e) {
-            debug.strategies.strategy1 = { error: e.message };
-          }
-
-          // Strategy 2: /message/findMessages
-          try {
-            const r = await fetch(`${url}/message/findMessages/${realName}`, {
-              method: 'POST',
-              headers: { 'apikey': key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ where: { remoteJid }, take: 10 })
-            });
-            debug.strategies.strategy2 = {
-              endpoint: `/message/findMessages/${realName}`,
-              status: r.status,
-              ok: r.ok,
-              rawResponse: null,
-              type: null
-            };
-
-            if (r.ok) {
-              const d = await r.json();
-              debug.strategies.strategy2.type = typeof d;
-              debug.strategies.strategy2.isArray = Array.isArray(d);
-              debug.strategies.strategy2.rawResponse = JSON.stringify(d).substring(0, 1000);
-            }
-          } catch (e) {
-            debug.strategies.strategy2 = { error: e.message };
-          }
-
-          // Strategy 3: /message/fetchMessages
-          try {
-            const r = await fetch(`${url}/message/fetchMessages/${realName}?jid=${encodeURIComponent(remoteJid)}&limit=10`, {
-              headers: { 'apikey': key }
-            });
-            debug.strategies.strategy3 = {
-              endpoint: `/message/fetchMessages/${realName}`,
-              status: r.status,
-              ok: r.ok,
-              rawResponse: null,
-              type: null
-            };
-
-            if (r.ok) {
-              const d = await r.json();
-              debug.strategies.strategy3.type = typeof d;
-              debug.strategies.strategy3.isArray = Array.isArray(d);
-              debug.strategies.strategy3.rawResponse = JSON.stringify(d).substring(0, 1000);
-            }
-          } catch (e) {
-            debug.strategies.strategy3 = { error: e.message };
-          }
-
-          return res.status(200).json({
-            success: true,
-            debug,
-            message: 'This shows the RAW responses from Evolution API for message queries'
-          });
-        } catch (e) {
-          return res.status(200).json({ success: false, error: e.message });
         }
       }
 
