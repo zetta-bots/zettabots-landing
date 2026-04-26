@@ -24,55 +24,69 @@ export default async function handler(req, res) {
         const instances = await listRes.json();
         const data = Array.isArray(instances) ? instances : (instances.data || []);
 
-        // Normalize string for matching (remove accents, spaces, special chars)
+        // Normalize string for matching
         const normalize = (str) => {
+          if (!str) return '';
           return str
             .toLowerCase()
             .normalize('NFD')
-            .replace(/[̀-ͯ]/g, '') // Remove accents
-            .replace(/[^\w]/g, '') // Remove non-word chars
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/[^\w]/g, '')
             .trim();
         };
 
         const normalizedInput = normalize(name);
+        let found = null;
 
-        // Strategy 1: Exact match
-        let found = data.find(i => i.name && normalize(i.name) === normalizedInput);
+        // Strategy 1: Exact match on instance.name
+        found = data.find(i => i.name && normalize(i.name) === normalizedInput);
 
-        // Strategy 2: Partial match (input is substring)
+        // Strategy 2: Check if input matches ownerJid, phone, or other fields
         if (!found) {
-          found = data.find(i => i.name && normalize(i.name).includes(normalizedInput));
+          found = data.find(i => {
+            const phoneNorm = normalize(i.phone || '');
+            const jidNorm = normalize(i.ownerJid || '');
+            const integrationNorm = normalize(i.integration || '');
+            return phoneNorm === normalizedInput || jidNorm === normalizedInput || integrationNorm === normalizedInput;
+          });
         }
 
-        // Strategy 3: Partial match (reverse - instance name contains input)
+        // Strategy 3: Partial substring match
+        if (!found) {
+          found = data.find(i =>
+            (i.name && normalize(i.name).includes(normalizedInput)) ||
+            (i.phone && normalize(i.phone).includes(normalizedInput)) ||
+            (i.integration && normalize(i.integration).includes(normalizedInput))
+          );
+        }
+
+        // Strategy 4: Reverse match - input contains instance name
         if (!found) {
           found = data.find(i => i.name && normalizedInput.includes(normalize(i.name)));
         }
 
-        // Strategy 4: Similarity score (if input length > 3)
-        if (!found && normalizedInput.length > 3) {
-          let bestMatch = null;
-          let bestScore = 0;
-
-          data.forEach(i => {
-            if (i.name) {
-              const normalized = normalize(i.name);
-              let matches = 0;
-              for (let j = 0; j < Math.min(normalizedInput.length, normalized.length); j++) {
-                if (normalizedInput[j] === normalized[j]) matches++;
-              }
-              const score = matches / Math.max(normalizedInput.length, normalized.length);
-              if (score > bestScore && score > 0.6) {
-                bestScore = score;
-                bestMatch = i;
+        // Strategy 5: Try getting from Supabase as alternative
+        if (!found) {
+          try {
+            const sbRes = await fetch(
+              `${sbUrl}/rest/v1/instances?instance_name=ilike.${encodeURIComponent(name)}&limit=1`,
+              { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
+            );
+            if (sbRes.ok) {
+              const sbData = await sbRes.json();
+              if (sbData && sbData.length > 0) {
+                const sbInstance = sbData[0];
+                // Try to find matching Evolution instance by phone
+                found = data.find(i => i.phone && normalize(i.phone) === normalize(sbInstance.phone));
               }
             }
-          });
-          found = bestMatch;
+          } catch (e) {
+            console.log(`[getCorrectInstance] Supabase lookup failed:`, e.message);
+          }
         }
 
-        console.log(`[getCorrectInstance] Input: "${name}" → Normalized: "${normalizedInput}" → Found: "${found?.name || 'NOT FOUND'}"`);
-        console.log(`[getCorrectInstance] Available instances:`, data.map(i => i.name).join(', '));
+        console.log(`[getCorrectInstance] Input: "${name}" → Found: "${found?.name || 'NOT FOUND'}" (phone: ${found?.phone || 'N/A'})`);
+        console.log(`[getCorrectInstance] Available:`, data.map(i => `${i.name}(${i.phone})`).join(' | '));
 
         return found ? found.name : name;
       } catch (e) {
