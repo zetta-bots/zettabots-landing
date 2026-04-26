@@ -119,12 +119,12 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
           </div>
 
           {/* Messages */}
-          <div style={{ 
-            flex: 1, 
-            overflowY: 'auto', 
-            padding: '20px', 
-            display: 'flex', 
-            flexDirection: 'column', 
+          <div className="custom-scroll" style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
             gap: '20px',
             background: 'radial-gradient(circle at top right, rgba(124, 58, 237, 0.05), transparent)'
           }}>

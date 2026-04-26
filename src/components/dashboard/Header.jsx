@@ -138,7 +138,7 @@ const Header = ({
                 </span>
               </div>
               
-              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <div className="custom-scroll" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                 {notifications.length > 0 ? (
                   notifications.map((n, idx) => (
                     <div 

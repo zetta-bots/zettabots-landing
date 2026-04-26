@@ -100,7 +100,7 @@ const ChatMonitorPanel = ({
           <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '700' }}>{hasChats ? chats.length : 0} ONLINE</span>
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+        <div className="custom-scroll" style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
           {chatsLoading ? (
             <SkeletonChatLoader />
           ) : !hasChats ? (
