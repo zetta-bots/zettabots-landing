@@ -55,6 +55,7 @@ const ChatMonitorPanel = ({
   chatMessagesLoading,
   selectedInstance
 }) => {
+  console.log('[ChatMonitorPanel] Rendered with props:', { chats: chats?.length, fetchChatMessages: !!fetchChatMessages, selectedInstance });
   const hasChats = chats && chats.length > 0;
 
   return (
