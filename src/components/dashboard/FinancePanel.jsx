@@ -66,17 +66,17 @@ const FinancePanel = ({ financeData, session, setShowSubModal }) => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1.25rem' }}>
-                <button 
-                  className="btn-primary" 
-                  style={{ flex: 1, padding: '1.2rem', borderRadius: '18px', fontSize: '1rem' }} 
+              <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                <button
+                  className="btn-primary"
+                  style={{ flex: 1, padding: '1.2rem', borderRadius: '18px', fontSize: '1rem', height: 'auto' }}
                   onClick={() => setShowSubModal(true)}
                 >
                   🚀 Renovar ou Mudar de Plano
                 </button>
-                <button 
-                  className="btn-secondary" 
-                  style={{ padding: '0 1.5rem', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)' }} 
+                <button
+                  className="btn-secondary"
+                  style={{ padding: '1.2rem 1.5rem', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={() => window.open('https://wa.me/5521969875522', '_blank')}
                 >
                   💬 Ajuda
