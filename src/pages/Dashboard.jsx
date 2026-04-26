@@ -305,10 +305,10 @@ export default function Dashboard() {
 
   const fetchLeads = async (instanceName) => {
     try {
-      const res = await fetch('/api/get-contacts', {
+      const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName })
+        body: JSON.stringify({ action: 'get-contacts', instanceName })
       })
       const data = await res.json()
       if (data.success) {
