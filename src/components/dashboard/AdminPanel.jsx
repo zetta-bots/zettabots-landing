@@ -81,6 +81,11 @@ const AdminPanel = ({
 
   const mrrPerClient = paidClients > 0 ? Math.round((adminStats?.mrr || totalMRRCalculated) / paidClients) : 0;
 
+  // Helper para identificar admin pelo phone
+  const isAdminClient = (client) => {
+    return String(client.phone || '').includes('21969875522');
+  };
+
   return (
     <div className="tab-panel reveal-item">
 
@@ -331,7 +336,7 @@ const AdminPanel = ({
                   >
                     <td style={{ padding: '1.25rem 1.5rem', borderRadius: '16px 0 0 16px', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)', borderLeft: '1px solid rgba(255,255,255,0.02)' }}>
                       <div style={{ fontWeight: '800', fontSize: '0.95rem', color: '#fff' }}>
-                        {c.plan_type === 'admin' || c.status === 'admin' ? 'ZettaBots' : (c.instance_name || c.full_name || 'Usuário Zetta')}
+                        {isAdminClient(c) ? 'ZettaBots' : (c.instance_name || c.full_name || 'Usuário Zetta')}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{c.email}</div>
                     </td>
@@ -362,10 +367,10 @@ const AdminPanel = ({
                       </div>
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', color: '#fff', fontSize: '0.85rem', fontWeight: '700', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                      {c.plan_type === 'admin' || c.status === 'admin' ? '—' : (exp ? exp.toLocaleDateString('pt-BR') : '—')}
+                      {isAdminClient(c) ? '—' : (exp ? exp.toLocaleDateString('pt-BR') : '—')}
                     </td>
                     <td style={{ padding: '1.25rem 1.5rem', borderRadius: '0 16px 16px 0', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.02)' }}>
-                      {c.plan_type === 'admin' || c.status === 'admin' ? '—' : (daysLeft !== null ? (
+                      {isAdminClient(c) ? '—' : (daysLeft !== null ? (
                         <span style={{
                           color: daysColor,
                           fontWeight: '800',
