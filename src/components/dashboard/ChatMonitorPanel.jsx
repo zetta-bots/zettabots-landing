@@ -246,6 +246,75 @@ const ChatMonitorPanel = ({
                 ))
               )}
             </div>
+
+            {/* Input de Mensagem Manual */}
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const text = e.target.msg.value;
+                if (!text.trim()) return;
+                e.target.msg.value = '';
+                
+                try {
+                  const res = await fetch('/api/dashboard-core', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      action: 'send-manual-message', 
+                      instanceName: selectedInstance, 
+                      remoteJid: selectedChat.remoteJid || selectedChat.id,
+                      text 
+                    })
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    fetchChatMessages(selectedChat.remoteJid || selectedChat.id);
+                  }
+                } catch (err) { console.error(err); }
+              }}
+              style={{ 
+                padding: '1.25rem 2rem', 
+                background: 'rgba(0,0,0,0.2)', 
+                borderTop: '1px solid rgba(255,255,255,0.05)',
+                display: 'flex',
+                gap: '12px'
+              }}
+            >
+              <input
+                name="msg"
+                type="text"
+                placeholder="Digite sua mensagem para o cliente..."
+                autoComplete="off"
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#fff',
+                  fontSize: '0.9rem',
+                  outline: 'none'
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  width: '45px',
+                  height: '45px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)'
+                }}
+              >
+                ✈️
+              </button>
+            </form>
           </>
         ) : (
           <div style={{ 

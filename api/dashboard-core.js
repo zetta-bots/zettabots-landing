@@ -712,6 +712,23 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'send-manual-message': {
+        const { remoteJid, text } = body;
+        if (!instanceName || !remoteJid || !text) return res.status(400).json({ error: 'Faltam dados' });
+
+        try {
+          const evolutionRes = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
+            body: JSON.stringify({ number: remoteJid.replace(/\\D/g, ''), text })
+          });
+          const data = await evolutionRes.json();
+          return res.json({ success: true, data });
+        } catch (err) {
+          return res.status(500).json({ error: err.message });
+        }
+      }
+
       case 'get-admin-stats': {
         try {
           const { email: adminEmail } = req.body;
@@ -1079,8 +1096,8 @@ export default async function handler(req, res) {
             throw new Error(data.error?.message || 'Erro no Gemini');
           };
 
-          // 4. Chamar a Groq com lógica de Retry e Fallback para Gemini
-          const callGroq = async (modelName, attempt = 1) => {
+          // 4. Chamar a Groq com lógica de Debug
+          const callGroq = async (modelName) => {
             try {
               const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
@@ -1102,20 +1119,21 @@ export default async function handler(req, res) {
 
               const data = await groqRes.json();
 
-              // Se for erro de Rate Limit (429) ou erro de API Key, pula para o Gemini
-              if ((groqRes.status === 429 || groqRes.status === 401) && GEMINI_KEY) {
-                console.log('[Dashboard] Groq Limitado/Erro. Pulando para Gemini...');
-                return await callGemini();
+              if (groqRes.status !== 200) {
+                // Se a Groq falhar, vamos mostrar o erro REAL dela
+                const errorMsg = data.error?.message || JSON.stringify(data);
+                throw new Error(`Groq Error (${groqRes.status}): ${errorMsg}`);
               }
 
               if (data.choices && data.choices[0]) {
                 return { response: data.choices[0].message.content, modelUsed: modelName };
-              } else {
-                // Fallback final se o JSON vier quebrado
+              }
+              throw new Error('Resposta vazia da Groq');
+            } catch (err) {
+              // Fallback para o Gemini apenas se a chave existir e a Groq realmente falhar por limite
+              if (GEMINI_KEY && err.message.includes('429')) {
                 return await callGemini();
               }
-            } catch (err) {
-              if (GEMINI_KEY) return await callGemini();
               throw err;
             }
           };
@@ -1123,6 +1141,7 @@ export default async function handler(req, res) {
           const result = await callGroq('llama-3.3-70b-versatile');
           return res.status(200).json(result);
         } catch (error) {
+          console.error('[Dashboard-Test] Erro:', error.message);
           return res.status(500).json({ error: error.message });
         }
       }
