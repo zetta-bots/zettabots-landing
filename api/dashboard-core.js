@@ -1034,25 +1034,52 @@ export default async function handler(req, res) {
         try {
           const { message, systemPrompt, history } = req.body;
           const GROQ_KEY = process.env.GROQ_API_KEY;
+          const GEMINI_KEY = process.env.GEMINI_API_KEY;
 
           // 1. Buscar base de conhecimento (RAG)
           let knowledgeBase = '';
-          const { data: kbData } = await fetch(
-            `${sbUrl}/rest/v1/knowledge_base?instance_name=eq.${encodeURIComponent(instanceName)}&status=eq.active&select=extracted_text`,
-            { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
-          ).then(r => r.json()).catch(() => ({ data: [] }));
+          try {
+            const kbRes = await fetch(
+              `${sbUrl}/rest/v1/knowledge_base?instance_name=eq.${encodeURIComponent(instanceName)}&status=eq.active&select=extracted_text`,
+              { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
+            );
+            const kbData = await kbRes.json();
+            if (Array.isArray(kbData) && kbData.length > 0) {
+              knowledgeBase = kbData.map(item => item.extracted_text).join('\n---\n');
+            }
+          } catch (e) {}
           
-          if (Array.isArray(kbData) && kbData.length > 0) {
-            knowledgeBase = kbData.map(item => item.extracted_text).join('\n---\n');
-          }
-
           // 2. Montar o Contexto Final
           let finalPrompt = systemPrompt || 'Você é a Sarah, assistente virtual da ZettaBots.';
           if (knowledgeBase) {
             finalPrompt += '\n\nBASE DE CONHECIMENTO (Use estes dados para responder):\n' + knowledgeBase;
           }
 
-          // 3. Chamar a Groq com lógica de Retry e Fallback
+          // 3. Função Gemini (Fallback de Alta Disponibilidade)
+          const callGemini = async () => {
+            const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  { role: 'user', parts: [{ text: `INSTRUÇÕES MESTRE:\n${finalPrompt}\n\nResponda agora ao cliente seguindo as regras acima.` }] },
+                  { role: 'model', parts: [{ text: 'Entendido. Vou atuar exatamente conforme as instruções mestre fornecidas.' }] },
+                  ...(history || []).map(m => ({ 
+                    role: m.role === 'assistant' ? 'model' : 'user', 
+                    parts: [{ text: m.content }] 
+                  })),
+                  { role: 'user', parts: [{ text: message }] }
+                ]
+              })
+            });
+            const data = await geminiRes.json();
+            if (data.candidates && data.candidates[0]) {
+              return { response: data.candidates[0].content.parts[0].text, modelUsed: 'Gemini 1.5 Flash' };
+            }
+            throw new Error(data.error?.message || 'Erro no Gemini');
+          };
+
+          // 4. Chamar a Groq com lógica de Retry e Fallback para Gemini
           const callGroq = async (modelName, attempt = 1) => {
             try {
               const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1075,21 +1102,20 @@ export default async function handler(req, res) {
 
               const data = await groqRes.json();
 
-              // Se for erro de Rate Limit (429) e tivermos tentativas
-              if (groqRes.status === 429 && attempt <= 3) {
-                const waitTime = attempt * 2000;
-                await new Promise(resolve => setTimeout(resolve, waitTime));
-                const nextModel = attempt === 3 ? 'llama-3.1-8b-instant' : modelName;
-                return callGroq(nextModel, attempt + 1);
+              // Se for erro de Rate Limit (429) ou erro de API Key, pula para o Gemini
+              if ((groqRes.status === 429 || groqRes.status === 401) && GEMINI_KEY) {
+                console.log('[Dashboard] Groq Limitado/Erro. Pulando para Gemini...');
+                return await callGemini();
               }
 
               if (data.choices && data.choices[0]) {
                 return { response: data.choices[0].message.content, modelUsed: modelName };
               } else {
-                throw new Error(data.error?.message || 'Erro na resposta da Groq');
+                // Fallback final se o JSON vier quebrado
+                return await callGemini();
               }
             } catch (err) {
-              if (attempt <= 2) return callGroq(modelName, attempt + 1);
+              if (GEMINI_KEY) return await callGemini();
               throw err;
             }
           };
