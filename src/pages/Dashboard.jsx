@@ -765,6 +765,7 @@ export default function Dashboard() {
       </header>
 
       <Sidebar 
+        session={session}
         activeTab={activeTab} 
         setActiveTab={(tab) => {
           setActiveTab(tab);
