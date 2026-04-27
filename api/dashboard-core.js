@@ -713,14 +713,14 @@ export default async function handler(req, res) {
       }
 
       case 'send-manual-message': {
-        const { remoteJid, text } = body;
+        const { remoteJid, text } = req.body;
         if (!instanceName || !remoteJid || !text) return res.status(400).json({ error: 'Faltam dados' });
 
         try {
-          const evolutionRes = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+          const evolutionRes = await fetch(`${url}/message/sendText/${instanceName}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': EVOLUTION_API_KEY },
-            body: JSON.stringify({ number: remoteJid.replace(/\\D/g, ''), text })
+            headers: { 'Content-Type': 'application/json', 'apikey': key },
+            body: JSON.stringify({ number: remoteJid.replace(/\D/g, ''), text })
           });
           const data = await evolutionRes.json();
           return res.json({ success: true, data });
