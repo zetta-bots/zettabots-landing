@@ -831,11 +831,23 @@ export default async function handler(req, res) {
           const { email } = req.body;
           if (email !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
 
+          const instanceDisplayNames = {
+            'zbab2f7c727336': 'Atlas da Fé',
+            'ZettaBots': 'ZettaBots'
+          };
+
           const allRes = await fetch(`${sbUrl}/rest/v1/instances?select=*&order=created_at.desc`, {
             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
           });
-          const allData = await allRes.json();
-          return res.status(200).json({ success: true, instances: allData || [] });
+          let allData = await allRes.json() || [];
+
+          // Add display name mapping
+          allData = allData.map(instance => ({
+            ...instance,
+            display_name: instanceDisplayNames[instance.instance_name] || instance.instance_name || instance.name || 'Instance'
+          }));
+
+          return res.status(200).json({ success: true, instances: allData });
         } catch (e) {
           return res.status(500).json({ error: 'Admin fetch error' });
         }

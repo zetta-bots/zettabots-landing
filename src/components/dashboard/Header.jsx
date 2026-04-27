@@ -73,7 +73,7 @@ const Header = ({
               }}
             >
               {allInstances.map(i => (
-                <option key={i.id} value={i.instance_name} style={{ background: '#0f172a' }}>{i.instance_name}</option>
+                <option key={i.id} value={i.instance_name} style={{ background: '#0f172a' }}>{i.display_name || i.instance_name}</option>
               ))}
             </select>
           )}
