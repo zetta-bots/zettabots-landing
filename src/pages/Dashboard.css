@@ -677,6 +677,14 @@ h1, h2, h3, h4, .brand-info h2 {
   border-radius: 2px;
 }
 
+.fast-test-chat-wrapper {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+  transition: bottom 0.3s ease-out, right 0.3s ease-out;
+}
+
 @media (max-width: 1024px) {
   /* Correção definitiva para "Dança" de Layout (ResizeObserver Loop) */
   body, html, #root {
@@ -710,6 +718,12 @@ h1, h2, h3, h4, .brand-info h2 {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  .fast-test-chat-wrapper {
+    bottom: 95px !important;
+    right: 20px !important;
+    transform: scale(0.9) !important;
   }
 
   .dashboard-layout {
