@@ -1,3 +1,6 @@
+import React from 'react';
+import { PieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+
 const AdminPanel = ({ 
   adminStats, 
   adminExtending, 
