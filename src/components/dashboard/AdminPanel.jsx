@@ -339,7 +339,6 @@ const AdminPanel = ({
             </thead>
             <tbody>
               {paginatedClients.map((c, i) => {
-                console.log(`[AdminPanel Table] Client: ${c.full_name}, email: ${c.email}, bot_name: ${c.bot_name}, instance_name: ${c.instance_name}`);
                 const color = PLAN_COLOR[c.plan_type] || '#888';
                 const exp = c.plan_expires_at ? new Date(c.plan_expires_at) : null;
                 const daysLeft = getDaysRemaining(c.plan_expires_at);

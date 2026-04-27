@@ -714,16 +714,12 @@ export default async function handler(req, res) {
 
       case 'get-admin-stats': {
         try {
-          console.log('[ADMIN-STATS] Request received', req.body);
           const { email: adminEmail } = req.body;
-          console.log('[ADMIN-STATS] Admin email:', adminEmail);
-
-          // TODO: Enable this validation after testing
-          // if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
 
           // Manual mapping of instance IDs to display names
           const instanceDisplayNames = {
-            'zbab2f7c272336': 'Atlas da Fé',
+            'zbab2f7c727336': 'Atlas da Fé',
             'ZettaBots': 'ZettaBots'
           };
 
@@ -733,14 +729,14 @@ export default async function handler(req, res) {
             { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
           );
           let clients = await profRes.json() || [];
-          console.log('[ADMIN-STATS] Clients from Supabase:', clients.length, clients.slice(0, 1));
 
           // Enrich clients with display names using the mapping
           clients = clients.map(client => {
-            const instanceName = String(client.instance_name || '').trim();
-            const mapped = instanceDisplayNames[instanceName];
-            const bot_name = `DEBUG: instance="${instanceName}" | mapped="${mapped}" | fallback="${client.instance_name}"`;
-            console.log('[ADMIN-STATS]', { instanceName, mapped, keys: Object.keys(instanceDisplayNames) });
+            const bot_name =
+              instanceDisplayNames[client.instance_name] ||
+              client.instance_name ||
+              client.full_name ||
+              'Cliente';
             return { ...client, bot_name };
           });
 

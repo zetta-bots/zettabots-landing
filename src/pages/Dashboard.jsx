@@ -196,7 +196,6 @@ export default function Dashboard() {
   const fetchAdminStats = async (emailOverride) => {
     try {
       const email = emailOverride || session?.email;
-      alert(`[DEBUG] fetchAdminStats called. Email: ${email}`);
       if (!email) return;
 
       const res = await fetch('/api/dashboard-core', {
@@ -205,25 +204,15 @@ export default function Dashboard() {
         body: JSON.stringify({ action: 'get-admin-stats', instanceName: selectedInstance, email })
       })
 
-      alert(`[DEBUG] Response status: ${res.status}`);
-
       if (!res.ok) {
-        alert(`[DEBUG] Error: Response not OK - ${res.status}`);
+        console.warn('Admin stats fetch failed:', res.status);
         return;
       }
 
       const data = await res.json()
-      alert(`[DEBUG] Response success: ${data.success}, has clients: ${!!data.clients}`);
-
-      if (data.success) {
-        setAdminStats(data);
-        const clientInfo = data.clients.map(c => `${c.full_name} (instance: ${c.instance_name}, bot_name: ${c.bot_name})`).join(' | ');
-        alert(`[DEBUG] Admin stats updated. Clients: ${clientInfo}`);
-      } else {
-        alert(`[DEBUG] Response not successful: ${data.error}`);
-      }
+      if (data.success) setAdminStats(data)
     } catch (err) {
-      alert(`[DEBUG] Error: ${err.message}`);
+      console.error('ADMIN STATS:', err)
     }
   }
 
