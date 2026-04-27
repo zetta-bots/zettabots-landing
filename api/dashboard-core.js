@@ -744,9 +744,13 @@ export default async function handler(req, res) {
           const now = new Date();
           const in7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-          const active   = clients.filter(p => p.is_active && !['trial','blocked'].includes(p.plan_type));
-          const trial    = clients.filter(p => p.plan_type === 'trial');
-          const blocked  = clients.filter(p => p.plan_type === 'blocked' || !p.is_active);
+          // Exclude admin from client metrics
+          const isAdmin = (c) => c.full_name === 'richardrovigati' || c.plan_type === 'admin';
+          const nonAdminClients = clients.filter(c => !isAdmin(c));
+
+          const active   = nonAdminClients.filter(p => p.is_active && !['trial','blocked'].includes(p.plan_type));
+          const trial    = nonAdminClients.filter(p => p.plan_type === 'trial');
+          const blocked  = nonAdminClients.filter(p => p.plan_type === 'blocked' || !p.is_active);
           const expiring = clients.filter(p => {
             if (!p.plan_expires_at || !p.is_active) return false;
             const d = new Date(p.plan_expires_at);
@@ -763,7 +767,7 @@ export default async function handler(req, res) {
             success: true,
             mrr,
             mrrDistribution,
-            totalClients: clients.length,
+            totalClients: nonAdminClients.length,
             totalActive:  active.length,
             totalTrial:   trial.length,
             totalBlocked: blocked.length,
