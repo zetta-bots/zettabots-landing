@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const planLabel = planName || 'Pro';
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
