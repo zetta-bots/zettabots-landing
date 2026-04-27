@@ -311,7 +311,6 @@ const AdminPanel = ({
                 <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>STATUS</th>
                 <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>EXPIRAÇÃO</th>
                 <th style={{ textAlign: 'left', padding: '0 1.5rem' }}>DIAS REST.</th>
-                <th style={{ textAlign: 'center', padding: '0 1.5rem' }}>AÇÕES RÁPIDAS</th>
               </tr>
             </thead>
             <tbody>
@@ -362,7 +361,7 @@ const AdminPanel = ({
                     <td style={{ padding: '1.25rem 1.5rem', color: '#fff', fontSize: '0.85rem', fontWeight: '700', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                       {exp ? exp.toLocaleDateString('pt-BR') : '—'}
                     </td>
-                    <td style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                    <td style={{ padding: '1.25rem 1.5rem', borderRadius: '0 16px 16px 0', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.02)' }}>
                       {daysLeft !== null ? (
                         <span style={{
                           color: daysColor,
@@ -376,47 +375,6 @@ const AdminPanel = ({
                           {daysLeft}d
                         </span>
                       ) : '—'}
-                    </td>
-                    <td style={{ padding: '1.25rem 1.5rem', borderRadius: '0 16px 16px 0', borderTop: '1px solid rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.02)' }}>
-                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleAdminToggleStatus(c.email, c.is_active)}
-                          style={{
-                            background: c.is_active ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                            color: c.is_active ? '#ef4444' : '#10b981',
-                            border: `1px solid ${c.is_active ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
-                            padding: '8px 16px',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            fontWeight: '900',
-                            minWidth: '100px',
-                            transition: 'all 0.3s'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.background = c.is_active ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}
-                          onMouseLeave={(e) => e.currentTarget.style.background = c.is_active ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)'}
-                        >
-                          {c.is_active ? 'DESATIVAR' : 'REATIVAR'}
-                        </button>
-                        <button
-                          onClick={() => handleAdminExtend(c.email, 7)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            color: '#94a3b8',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            padding: '8px 16px',
-                            borderRadius: '10px',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            fontWeight: '900',
-                            transition: 'all 0.3s'
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)', e.currentTarget.style.color = '#f59e0b', e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)')}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)', e.currentTarget.style.color = '#94a3b8', e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)')}
-                        >
-                          🎁 +7 DIAS
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );
