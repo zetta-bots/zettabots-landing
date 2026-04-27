@@ -250,26 +250,28 @@ const AdminPanel = ({
                     </div>
                     <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '600' }}>Expira em {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}</span>
                   </div>
-                  <button
-                    onClick={() => handleAdminExtend(c.email, 7)}
-                    style={{
-                      background: '#f59e0b',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 14px',
-                      borderRadius: '10px',
-                      fontSize: '0.75rem',
-                      fontWeight: '800',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)',
-                      transition: 'all 0.3s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    +7 DIAS
-                  </button>
+                  {daysLeft !== null && daysLeft <= 7 && (
+                    <button
+                      onClick={() => handleAdminExtend(c.email, 7)}
+                      style={{
+                        background: '#f59e0b',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '8px 14px',
+                        borderRadius: '10px',
+                        fontSize: '0.75rem',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)',
+                        transition: 'all 0.3s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                      +7 DIAS
+                    </button>
+                  )}
                 </div>
               );
             })}
