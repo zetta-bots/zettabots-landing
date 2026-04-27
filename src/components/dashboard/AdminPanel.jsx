@@ -114,8 +114,8 @@ const AdminPanel = ({
       </div>
 
       {/* Cards de Métricas Expandidas */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+      <div className="admin-metrics-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+        <div className="admin-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
           {[
             {
               label: 'MRR TOTAL',
@@ -166,7 +166,7 @@ const AdminPanel = ({
         </div>
 
         {chartData.length > 0 && (
-          <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+          <div className="glass-card admin-chart-container" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
             <h4 style={{ margin: '0 0 1rem', fontSize: '0.85rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.05em' }}>DISTRIBUIÇÃO DE RECEITA</h4>
             <div style={{ flex: 1, position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -200,7 +200,7 @@ const AdminPanel = ({
           <div style={{ color: '#f59e0b', fontWeight: '900', marginBottom: '1.25rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' }}>
             <span style={{ fontSize: '1.1rem' }}>⚠️</span> ALERTA DE RENOVAÇÃO (PRÓXIMOS 7 DIAS)
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
+          <div className="admin-expiring-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
             {(adminStats?.expiringSoon || []).map(c => {
               const daysLeft = getDaysRemaining(c.plan_expires_at);
               const urgencyColor = daysLeft !== null && daysLeft <= 3 ? '#ef4444' : '#f59e0b';

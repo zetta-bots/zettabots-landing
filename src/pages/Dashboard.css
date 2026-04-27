@@ -1181,5 +1181,27 @@ h1, h2, h3, h4, .brand-info h2 {
     width: 40px;
     height: 40px;
   }
+
+  /* AdminPanel responsive - collapse metrics layout to single column */
+  .admin-metrics-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* AdminPanel cards grid - collapse from 2x2 to 1 column */
+  .admin-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* AdminPanel chart - fix responsive sizing */
+  .admin-chart-container {
+    min-height: 280px !important;
+    height: auto !important;
+  }
+
+  /* AdminPanel expiring cards - collapse to single column */
+  .admin-expiring-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 }
