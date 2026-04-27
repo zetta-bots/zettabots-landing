@@ -709,6 +709,7 @@ h1, h2, h3, h4, .brand-info h2 {
     padding-top: 80px;
     padding-left: 1rem;
     padding-right: 1rem;
+    overflow-x: hidden;
   }
   
   .mobile-header {
@@ -716,7 +717,7 @@ h1, h2, h3, h4, .brand-info h2 {
   }
   
   .chat-monitor-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     height: auto;
   }
   
@@ -725,7 +726,44 @@ h1, h2, h3, h4, .brand-info h2 {
   }
   
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Force responsive grids on mobile to override inline styles */
+  .dashboard-metrics-row,
+  .admin-metrics-layout,
+  .admin-cards-grid,
+  .admin-expiring-grid,
+  div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Fix table overflows */
+  .leads-table-container,
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Smaller mobile tweaks */
+  .dashboard-main {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Override specific inline grids that have multiple columns */
+  div[style*="grid-template-columns: 1fr auto"] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  .leads-filters {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
   }
 }
 
@@ -739,6 +777,7 @@ h1, h2, h3, h4, .brand-info h2 {
 
 .dashboard-layout {
   transition: filter 0.3s ease;
+  overflow-x: hidden;
 }
 
 /* Botões Globais Premium */
