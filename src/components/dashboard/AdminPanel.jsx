@@ -250,7 +250,7 @@ const AdminPanel = ({
                     </div>
                     <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: '600' }}>Expira em {new Date(c.plan_expires_at).toLocaleDateString('pt-BR')}</span>
                   </div>
-                  {daysLeft !== null && daysLeft <= 7 && (
+                  {daysLeft !== null && daysLeft < 7 && (
                     <button
                       onClick={() => handleAdminExtend(c.email, 7)}
                       style={{
