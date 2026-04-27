@@ -196,7 +196,7 @@ export default function Dashboard() {
   const fetchAdminStats = async (emailOverride) => {
     try {
       const email = emailOverride || session?.email;
-      console.log('[FETCH ADMIN STATS] Email:', email, 'Session:', session?.email);
+      alert(`[DEBUG] fetchAdminStats called. Email: ${email}`);
       if (!email) return;
 
       console.log('[FETCH ADMIN STATS] Sending request with email:', email);
