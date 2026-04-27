@@ -826,6 +826,35 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'test-update-atlas': {
+        try {
+          const { email: adminEmail } = req.body;
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+
+          // Update Atlas da Fé to plan_type: start and expiration to 2026-05-03
+          const updateRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?instance_name=eq.zbab2f7c727336`,
+            {
+              method: 'PATCH',
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({
+                plan_type: 'start',
+                plan_expires_at: '2026-05-03T23:59:59Z'
+              }),
+            }
+          );
+
+          if (!updateRes.ok) {
+            const errText = await updateRes.text();
+            throw new Error('Supabase Error: ' + errText);
+          }
+
+          return res.status(200).json({ success: true, message: 'Atlas da Fé updated to Start plan, expires 2026-05-03' });
+        } catch (e) {
+          return res.status(500).json({ error: e.message });
+        }
+      }
+
       case 'get-all-instances':
         try {
           const { email } = req.body;
