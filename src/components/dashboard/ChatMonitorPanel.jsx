@@ -71,6 +71,15 @@ const ChatMonitorPanel = ({
   selectedInstance
 }) => {
   const hasChats = chats && chats.length > 0;
+  const messagesEndRef = React.useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
 
   return (
     <div className="chat-monitor-container reveal-item" style={{ 
@@ -245,6 +254,7 @@ const ChatMonitorPanel = ({
                   </div>
                 ))
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input de Mensagem Manual */}
@@ -268,9 +278,14 @@ const ChatMonitorPanel = ({
                   });
                   const data = await res.json();
                   if (data.success) {
+                    e.target.msg.value = '';
                     fetchChatMessages(selectedChat.remoteJid || selectedChat.id);
+                  } else {
+                    alert('Erro ao enviar: ' + (data.error || 'Verifique se a instância está conectada'));
                   }
-                } catch (err) { console.error(err); }
+                } catch (err) { 
+                  alert('Erro de conexão: ' + err.message);
+                }
               }}
               style={{ 
                 padding: '1.25rem 2rem', 
