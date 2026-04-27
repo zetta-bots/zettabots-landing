@@ -717,11 +717,46 @@ export default async function handler(req, res) {
           const { email: adminEmail } = req.body;
           if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
 
+          // Fetch clients from Supabase
           const profRes = await fetch(
             `${sbUrl}/rest/v1/profiles?select=id,email,full_name,instance_name,plan_type,is_active,plan_expires_at,mercadopago_subscription_id&order=created_at.desc`,
             { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
           );
-          const clients = await profRes.json() || [];
+          let clients = await profRes.json() || [];
+
+          // Fetch instances from Evolution to get bot names
+          try {
+            const instRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
+            const instances = await instRes.json();
+            const instData = Array.isArray(instances) ? instances : (instances.data || []);
+
+            // Map instance IDs to bot names
+            const instanceMap = {};
+            instData.forEach(inst => {
+              if (inst.name) {
+                instanceMap[inst.name] = inst.name; // Use instance name as bot name
+              }
+            });
+
+            // Enrich clients with bot names from Evolution
+            clients = clients.map(client => {
+              // Try to find bot name by instance_name
+              if (client.instance_name && instanceMap[client.instance_name]) {
+                return { ...client, bot_name: instanceMap[client.instance_name] };
+              }
+              // If instance_name looks like an ID, try to match with Evolution instances
+              if (client.instance_name && client.instance_name.startsWith('zba')) {
+                const matchedInst = instData.find(i => i.name === client.instance_name);
+                if (matchedInst) {
+                  return { ...client, bot_name: matchedInst.name };
+                }
+              }
+              return { ...client, bot_name: client.instance_name || client.full_name };
+            });
+          } catch (e) {
+            // If Evolution fetch fails, use instance_name or full_name as fallback
+            clients = clients.map(c => ({ ...c, bot_name: c.instance_name || c.full_name }));
+          }
 
           const PLAN_MRR = { start: 127, pro: 247, enterprise: 997, trial: 0, blocked: 0, pago: 247 };
           const now = new Date();
