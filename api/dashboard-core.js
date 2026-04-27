@@ -746,7 +746,9 @@ export default async function handler(req, res) {
 
           // Exclude admin from client metrics
           const isAdmin = (c) => c.full_name === 'richardrovigati' || c.plan_type === 'admin';
+          console.log('[ADMIN STATS] Checking clients:', clients.map(c => ({ full_name: c.full_name, plan_type: c.plan_type, isAdmin: isAdmin(c) })));
           const nonAdminClients = clients.filter(c => !isAdmin(c));
+          console.log('[ADMIN STATS] Non-admin clients count:', nonAdminClients.length);
 
           const active   = nonAdminClients.filter(p => p.is_active && !['trial','blocked'].includes(p.plan_type));
           const trial    = nonAdminClients.filter(p => p.plan_type === 'trial');
