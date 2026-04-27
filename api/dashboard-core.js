@@ -718,7 +718,7 @@ export default async function handler(req, res) {
           if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
 
           const profRes = await fetch(
-            `${sbUrl}/rest/v1/profiles?select=id,email,full_name,plan_type,is_active,plan_expires_at,mercadopago_subscription_id&order=created_at.desc`,
+            `${sbUrl}/rest/v1/profiles?select=id,email,full_name,instance_name,plan_type,is_active,plan_expires_at,mercadopago_subscription_id&order=created_at.desc`,
             { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
           );
           const clients = await profRes.json() || [];
