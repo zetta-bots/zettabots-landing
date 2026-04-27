@@ -29,10 +29,18 @@ const AdminPanel = ({
   const PLAN_PRICES = { trial: 0, start: 127, pro: 247, enterprise: 497 };
   const PLAN_COLOR = { start: '#6366f1', pro: '#a78bfa', enterprise: '#fbbf24', trial: '#3b82f6', blocked: '#ef4444' };
 
+  // Helper para identificar admin
+  const isAdminClient = (client) => {
+    return client.full_name === 'richardrovigati' || client.plan_type === 'admin';
+  };
+
+  // Filtrar clientes (excluir admin)
+  const nonAdminClients = (adminStats?.clients || []).filter(c => !isAdminClient(c));
+
   // Calcular distribuição de receita real pelos clientes
   const calculateChartData = () => {
     const distribution = { trial: 0, start: 0, pro: 0, enterprise: 0 };
-    (adminStats?.clients || []).forEach(c => {
+    nonAdminClients.forEach(c => {
       const plan = c.plan_type || 'trial';
       distribution[plan] += PLAN_PRICES[plan] || 0;
     });
@@ -49,7 +57,7 @@ const AdminPanel = ({
   const totalMRRCalculated = chartData.reduce((sum, d) => sum + d.value, 0);
 
   // Dados para métricas expandidas
-  const clients = adminStats?.clients || [];
+  const clients = nonAdminClients;
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.is_active).length;
   const paidClients = clients.filter(c => c.is_active && c.plan_type !== 'trial').length;
@@ -89,11 +97,6 @@ const AdminPanel = ({
   };
 
   const mrrPerClient = paidClients > 0 ? Math.round((adminStats?.mrr || totalMRRCalculated) / paidClients) : 0;
-
-  // Helper para identificar admin pelo full_name
-  const isAdminClient = (client) => {
-    return client.full_name === 'richardrovigati' || client.plan_type === 'admin';
-  };
 
   return (
     <div className="tab-panel reveal-item">
