@@ -64,8 +64,8 @@ const AdminPanel = ({
   const trialClients = clients.filter(c => c.plan_type === 'trial').length;
   const blockedCount = clients.filter(c => !c.is_active).length;
 
-  // Filtrar clientes visíveis na tabela (inclui admin)
-  const filteredClients = allClientsForTable
+  // Filtrar clientes visíveis na tabela
+  const filteredClients = clients
     .filter(c => {
       const s = adminSearch.toLowerCase();
       const matchS = !s || (c.email || '').toLowerCase().includes(s) || (c.full_name || '').toLowerCase().includes(s);
@@ -97,9 +97,6 @@ const AdminPanel = ({
   };
 
   const mrrPerClient = paidClients > 0 ? Math.round((adminStats?.mrr || totalMRRCalculated) / paidClients) : 0;
-
-  // Clientes para exibição na tabela (inclui admin, mas ele não conta nas métricas)
-  const allClientsForTable = adminStats?.clients || [];
 
   return (
     <div className="tab-panel reveal-item">
