@@ -102,7 +102,10 @@ const AdminPanel = ({
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Visão operacional completa: gestão de clientes, planos e receita.</p>
         </div>
         <button
-          onClick={() => fetchAdminStats()}
+          onClick={() => {
+            console.log('Button clicked! fetchAdminStats:', typeof fetchAdminStats);
+            fetchAdminStats();
+          }}
           style={{
             background: 'rgba(255,255,255,0.03)',
             border: '1px solid rgba(255,255,255,0.08)',
