@@ -196,7 +196,11 @@ export default function Dashboard() {
   const fetchAdminStats = async (emailOverride) => {
     try {
       const email = emailOverride || session?.email;
-      if (!email) return;
+      if (!email) {
+        console.log('fetchAdminStats: no email');
+        return;
+      }
+      console.log('fetchAdminStats called with email:', email, 'selectedInstance:', selectedInstance);
 
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -205,13 +209,17 @@ export default function Dashboard() {
       })
 
       if (!res.ok) {
-        console.warn('Admin stats fetch failed:', res.status);
+        console.warn('Admin stats fetch failed:', res.status, res.statusText);
         return;
       }
 
       const data = await res.json()
-      if (data.success) setAdminStats(data)
-    } catch (err) { console.error('ADMIN STATS:', err) }
+      console.log('Admin stats response:', data);
+      if (data.success) {
+        console.log('Setting admin stats, clients:', data.clients);
+        setAdminStats(data)
+      }
+    } catch (err) { console.error('ADMIN STATS ERROR:', err) }
   }
 
   const handleAdminExtend = async (targetEmail, days = 7) => {
