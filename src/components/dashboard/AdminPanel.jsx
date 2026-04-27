@@ -40,11 +40,6 @@ const AdminPanel = ({
 
   // Dados para métricas expandidas
   const clients = adminStats?.clients || [];
-  console.log('AdminPanel clients DEBUG:', clients);
-  if (clients.length > 0) {
-    console.log('Primeiro cliente:', clients[0]);
-    console.log('Tem phone?', clients.map(c => ({ email: c.email, phone: c.phone, full_name: c.full_name, instance_name: c.instance_name })));
-  }
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.is_active).length;
   const paidClients = clients.filter(c => c.is_active && c.plan_type !== 'trial').length;
@@ -85,9 +80,9 @@ const AdminPanel = ({
 
   const mrrPerClient = paidClients > 0 ? Math.round((adminStats?.mrr || totalMRRCalculated) / paidClients) : 0;
 
-  // Helper para identificar admin pelo phone
+  // Helper para identificar admin pelo full_name
   const isAdminClient = (client) => {
-    return String(client.phone || '').includes('21969875522');
+    return client.full_name === 'richardrovigati' || client.plan_type === 'admin';
   };
 
   return (
@@ -102,15 +97,7 @@ const AdminPanel = ({
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Visão operacional completa: gestão de clientes, planos e receita.</p>
         </div>
         <button
-          onClick={() => {
-            alert('Botão clicado! Sincronizando...');
-            console.log('Button clicked! fetchAdminStats:', typeof fetchAdminStats);
-            if (typeof fetchAdminStats === 'function') {
-              fetchAdminStats();
-            } else {
-              alert('Erro: fetchAdminStats não é uma função!');
-            }
-          }}
+          onClick={() => fetchAdminStats()}
           style={{
             background: 'rgba(255,255,255,0.03)',
             border: '1px solid rgba(255,255,255,0.08)',
