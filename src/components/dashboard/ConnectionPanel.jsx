@@ -153,19 +153,20 @@ const ConnectionPanel = ({ qrStatus, qrCode, qrTimer, fetchQrCode, selectedInsta
                   style={{
                     width: '100%',
                     padding: '1rem 1.5rem',
-                    borderRadius: '12px',
-                    background: qrStatus === 'CONNECTED' ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                    borderRadius: '14px',
+                    background: qrStatus === 'loading' ? 'rgba(124, 58, 237, 0.2)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
                     color: '#fff',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(124, 58, 237, 0.5)',
                     fontWeight: '700',
                     fontSize: '0.95rem',
                     cursor: qrStatus === 'loading' ? 'not-allowed' : 'pointer',
-                    boxShadow: qrStatus === 'CONNECTED' ? 'none' : '0 8px 20px rgba(124, 58, 237, 0.25)',
+                    boxShadow: qrStatus === 'loading' ? 'none' : '0 8px 20px rgba(124, 58, 237, 0.3)',
                     transition: 'all 0.3s',
-                    opacity: qrStatus === 'loading' ? 0.6 : 1
+                    opacity: qrStatus === 'loading' ? 0.7 : 1,
+                    whiteSpace: 'nowrap'
                   }}
-                  onMouseEnter={(e) => qrStatus !== 'loading' && (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 12px 28px rgba(124, 58, 237, 0.4)')}
-                  onMouseLeave={(e) => qrStatus !== 'loading' && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = qrStatus === 'CONNECTED' ? 'none' : '0 8px 20px rgba(124, 58, 237, 0.25)')}
+                  onMouseEnter={(e) => qrStatus !== 'loading' && (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.4)')}
+                  onMouseLeave={(e) => qrStatus !== 'loading' && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 8px 20px rgba(124, 58, 237, 0.3)')}
                 >
                   {qrStatus === 'loading' ? '⏳ Processando...' : qrStatus === 'CONNECTED' ? '🔄 Verificar Sincronização' : '📱 Gerar Código QR'}
                 </button>
