@@ -51,19 +51,27 @@ const StatsPanel = ({ leads = [], stats = {} }) => {
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(today.getDate() - i);
-    last7Days.push({ name: getDayName(d), dateStr: d.toISOString().split('T')[0], count: 0 });
+    last7Days.push({ name: getDayName(d), dateStr: d.toLocaleDateString('pt-BR'), count: 0 });
   }
 
   // Contabilizar leads por dia
+  let leadsInLast7Days = 0;
   safeLeads.forEach(lead => {
-    if (!lead.created_at) return;
-    const leadDate = new Date(lead.created_at).toISOString().split('T')[0];
-    const dayObj = last7Days.find(d => d.dateStr === leadDate);
-    if (dayObj) dayObj.count++;
+    let formattedDate = lead.date || lead.created_at;
+    if (!formattedDate) return;
+    
+    if (formattedDate.includes('T') || formattedDate.includes('-')) {
+      try { formattedDate = new Date(formattedDate).toLocaleDateString('pt-BR'); } catch(e) {}
+    }
+    const dayObj = last7Days.find(d => d.dateStr === formattedDate);
+    if (dayObj) {
+      dayObj.count++;
+      leadsInLast7Days++;
+    }
   });
 
   // Dados para o gráfico de leads (Crescimento Acumulado)
-  let cumulative = 0;
+  let cumulative = Math.max(0, safeLeads.length - leadsInLast7Days);
   const leadsData = last7Days.map(d => {
     cumulative += d.count;
     return { name: d.name, value: cumulative };
@@ -76,19 +84,27 @@ const StatsPanel = ({ leads = [], stats = {} }) => {
     return { name: d.name, value: baseMessages + basal };
   });
 
-  // Extrair as últimas 5 atividades reais baseadas nos leads
+  // Extrair as últimas 4 atividades reais baseadas nos leads (para alinhamento)
   const recentActivities = [...safeLeads]
     .sort((a, b) => {
-      const dateA = new Date(b.last_contact_at || b.created_at || 0);
-      const dateB = new Date(a.last_contact_at || a.created_at || 0);
+      const parseDate = (dStr) => {
+        if (!dStr) return 0;
+        if (dStr.includes('/')) {
+          const [d, m, y] = dStr.split('/');
+          return new Date(`${y}-${m}-${d}`).getTime();
+        }
+        return new Date(dStr).getTime();
+      };
+      const dateA = parseDate(b.last_contact_at || b.date || b.created_at);
+      const dateB = parseDate(a.last_contact_at || a.date || a.created_at);
       return dateA - dateB;
     })
-    .slice(0, 5)
+    .slice(0, 4)
     .map(lead => ({
       id: lead?.id || Math.random(),
       title: lead?.sentiment === 'hot' ? '🔥 Lead Quente capturado!' : '👤 Novo lead identificado',
       desc: `${lead?.name || 'Cliente'} (${lead?.phone || 'Sem número'})`,
-      time: lead?.last_contact_at ? new Date(lead.last_contact_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Recente',
+      time: lead?.last_contact_at ? new Date(lead.last_contact_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : (lead?.date || 'Recente'),
       type: lead?.sentiment === 'hot' ? 'danger' : 'success'
     }));
 
