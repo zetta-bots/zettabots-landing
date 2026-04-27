@@ -737,12 +737,9 @@ export default async function handler(req, res) {
 
           // Enrich clients with display names using the mapping
           clients = clients.map(client => {
-            const bot_name =
-              instanceDisplayNames[client.instance_name] ||
-              client.instance_name ||
-              client.full_name ||
-              'Cliente';
-            console.log('[ADMIN-STATS] Mapped client:', { full_name: client.full_name, instance_name: client.instance_name, bot_name });
+            const mapped = instanceDisplayNames[client.instance_name];
+            const bot_name = `TEST-${mapped || client.instance_name || client.full_name || 'Cliente'}`;
+            console.log('[ADMIN-STATS] Mapped client:', { full_name: client.full_name, instance_name: client.instance_name, bot_name, mapped });
             return { ...client, bot_name };
           });
 
