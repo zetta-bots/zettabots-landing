@@ -103,8 +103,13 @@ const AdminPanel = ({
         </div>
         <button
           onClick={() => {
+            alert('Botão clicado! Sincronizando...');
             console.log('Button clicked! fetchAdminStats:', typeof fetchAdminStats);
-            fetchAdminStats();
+            if (typeof fetchAdminStats === 'function') {
+              fetchAdminStats();
+            } else {
+              alert('Erro: fetchAdminStats não é uma função!');
+            }
           }}
           style={{
             background: 'rgba(255,255,255,0.03)',
