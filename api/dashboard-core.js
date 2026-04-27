@@ -731,6 +731,9 @@ export default async function handler(req, res) {
           );
           let clients = await profRes.json() || [];
 
+          // Debug: log raw clients from Supabase
+          console.log('[DEBUG] Raw clients from Supabase:', JSON.stringify(clients.slice(0, 2), null, 2));
+
           // Enrich clients with display names using the mapping
           clients = clients.map(client => {
             // Try to get display name from the mapping, fall back to instance_name, then full_name
@@ -742,6 +745,8 @@ export default async function handler(req, res) {
             console.log(`[Admin Stats] Client: ${client.full_name}, instance_name: ${client.instance_name}, bot_name: ${bot_name}`);
             return { ...client, bot_name };
           });
+
+          console.log('[DEBUG] Clients after mapping:', JSON.stringify(clients.slice(0, 2), null, 2));
 
           const PLAN_MRR = { start: 127, pro: 247, enterprise: 997, trial: 0, blocked: 0, pago: 247 };
           const now = new Date();
