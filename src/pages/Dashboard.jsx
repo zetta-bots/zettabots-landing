@@ -900,13 +900,14 @@ export default function Dashboard() {
           />
         )}
 
-        <FastTestChat 
-          session={session} 
-          systemPrompt={prompt} 
-          knowledgeFiles={knowledgeFiles} 
-          selectedInstance={selectedInstance}
-        />
       </main>
+
+      <FastTestChat 
+        session={session} 
+        systemPrompt={prompt} 
+        knowledgeFiles={knowledgeFiles} 
+        selectedInstance={selectedInstance}
+      />
 
       {showSubModal && (
         <SubModal 
