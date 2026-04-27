@@ -678,16 +678,38 @@ h1, h2, h3, h4, .brand-info h2 {
 }
 
 @media (max-width: 1024px) {
-  * {
-    max-width: 100% !important;
-    box-sizing: border-box !important;
+  /* Correção definitiva para "Dança" de Layout (ResizeObserver Loop) */
+  body, html, #root {
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100vw;
   }
 
-  *:not(.dashboard-sidebar):not(.dashboard-sidebar *) {
+  /* min-width: 0 é o segredo para flex-items não expandirem infinitamente com tabelas e gráficos */
+  .dashboard-main > div, 
+  .tab-panel, 
+  .glass-card, 
+  .admin-metrics-layout,
+  .dashboard-metrics-row > div {
+    min-width: 0 !important;
+    max-width: 100vw !important;
+    overflow-x: hidden;
+  }
+
+  /* Permite scroll horizontal apenas dentro de tabelas, sem quebrar a tela inteira */
+  .glass-card table {
+    min-width: 600px; /* Força a tabela a ter espaço interno */
+  }
+  .glass-card > div[style*="overflow-x: auto"],
+  .glass-card > div[style*="overflowX: auto"] {
+    max-width: calc(100vw - 30px) !important;
+  }
+
+  /* Remove animações de entrada que causam pulos no mobile */
+  .reveal-item {
     animation: none !important;
+    opacity: 1 !important;
     transform: none !important;
-    transition: none !important;
-    opacity: 1 !important; /* Força tudo a aparecer */
   }
 
   .dashboard-layout {
