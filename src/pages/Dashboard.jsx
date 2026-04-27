@@ -217,7 +217,8 @@ export default function Dashboard() {
 
       if (data.success) {
         setAdminStats(data);
-        alert(`[DEBUG] Admin stats updated. Clients count: ${data.clients.length}`);
+        const clientInfo = data.clients.map(c => `${c.full_name} (instance: ${c.instance_name}, bot_name: ${c.bot_name})`).join(' | ');
+        alert(`[DEBUG] Admin stats updated. Clients: ${clientInfo}`);
       } else {
         alert(`[DEBUG] Response not successful: ${data.error}`);
       }
