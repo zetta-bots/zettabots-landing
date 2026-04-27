@@ -40,6 +40,7 @@ const AdminPanel = ({
 
   // Dados para métricas expandidas
   const clients = adminStats?.clients || [];
+  console.log('AdminPanel clients:', clients); // DEBUG
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.is_active).length;
   const paidClients = clients.filter(c => c.is_active && c.plan_type !== 'trial').length;
