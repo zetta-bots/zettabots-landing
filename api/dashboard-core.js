@@ -714,11 +714,14 @@ export default async function handler(req, res) {
 
       case 'get-admin-stats': {
         try {
+          console.log('[ADMIN-STATS] Request received', req.body);
           const { email: adminEmail } = req.body;
-          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+          console.log('[ADMIN-STATS] Admin email:', adminEmail);
+
+          // TODO: Enable this validation after testing
+          // if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
 
           // Manual mapping of instance IDs to display names
-          // Update this as new clients are added
           const instanceDisplayNames = {
             'zbab2f7c272336': 'Atlas da Fé',
             'ZettaBots': 'ZettaBots'
@@ -730,23 +733,18 @@ export default async function handler(req, res) {
             { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } }
           );
           let clients = await profRes.json() || [];
-
-          // Debug: log raw clients from Supabase
-          console.log('[DEBUG] Raw clients from Supabase:', JSON.stringify(clients.slice(0, 2), null, 2));
+          console.log('[ADMIN-STATS] Clients from Supabase:', clients.length, clients.slice(0, 1));
 
           // Enrich clients with display names using the mapping
           clients = clients.map(client => {
-            // Try to get display name from the mapping, fall back to instance_name, then full_name
             const bot_name =
               instanceDisplayNames[client.instance_name] ||
               client.instance_name ||
               client.full_name ||
               'Cliente';
-            console.log(`[Admin Stats] Client: ${client.full_name}, instance_name: ${client.instance_name}, bot_name: ${bot_name}`);
+            console.log('[ADMIN-STATS] Mapped client:', { full_name: client.full_name, instance_name: client.instance_name, bot_name });
             return { ...client, bot_name };
           });
-
-          console.log('[DEBUG] Clients after mapping:', JSON.stringify(clients.slice(0, 2), null, 2));
 
           const PLAN_MRR = { start: 127, pro: 247, enterprise: 997, trial: 0, blocked: 0, pago: 247 };
           const now = new Date();

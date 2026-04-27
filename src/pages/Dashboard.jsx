@@ -196,22 +196,26 @@ export default function Dashboard() {
   const fetchAdminStats = async (emailOverride) => {
     try {
       const email = emailOverride || session?.email;
+      console.log('[FETCH ADMIN STATS] Email:', email, 'Session:', session?.email);
       if (!email) return;
 
+      console.log('[FETCH ADMIN STATS] Sending request with email:', email);
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-admin-stats', instanceName: selectedInstance, email })
       })
 
+      console.log('[FETCH ADMIN STATS] Response status:', res.status);
       if (!res.ok) {
         console.warn('Admin stats fetch failed:', res.status);
         return;
       }
 
       const data = await res.json()
+      console.log('[FETCH ADMIN STATS] Response data:', data);
       if (data.success) setAdminStats(data)
-    } catch (err) { console.error('ADMIN STATS:', err) }
+    } catch (err) { console.error('ADMIN STATS ERROR:', err) }
   }
 
   const handleAdminExtend = async (targetEmail, days = 7) => {
