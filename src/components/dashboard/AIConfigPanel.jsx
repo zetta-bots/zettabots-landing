@@ -65,6 +65,8 @@ const AIConfigPanel = ({
           padding: '2rem 2.5rem', 
           borderBottom: '1px solid rgba(255,255,255,0.05)', 
           display: 'flex', 
+          flexWrap: 'wrap',
+          gap: '1.5rem',
           justifyContent: 'space-between', 
           alignItems: 'center', 
           background: 'linear-gradient(to right, rgba(124, 58, 237, 0.05), transparent)' 
@@ -75,7 +77,7 @@ const AIConfigPanel = ({
             </h2>
             <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Customize o comportamento e ensine novos dados à Sarah.</p>
           </div>
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center' }}>
              <button 
               onClick={handleRefresh}
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', borderRadius: '12px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}
@@ -85,7 +87,7 @@ const AIConfigPanel = ({
             >
               🔄
             </button>
-            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <button 
                 onClick={() => setActiveSubTab('behavior')}
                 style={{ 
@@ -97,7 +99,8 @@ const AIConfigPanel = ({
                   cursor: 'pointer',
                   background: activeSubTab === 'behavior' ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'transparent',
                   color: activeSubTab === 'behavior' ? '#fff' : '#64748b',
-                  transition: 'all 0.3s'
+                  transition: 'all 0.3s',
+                  flex: '1 1 auto'
                 }}
               >
                 Comportamento
@@ -120,7 +123,8 @@ const AIConfigPanel = ({
                   background: activeSubTab === 'knowledge' ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'transparent',
                   color: activeSubTab === 'knowledge' ? '#fff' : '#334155',
                   transition: 'all 0.3s',
-                  opacity: currentPlan === 'start' ? 0.5 : 1
+                  opacity: currentPlan === 'start' ? 0.5 : 1,
+                  flex: '1 1 auto'
                 }}
               >
                 Conhecimento {currentPlan === 'start' && '🔒'}
@@ -133,7 +137,7 @@ const AIConfigPanel = ({
           
           {activeSubTab === 'behavior' && (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', animation: 'revealUp 0.4s ease-out' }}>
-              <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ marginBottom: '1.25rem', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label style={{ fontSize: '0.9rem', fontWeight: '700', color: '#94a3b8' }}>Instruções de Personalidade (Prompt Maestro)</label>
                 <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#a78bfa', background: 'rgba(124, 58, 237, 0.1)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
                   IA EM MODO AVANÇADO
@@ -161,8 +165,8 @@ const AIConfigPanel = ({
                   transition: 'all 0.3s'
                 }} 
               />
-              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', alignItems: 'center' }}>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>Alterações entram em vigor em tempo real para novos chats.</p>
+              <div style={{ marginTop: '2rem', display: 'flex', flexWrap: 'wrap-reverse', justifyContent: 'space-between', gap: '1.5rem', alignItems: 'center' }}>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', fontWeight: '500', flex: '1 1 200px' }}>Alterações entram em vigor em tempo real para novos chats.</p>
                 <button 
                   onClick={handleSavePrompt} 
                   disabled={saving} 
@@ -176,7 +180,9 @@ const AIConfigPanel = ({
                     border: 'none',
                     cursor: 'pointer',
                     boxShadow: '0 8px 25px rgba(124, 58, 237, 0.4)',
-                    transition: 'all 0.3s'
+                    transition: 'all 0.3s',
+                    flex: '1 1 auto',
+                    textAlign: 'center'
                   }}
                   onMouseEnter={(e) => !saving && (e.currentTarget.style.transform = 'translateY(-2px)', e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.5)')}
                   onMouseLeave={(e) => !saving && (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 8px 25px rgba(124, 58, 237, 0.4)')}
@@ -189,7 +195,7 @@ const AIConfigPanel = ({
 
           {activeSubTab === 'knowledge' && (
             <div style={{ animation: 'revealUp 0.4s ease-out' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
                 <div>
                   <h4 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '800' }}>Base de Conhecimento RAG</h4>
                   <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#94a3b8', fontWeight: '500' }}>Ensine a Sarah usando seus próprios documentos.</p>
