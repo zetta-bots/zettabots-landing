@@ -77,21 +77,11 @@ const AIConfigPanel = ({
             </h2>
             <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Customize o comportamento e ensine novos dados à Sarah.</p>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center' }}>
-             <button 
-              onClick={handleRefresh}
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', borderRadius: '12px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}
-              title="Sincronizar Dados"
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-            >
-              🔄
-            </button>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', background: 'rgba(0,0,0,0.3)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
               <button 
                 onClick={() => setActiveSubTab('behavior')}
                 style={{ 
-                  padding: '10px 20px', 
+                  padding: '10px 18px', 
                   borderRadius: '12px', 
                   border: 'none', 
                   fontSize: '0.8rem', 
@@ -99,8 +89,7 @@ const AIConfigPanel = ({
                   cursor: 'pointer',
                   background: activeSubTab === 'behavior' ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'transparent',
                   color: activeSubTab === 'behavior' ? '#fff' : '#64748b',
-                  transition: 'all 0.3s',
-                  flex: '1 1 auto'
+                  transition: 'all 0.3s'
                 }}
               >
                 Comportamento
@@ -114,22 +103,50 @@ const AIConfigPanel = ({
                   }
                 }}
                 style={{ 
-                  padding: '10px 20px', 
+                  padding: '10px 18px', 
                   borderRadius: '12px', 
                   border: 'none', 
                   fontSize: '0.8rem', 
                   fontWeight: '700', 
                   cursor: 'pointer',
                   background: activeSubTab === 'knowledge' ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'transparent',
-                  color: activeSubTab === 'knowledge' ? '#fff' : '#334155',
+                  color: activeSubTab === 'knowledge' ? '#fff' : '#64748b',
                   transition: 'all 0.3s',
-                  opacity: currentPlan === 'start' ? 0.5 : 1,
-                  flex: '1 1 auto'
+                  opacity: currentPlan === 'start' ? 0.5 : 1
                 }}
               >
                 Conhecimento {currentPlan === 'start' && '🔒'}
               </button>
-            </div>
+              <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 5px' }} />
+              <button 
+                onClick={handleRefresh}
+                style={{ 
+                  background: 'rgba(255,255,255,0.05)', 
+                  border: '1px solid rgba(255,255,255,0.1)', 
+                  cursor: 'pointer', 
+                  borderRadius: '10px', 
+                  width: '34px', 
+                  height: '34px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  transition: 'all 0.3s',
+                  fontSize: '0.9rem'
+                }}
+                title="Sincronizar Sarah"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(124, 58, 237, 0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.4)';
+                  e.currentTarget.style.transform = 'rotate(180deg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.transform = 'rotate(0deg)';
+                }}
+              >
+                🔄
+              </button>
           </div>
         </div>
 
