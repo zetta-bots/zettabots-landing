@@ -13,7 +13,17 @@ const AdminPanel = ({
   fetchAdminStats
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSyncing, setIsSyncing] = useState(false);
   const itemsPerPage = 10;
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await fetchAdminStats();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Preços por plano
   const PLAN_PRICES = { trial: 0, start: 127, pro: 247, enterprise: 497 };
@@ -97,23 +107,32 @@ const AdminPanel = ({
           <p style={{ margin: '6px 0 0', fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>Visão operacional completa: gestão de clientes, planos e receita.</p>
         </div>
         <button
-          onClick={() => fetchAdminStats()}
+          onClick={handleSync}
+          disabled={isSyncing}
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: isSyncing ? 'rgba(124, 58, 237, 0.2)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+            border: '1px solid rgba(124, 58, 237, 0.5)',
             color: '#fff',
             padding: '12px 24px',
             borderRadius: '14px',
-            cursor: 'pointer',
+            cursor: isSyncing ? 'not-allowed' : 'pointer',
             fontWeight: '700',
             fontSize: '0.85rem',
             transition: 'all 0.3s',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            opacity: isSyncing ? 0.7 : 1,
+            boxShadow: isSyncing ? 'none' : '0 8px 20px rgba(124, 58, 237, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+          onMouseEnter={(e) => !isSyncing && (e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.4)')}
+          onMouseLeave={(e) => !isSyncing && (e.currentTarget.style.boxShadow = '0 8px 20px rgba(124, 58, 237, 0.3)')}
         >
-          🔄 Sincronizar Rede
+          <span style={{ display: 'inline-block', animation: isSyncing ? 'spin 1s linear infinite' : 'none' }}>
+            🔄
+          </span>
+          {isSyncing ? 'Sincronizando...' : 'Sincronizar Rede'}
         </button>
       </div>
 
