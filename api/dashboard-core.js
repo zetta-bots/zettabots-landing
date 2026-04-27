@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const planLabel = planName || 'Pro';
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 'test-reset-atlas'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     return res.status(400).json({ error: 'Action and Instance required' });
@@ -850,6 +850,39 @@ export default async function handler(req, res) {
           }
 
           return res.status(200).json({ success: true, message: 'Atlas da Fé updated to Start plan, expires 2026-05-03' });
+        } catch (e) {
+          return res.status(500).json({ error: e.message });
+        }
+      }
+
+      case 'test-reset-atlas': {
+        try {
+          const { email: adminEmail } = req.body;
+          if (adminEmail !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
+
+          const now = new Date();
+          const trialEnd = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+          // Reset Atlas da Fé to TRIAL
+          const updateRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?instance_name=eq.zbab2f7c727336`,
+            {
+              method: 'PATCH',
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({
+                plan_type: 'trial',
+                plan_expires_at: trialEnd,
+                is_active: true
+              }),
+            }
+          );
+
+          if (!updateRes.ok) {
+            const errText = await updateRes.text();
+            throw new Error('Supabase Error: ' + errText);
+          }
+
+          return res.status(200).json({ success: true, message: `Atlas da Fé reset to TRIAL, expires in 7 days (${trialEnd})` });
         } catch (e) {
           return res.status(500).json({ error: e.message });
         }
