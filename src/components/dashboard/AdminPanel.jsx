@@ -40,7 +40,11 @@ const AdminPanel = ({
 
   // Dados para métricas expandidas
   const clients = adminStats?.clients || [];
-  console.log('AdminPanel clients:', clients); // DEBUG
+  console.log('AdminPanel clients DEBUG:', clients);
+  if (clients.length > 0) {
+    console.log('Primeiro cliente:', clients[0]);
+    console.log('Tem phone?', clients.map(c => ({ email: c.email, phone: c.phone, full_name: c.full_name, instance_name: c.instance_name })));
+  }
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.is_active).length;
   const paidClients = clients.filter(c => c.is_active && c.plan_type !== 'trial').length;
