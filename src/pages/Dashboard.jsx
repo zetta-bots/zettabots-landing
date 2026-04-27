@@ -199,23 +199,31 @@ export default function Dashboard() {
       alert(`[DEBUG] fetchAdminStats called. Email: ${email}`);
       if (!email) return;
 
-      console.log('[FETCH ADMIN STATS] Sending request with email:', email);
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'get-admin-stats', instanceName: selectedInstance, email })
       })
 
-      console.log('[FETCH ADMIN STATS] Response status:', res.status);
+      alert(`[DEBUG] Response status: ${res.status}`);
+
       if (!res.ok) {
-        console.warn('Admin stats fetch failed:', res.status);
+        alert(`[DEBUG] Error: Response not OK - ${res.status}`);
         return;
       }
 
       const data = await res.json()
-      console.log('[FETCH ADMIN STATS] Response data:', data);
-      if (data.success) setAdminStats(data)
-    } catch (err) { console.error('ADMIN STATS ERROR:', err) }
+      alert(`[DEBUG] Response success: ${data.success}, has clients: ${!!data.clients}`);
+
+      if (data.success) {
+        setAdminStats(data);
+        alert(`[DEBUG] Admin stats updated. Clients count: ${data.clients.length}`);
+      } else {
+        alert(`[DEBUG] Response not successful: ${data.error}`);
+      }
+    } catch (err) {
+      alert(`[DEBUG] Error: ${err.message}`);
+    }
   }
 
   const handleAdminExtend = async (targetEmail, days = 7) => {
