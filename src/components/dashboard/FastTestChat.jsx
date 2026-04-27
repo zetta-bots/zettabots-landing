@@ -207,7 +207,7 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
               </button>
             </div>
             <p style={{ margin: '8px 0 0', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
-              Sarah está usando a base de conhecimento atualizada ⚡
+              {selectedInstance && selectedInstance !== 'ZettaBots' ? `${selectedInstance} está usando` : 'ZettaBots está usando'} a base de conhecimento atualizada ⚡
             </p>
           </form>
         </div>
