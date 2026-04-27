@@ -75,15 +75,15 @@ export default function Dashboard() {
     setPrompt(parsed.systemPrompt?.replace(/\[SISTEMA - SILÊNCIO TOTAL\][\s\S]*?Fim\.\n\n/, '') || '')
     setWebhookUrl(parsed.webhookUrl || '')
     setNotificationEmail(parsed.notificationEmail || '')
-    setIsAdmin(parsed.email === 'richardrovigati@gmail.com')
-    
+    setIsAdmin(String(parsed.phone || '').includes('21969875522'))
+
     // Inicia carregamento
     fetchStats(parsed.instanceName)
     fetchFinance(parsed.instanceName)
     fetchKnowledgeBase()
     fetchNotifications()
-    
-    if (parsed.email === 'richardrovigati@gmail.com') {
+
+    if (String(parsed.phone || '').includes('21969875522')) {
       fetchAdminStats(parsed.email)
       fetchAllInstances(parsed.email)
     }
