@@ -727,33 +727,38 @@ export default async function handler(req, res) {
           // Fetch instances from Evolution to get bot names
           try {
             const instRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
+            if (!instRes.ok) throw new Error('Evolution fetch failed');
+
             const instances = await instRes.json();
             const instData = Array.isArray(instances) ? instances : (instances.data || []);
-
-            // Map instance IDs to bot names
-            const instanceMap = {};
-            instData.forEach(inst => {
-              if (inst.name) {
-                instanceMap[inst.name] = inst.name; // Use instance name as bot name
-              }
-            });
+            console.log('Evolution instances count:', instData.length);
 
             // Enrich clients with bot names from Evolution
             clients = clients.map(client => {
-              // Try to find bot name by instance_name
-              if (client.instance_name && instanceMap[client.instance_name]) {
-                return { ...client, bot_name: instanceMap[client.instance_name] };
+              // Find matching instance by name or ID
+              let matchedInst = null;
+
+              // Strategy 1: Direct match by instance_name
+              if (client.instance_name) {
+                matchedInst = instData.find(i => i.name === client.instance_name);
               }
-              // If instance_name looks like an ID, try to match with Evolution instances
-              if (client.instance_name && client.instance_name.startsWith('zba')) {
-                const matchedInst = instData.find(i => i.name === client.instance_name);
-                if (matchedInst) {
-                  return { ...client, bot_name: matchedInst.name };
-                }
+
+              // Strategy 2: If still not found and instance_name is an ID, try to find any matching instance
+              if (!matchedInst && client.instance_name) {
+                matchedInst = instData.find(i =>
+                  i.name?.includes(client.instance_name) ||
+                  client.instance_name?.includes(i.name)
+                );
               }
-              return { ...client, bot_name: client.instance_name || client.full_name };
+
+              // Use bot name from Evolution if found, otherwise fallback
+              const bot_name = matchedInst?.name || client.instance_name || client.full_name;
+              console.log(`Client ${client.email}: instance_name="${client.instance_name}" -> bot_name="${bot_name}"`);
+
+              return { ...client, bot_name };
             });
           } catch (e) {
+            console.error('Evolution fetch error:', e.message);
             // If Evolution fetch fails, use instance_name or full_name as fallback
             clients = clients.map(c => ({ ...c, bot_name: c.instance_name || c.full_name }));
           }
