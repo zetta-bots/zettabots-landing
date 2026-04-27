@@ -667,13 +667,16 @@ export default async function handler(req, res) {
             else if (msg.stickerMessage) { text = '📦 Figurinha'; type = 'sticker'; mimetype = msg.stickerMessage.mimetype; }
             else if (!text) text = 'Mensagem de mídia/sistema';
 
+            const timestamp = m.messageTimestamp || m.timestamp || (Date.now() / 1000);
+            const date = new Date((timestamp * 1000) - (3 * 60 * 60 * 1000));
+
             return {
               id: m.key?.id,
               text,
               type,
               mimetype,
               fromMe: m.key?.fromMe,
-              time: m.messageTimestamp ? new Date(m.messageTimestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
+              time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
             }
           });
 
