@@ -121,31 +121,34 @@ const AIConfigPanel = ({
               <button 
                 onClick={handleRefresh}
                 style={{ 
-                  background: 'rgba(255,255,255,0.05)', 
-                  border: '1px solid rgba(255,255,255,0.1)', 
+                  background: 'rgba(124, 58, 237, 0.1)', 
+                  border: '1px solid rgba(124, 58, 237, 0.3)', 
                   cursor: 'pointer', 
-                  borderRadius: '10px', 
-                  width: '34px', 
-                  height: '34px', 
+                  borderRadius: '12px', 
+                  padding: '8px 16px',
                   display: 'flex', 
                   alignItems: 'center', 
-                  justifyContent: 'center', 
+                  gap: '8px',
                   transition: 'all 0.3s',
-                  fontSize: '0.9rem'
+                  color: '#a78bfa',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
                 }}
-                title="Sincronizar Sarah"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(124, 58, 237, 0.2)';
-                  e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.4)';
-                  e.currentTarget.style.transform = 'rotate(180deg)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.2)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-                  e.currentTarget.style.transform = 'rotate(0deg)';
+                  e.currentTarget.style.background = 'rgba(124, 58, 237, 0.1)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                🔄
+                <span style={{ fontSize: '0.9rem' }}>🔄</span>
+                Sincronizar Sarah
               </button>
           </div>
         </div>
