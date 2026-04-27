@@ -127,7 +127,7 @@ const ConnectionPanel = ({ qrStatus, qrCode, qrTimer, fetchQrCode, selectedInsta
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '100%' }}>
               <div>
                 <p style={{ color: '#94a3b8', fontSize: '0.95rem', fontWeight: '500', marginBottom: '2rem', lineHeight: '1.6' }}>
-                  {qrStatus === 'CONNECTED' && 'Seu ecossistema está online e a Sarah está pronta para vender. Monitore a atividade em tempo real.'}
+                  {qrStatus === 'CONNECTED' && `Seu ecossistema está online e ${selectedInstance || 'a IA'} está pronta para vender. Monitore a atividade em tempo real.`}
                   {qrStatus === 'QRCODE' && 'Escaneie o código QR com o WhatsApp do seu negócio para ativar a IA e começar a atender automaticamente.'}
                   {qrStatus === 'DISCONNECTED' && 'Sua instância perdeu a conexão. Gere um novo código QR para reativar o sistema imediatamente.'}
                   {qrStatus === 'NOT_FOUND' && 'Instância em manutenção ou não encontrada. Entre em contato com o suporte para resolver.'}
