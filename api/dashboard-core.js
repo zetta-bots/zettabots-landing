@@ -739,6 +739,7 @@ export default async function handler(req, res) {
               client.instance_name ||
               client.full_name ||
               'Cliente';
+            console.log(`[Admin Stats] Client: ${client.full_name}, instance_name: ${client.instance_name}, bot_name: ${bot_name}`);
             return { ...client, bot_name };
           });
 
