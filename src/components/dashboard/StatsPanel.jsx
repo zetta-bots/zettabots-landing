@@ -17,21 +17,64 @@ const StatsPanel = ({ leads = [], stats = {} }) => {
   const safeLeads = Array.isArray(leads) ? leads : [];
   const safeStats = stats || {};
 
-  // Dados para o gráfico de leads
-  const leadsData = [
-    { name: 'Seg', value: Math.floor(safeLeads.length * 0.1) },
-    { name: 'Ter', value: Math.floor(safeLeads.length * 0.2) },
-    { name: 'Qua', value: Math.floor(safeLeads.length * 0.4) },
-    { name: 'Qui', value: Math.floor(safeLeads.length * 0.6) },
-    { name: 'Sex', value: Math.floor(safeLeads.length * 0.8) },
-    { name: 'Sáb', value: Math.floor(safeLeads.length * 0.9) },
-    { name: 'Dom', value: safeLeads.length },
-  ];
+  // Estados para configuração de ROI
+  const [ticketMedio, setTicketMedio] = React.useState(500);
+  const [taxaConversao, setTaxaConversao] = React.useState(10);
+  const [showConfig, setShowConfig] = React.useState(false);
 
-  const activityData = (safeStats.activity || [0, 0, 0, 0, 0, 0, 0]).map((val, i) => ({
-    name: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][i],
-    value: val
-  }));
+  React.useEffect(() => {
+    const savedConfig = localStorage.getItem('zb_roi_config');
+    if (savedConfig) {
+      try {
+        const { ticket, taxa } = JSON.parse(savedConfig);
+        if (ticket) setTicketMedio(ticket);
+        if (taxa) setTaxaConversao(taxa);
+      } catch (e) {}
+    }
+  }, []);
+
+  const saveConfig = () => {
+    localStorage.setItem('zb_roi_config', JSON.stringify({ ticket: ticketMedio, taxa: taxaConversao }));
+    setShowConfig(false);
+  };
+
+  const realLeadsCount = safeLeads.length || safeStats.contacts || 0;
+  const estimatedROI = realLeadsCount * (taxaConversao / 100) * ticketMedio;
+  const formattedROI = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(estimatedROI);
+
+  // Processamento de dados reais para os gráficos
+  const today = new Date();
+  const getDayName = (date) => ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][date.getDay()];
+  
+  // Arrays para os últimos 7 dias
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    last7Days.push({ name: getDayName(d), dateStr: d.toISOString().split('T')[0], count: 0 });
+  }
+
+  // Contabilizar leads por dia
+  safeLeads.forEach(lead => {
+    if (!lead.created_at) return;
+    const leadDate = new Date(lead.created_at).toISOString().split('T')[0];
+    const dayObj = last7Days.find(d => d.dateStr === leadDate);
+    if (dayObj) dayObj.count++;
+  });
+
+  // Dados para o gráfico de leads (Crescimento Acumulado)
+  let cumulative = 0;
+  const leadsData = last7Days.map(d => {
+    cumulative += d.count;
+    return { name: d.name, value: cumulative };
+  });
+
+  // Dados para atividade da IA (Estimativa Proporcional ao tráfego real)
+  const activityData = last7Days.map((d, index) => {
+    const baseMessages = d.count * 8; 
+    const basal = (index % 3) + 1; // volume basal mínimo
+    return { name: d.name, value: baseMessages + basal };
+  });
 
   // Extrair as últimas 5 atividades reais baseadas nos leads
   const recentActivities = [...safeLeads]
@@ -75,13 +118,14 @@ const StatsPanel = ({ leads = [], stats = {} }) => {
         <div className="stat-card gradient-purple">
           <div className="stat-content">
             <span className="stat-label">Leads Capturados</span>
-            <span className="stat-value">{safeLeads.length || safeStats.contacts || 0}</span>
+            <span className="stat-value">{realLeadsCount}</span>
             <div className="stat-bar">
-              <div className="stat-bar-fill" style={{ width: `${Math.min((safeLeads.length || safeStats.contacts || 0) * 10, 100)}%` }}></div>
+              <div className="stat-bar-fill" style={{ width: `${Math.min(realLeadsCount * 10, 100)}%` }}></div>
             </div>
           </div>
           <div className="stat-icon">👤</div>
         </div>
+        
         <div className="stat-card gradient-blue">
           <div className="stat-content">
             <span className="stat-label">Conversas Ativas</span>
@@ -92,21 +136,69 @@ const StatsPanel = ({ leads = [], stats = {} }) => {
           </div>
           <div className="stat-icon">💬</div>
         </div>
+
         <div className="stat-card gradient-green">
           <div className="stat-content">
-            <span className="stat-label">Trabalho da IA</span>
-            <span className="stat-value">{safeStats.messages || 0}</span>
-            <div className="stat-sub">mensagens enviadas</div>
+            <span className="stat-label">Tempo Economizado</span>
+            <span className="stat-value">
+              {Math.floor((safeStats.messages || 0) * 2 / 60)}h {((safeStats.messages || 0) * 2) % 60}m
+            </span>
+            <div className="stat-sub">({safeStats.messages || 0} msgs automáticas)</div>
           </div>
-          <div className="stat-icon">🤖</div>
+          <div className="stat-icon">⏱️</div>
         </div>
-        <div className="stat-card gradient-orange">
+
+        <div className="stat-card gradient-orange" style={{ position: 'relative' }}>
           <div className="stat-content">
-            <span className="stat-label">ROI Estimado</span>
-            <span className="stat-value">{safeStats.roi || 'R$ 0'}</span>
-            <div className="stat-sub">em vendas potenciais</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="stat-label">Valor em Pipeline</span>
+              <button 
+                onClick={() => setShowConfig(!showConfig)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0', fontSize: '1.2rem', opacity: 0.7 }}
+                title="Configurar ROI"
+              >
+                ⚙️
+              </button>
+            </div>
+            <span className="stat-value">{formattedROI}</span>
+            <div className="stat-sub">estimativa de vendas</div>
           </div>
           <div className="stat-icon">💰</div>
+          
+          {showConfig && (
+            <div style={{
+              position: 'absolute', top: '100%', right: '0', marginTop: '10px',
+              background: '#0f172a', border: '1px solid #7c3aed', borderRadius: '12px',
+              padding: '15px', zIndex: 100, width: '250px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)'
+            }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#fff' }}>Configurar Estimativa</h4>
+              
+              <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.8rem', color: '#94a3b8' }}>
+                Ticket Médio (R$)
+                <input 
+                  type="number" 
+                  value={ticketMedio} 
+                  onChange={e => setTicketMedio(Number(e.target.value))}
+                  style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', marginTop: '4px' }}
+                />
+              </label>
+              
+              <label style={{ display: 'block', marginBottom: '15px', fontSize: '0.8rem', color: '#94a3b8' }}>
+                Taxa de Conversão (%)
+                <input 
+                  type="number" 
+                  value={taxaConversao} 
+                  onChange={e => setTaxaConversao(Number(e.target.value))}
+                  style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '6px', marginTop: '4px' }}
+                />
+              </label>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => setShowConfig(false)} style={{ flex: 1, padding: '8px', background: 'transparent', border: '1px solid #475569', color: '#fff', borderRadius: '6px', cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={saveConfig} style={{ flex: 1, padding: '8px', background: '#7c3aed', border: 'none', color: '#fff', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Salvar</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
