@@ -38,12 +38,12 @@
   background: rgba(14, 14, 26, 0.8);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(124, 58, 237, 0.35);
   border-radius: 20px;
   padding: 3rem 2.5rem;
   width: 100%;
   max-width: 450px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(124, 58, 237, 0.15);
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   z-index: 1;
@@ -148,6 +148,10 @@
   transition: all 0.3s ease;
   box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -201,5 +205,43 @@
 
   .login-header h2 {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 1rem;
+  }
+
+  .login-glass-panel {
+    padding: 1.5rem 1.25rem;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .login-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .login-header p {
+    font-size: 0.85rem;
+  }
+
+  .input-group label {
+    font-size: 0.8rem;
+  }
+
+  .input-group input {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .btn-primary {
+    padding: 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .btn-link {
+    font-size: 0.8rem;
   }
 }

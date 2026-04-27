@@ -1077,3 +1077,89 @@ h1, h2, h3, h4, .brand-info h2 {
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(124, 58, 237, 0.4);
 }
+
+/* Mobile Breakpoint: 480px (small phones) */
+@media (max-width: 480px) {
+  /* Header adjustments */
+  .main-header {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .main-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .header-title > div {
+    flex-wrap: wrap;
+  }
+
+  /* Tab panels */
+  .tab-panel {
+    padding: 0.75rem 0.5rem;
+  }
+
+  /* Glass cards */
+  .glass-card {
+    padding: 1.25rem;
+  }
+
+  /* Stat cards */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  /* Finance layout */
+  .finance-top-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Dashboard main grid */
+  .dashboard-metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar menu items */
+  .dashboard-sidebar a {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Connection grid */
+  .connection-grid {
+    gap: 1.5rem;
+  }
+
+  /* Button styles */
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Input fields */
+  .input-group input,
+  .input-group select {
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Notifications dropdown */
+  .notification-bell-desktop {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* User menu button */
+  .user-menu-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+}
