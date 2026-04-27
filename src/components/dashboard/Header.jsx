@@ -283,7 +283,7 @@ const Header = ({
         }}>
           <span style={{ fontSize: '1rem' }}>⭐</span>
           <span style={{ fontSize: '0.75rem', fontWeight: '900', color: '#fff', letterSpacing: '1px' }}>
-            PLANO {['pago', 'admin'].includes(session?.status) ? 'PRO' : 'TRIAL'}
+            {session?.status === 'admin' ? 'ADMIN' : `PLANO ${session?.status === 'pago' ? 'PRO' : 'TRIAL'}`}
           </span>
         </div>
       </div>
