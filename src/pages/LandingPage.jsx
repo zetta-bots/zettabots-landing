@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
 import Problems from '../components/Problems'
 import Features from '../components/Features'
+import RoiCalculator from '../components/RoiCalculator'
 import HowItWorks from '../components/HowItWorks'
 import Results from '../components/Results'
 import Pricing from '../components/Pricing'
@@ -46,6 +47,7 @@ export default function LandingPage() {
         <div className="reveal"><Hero /></div>
         <div className="reveal"><Problems /></div>
         <div className="reveal"><Features /></div>
+        <div className="reveal"><RoiCalculator /></div>
         <div className="reveal"><HowItWorks /></div>
         <div className="reveal"><Results /></div>
         <div className="reveal"><Pricing /></div>
