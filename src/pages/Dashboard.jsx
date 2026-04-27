@@ -118,6 +118,20 @@ export default function Dashboard() {
     if (activeTab === 'leads' && selectedInstance) fetchLeads(selectedInstance)
   }, [activeTab, selectedInstance])
 
+  // Polling para conversas e mensagens (Atualização Automática)
+  useEffect(() => {
+    if (activeTab !== 'mensagens' || !selectedInstance) return;
+
+    const interval = setInterval(() => {
+      fetchChats(selectedInstance);
+      if (selectedChat) {
+        fetchChatMessages(selectedChat.remoteJid || selectedChat.id);
+      }
+    }, 5000); // Atualiza a cada 5 segundos
+
+    return () => clearInterval(interval);
+  }, [activeTab, selectedInstance, selectedChat]);
+
   const handleGeneratePix = async (method = 'pix', price = 247, planName = 'Pro') => {
     try {
       setCheckoutLoading(true)
@@ -718,8 +732,32 @@ export default function Dashboard() {
       )}
 
       <header className="mobile-header">
-        <div className="premium-logo-container mini">
-          <img src="/images/logo.png" alt="ZettaBots" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="premium-logo-container mini">
+            <img src="/images/logo.png" alt="ZettaBots" />
+          </div>
+          {isAdmin && allInstances.length > 0 && (
+            <select 
+              className="instance-selector-mini"
+              value={selectedInstance || ''}
+              onChange={(e) => setSelectedInstance(e.target.value)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                color: '#fff',
+                fontSize: '0.65rem',
+                padding: '4px 8px',
+                fontWeight: '700',
+                outline: 'none',
+                maxWidth: '120px'
+              }}
+            >
+              {allInstances.map(i => (
+                <option key={i.id} value={i.instance_name} style={{ background: '#0f172a' }}>{i.display_name || i.instance_name}</option>
+              ))}
+            </select>
+          )}
         </div>
         <button className="hamburger-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           <span></span><span></span><span></span>

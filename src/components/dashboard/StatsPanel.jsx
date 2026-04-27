@@ -220,7 +220,6 @@ const StatsPanel = ({ leads = [], stats = {} }) => {
 
       <div className="dashboard-metrics-row" style={{ 
         display: 'grid', 
-        gridTemplateColumns: '1fr 350px', 
         gap: '20px', 
         marginTop: '20px' 
       }}>

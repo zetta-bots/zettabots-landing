@@ -140,8 +140,8 @@ const AdminPanel = ({
       </div>
 
       {/* Cards de Métricas Expandidas */}
-      <div className="admin-metrics-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-        <div className="admin-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+      <div className="admin-metrics-layout" style={{ marginBottom: '20px' }}>
+        <div className="admin-cards-grid" style={{ display: 'grid', gap: '15px' }}>
           {[
             {
               label: 'MRR TOTAL',
@@ -177,9 +177,7 @@ const AdminPanel = ({
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
-              border: '1px solid rgba(255,255,255,0.03)',
-              animation: `revealUp 0.4s ease-out forwards ${idx * 0.1}s`,
-              opacity: 0
+              border: '1px solid rgba(255,255,255,0.03)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                 <div style={{ fontSize: '1.2rem', width: '32px', height: '32px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.icon}</div>
@@ -192,10 +190,10 @@ const AdminPanel = ({
         </div>
 
         {chartData.length > 0 && (
-          <div className="glass-card admin-chart-container" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+          <div className="glass-card admin-chart-container" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '280px', marginTop: '20px' }}>
             <h4 style={{ margin: '0 0 1rem', fontSize: '0.85rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.05em' }}>DISTRIBUIÇÃO DE RECEITA</h4>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ flex: 1, minHeight: '200px' }}>
+              <ResponsiveContainer width="99%" height={200}>
                 <PieChart>
                   <Pie data={chartData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={5} dataKey="value" stroke="none" label={renderCustomLabel}>
                     {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
