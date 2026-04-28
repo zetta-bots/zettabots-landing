@@ -19,7 +19,8 @@ export default async function handler(req, res) {
     if (notificationEmail !== undefined) updateData.email = notificationEmail;
 
     if (Object.keys(updateData).length > 0) {
-      await fetch(`${sbUrl}/rest/v1/instances?id=eq.${recordId}`, {
+      const queryParam = instanceName ? `instance_name=eq.${instanceName}` : `id=eq.${recordId}`;
+      await fetch(`${sbUrl}/rest/v1/instances?${queryParam}`, {
         method: 'PATCH',
         headers: {
           'apikey': sbKey,

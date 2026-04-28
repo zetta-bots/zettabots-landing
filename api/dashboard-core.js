@@ -750,14 +750,31 @@ export default async function handler(req, res) {
           );
           let clients = await profRes.json() || [];
 
-          // Enrich clients with display names using the mapping
+          // Fetch evolution instances for Health Check
+          let evoInstances = [];
+          try {
+            const listRes = await fetch(`${url}/instance/fetchInstances`, fetchOptions);
+            const instances = await listRes.json();
+            evoInstances = Array.isArray(instances) ? instances : (instances.data || []);
+          } catch(e) {}
+
+          // Enrich clients with display names and health status
           clients = clients.map(client => {
             const bot_name =
               instanceDisplayNames[client.instance_name] ||
               client.instance_name ||
               client.full_name ||
               'Cliente';
-            return { ...client, bot_name };
+
+            const evoMatch = evoInstances.find(i => i.name === client.instance_name);
+            const evoStatus = evoMatch ? evoMatch.connectionStatus : 'disconnected';
+            
+            let health = 'red';
+            if (evoStatus === 'open') {
+              health = client.bot_paused ? 'yellow' : 'green';
+            }
+
+            return { ...client, bot_name, whatsapp_status: evoStatus, health_status: health };
           });
 
           const PLAN_MRR = { start: 127, pro: 247, enterprise: 997, trial: 0, blocked: 0, pago: 247 };
@@ -848,6 +865,35 @@ export default async function handler(req, res) {
 
           return res.status(200).json({ success: true });
         } catch (e) {
+          return res.status(500).json({ error: 'Admin toggle error' });
+        }
+      }
+
+      case 'toggle-ai': {
+        try {
+          const { instanceName, enabled } = req.body;
+          if (!instanceName) return res.status(400).json({ error: 'Instance missing' });
+
+          const sbRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?instance_name=eq.${encodeURIComponent(instanceName)}`,
+            {
+              method: 'PATCH',
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({ bot_paused: !enabled }),
+            }
+          );
+
+          if (!sbRes.ok) {
+            const errText = await sbRes.text();
+            throw new Error('Supabase Error: ' + errText);
+          }
+
+          return res.status(200).json({ success: true });
+        } catch (e) {
+          console.error('[toggle-ai] Error:', e);
+          return res.status(500).json({ error: 'Toggle AI error' });
+        }
+      }
           return res.status(500).json({ error: e.message });
         }
       }

@@ -64,7 +64,7 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
     };
 
     return (
-      <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 1000 }}>
+      <div className="fast-test-chat-wrapper">
         {/* Botão Flutuante Premium */}
         <button
           onClick={() => setIsOpen(!isOpen)}

@@ -72,14 +72,23 @@ const ChatMonitorPanel = ({
 }) => {
   const hasChats = chats && chats.length > 0;
   const messagesEndRef = React.useRef(null);
+  const prevMessagesLength = React.useRef(0);
+  const lastChatId = React.useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   React.useEffect(() => {
-    scrollToBottom();
-  }, [chatMessages]);
+    const isNewChat = selectedChat && lastChatId.current !== selectedChat.id;
+    const hasNewMessages = chatMessages && chatMessages.length > prevMessagesLength.current;
+    
+    if (isNewChat || hasNewMessages) {
+       scrollToBottom();
+       if (selectedChat) lastChatId.current = selectedChat.id;
+    }
+    prevMessagesLength.current = chatMessages?.length || 0;
+  }, [chatMessages, selectedChat]);
 
   return (
     <div className="chat-monitor-container reveal-item" style={{ 

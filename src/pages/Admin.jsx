@@ -218,7 +218,7 @@ export default function Admin() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#1a1a2e' }}>
-                {['Nome', 'Email', 'Plano', 'Status', 'Expira em', 'Ações'].map(h => (
+                {['Nome', 'Email', 'Plano', 'Status', 'Saúde', 'Expira em', 'Ações'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', color: '#a0a0b0', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid #ffffff0f' }}>
                     {h}
                   </th>
@@ -256,6 +256,13 @@ export default function Admin() {
                       }}>
                         {c.is_active ? '● Ativo' : '● Inativo'}
                       </span>
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                      <div style={{
+                        width: 12, height: 12, borderRadius: '50%', display: 'inline-block',
+                        background: c.health_status === 'green' ? '#10b981' : c.health_status === 'yellow' ? '#f59e0b' : '#ef4444',
+                        boxShadow: `0 0 8px ${c.health_status === 'green' ? '#10b981' : c.health_status === 'yellow' ? '#f59e0b' : '#ef4444'}66`
+                      }} title={c.health_status === 'green' ? 'WhatsApp OK & IA Ativa' : c.health_status === 'yellow' ? 'WhatsApp OK, IA Pausada/Aviso' : 'Desconectado'} />
                     </td>
                     <td style={{ padding: '12px 16px', color: expired ? '#ef4444' : '#a0a0b0', fontSize: 13 }}>
                       {expiresAt ? expiresAt.toLocaleDateString('pt-BR') : <span style={{ color: '#555' }}>—</span>}
