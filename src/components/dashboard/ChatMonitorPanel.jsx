@@ -147,11 +147,14 @@ const ChatMonitorPanel = ({
                   animationDelay: `${i * 0.05}s`
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <span style={{ fontWeight: '700', fontSize: '0.9rem', color: selectedChat?.id === chat.id ? '#a78bfa' : '#fff' }}>
                     {chat.user}
                   </span>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{chat.time}</span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {chat.ai_paused && <span style={{ fontSize: '0.65rem', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '2px 6px', borderRadius: '4px', fontWeight: '700' }}>🔴 ESPERA</span>}
+                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>{chat.time}</span>
+                  </div>
                 </div>
                 <p style={{ 
                   margin: 0, 
