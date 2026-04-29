@@ -123,9 +123,9 @@ export default function Dashboard() {
     if (activeTab !== 'mensagens' || !selectedInstance) return;
 
     const interval = setInterval(() => {
-      fetchChats(selectedInstance);
+      fetchChats(selectedInstance, true);
       if (selectedChat) {
-        fetchChatMessages(selectedChat.remoteJid || selectedChat.id);
+        fetchChatMessages(selectedChat.remoteJid || selectedChat.id, true);
       }
     }, 5000); // Atualiza a cada 5 segundos
 
@@ -397,8 +397,8 @@ export default function Dashboard() {
     return () => clearTimeout(t)
   }, [qrStatus, qrTimer])
 
-  const fetchChats = async (instanceName) => {
-    setChatsLoading(true)
+  const fetchChats = async (instanceName, isSilent = false) => {
+    if (!isSilent) setChatsLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -420,13 +420,13 @@ export default function Dashboard() {
       console.error('ERRO CHATS:', err)
       setChats([])
     } finally {
-      setChatsLoading(false)
+      if (!isSilent) setChatsLoading(false)
     }
   }
 
-  const fetchChatMessages = async (remoteJid) => {
+  const fetchChatMessages = async (remoteJid, isSilent = false) => {
     if (!remoteJid) return
-    setChatMessagesLoading(true)
+    if (!isSilent) setChatMessagesLoading(true)
     try {
       const res = await fetch('/api/dashboard-core', {
         method: 'POST',
@@ -448,7 +448,7 @@ export default function Dashboard() {
       console.error('ERRO MSG:', err)
       setChatMessages([])
     } finally {
-      setChatMessagesLoading(false)
+      if (!isSilent) setChatMessagesLoading(false)
     }
   }
 

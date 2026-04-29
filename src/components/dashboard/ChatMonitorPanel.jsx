@@ -83,12 +83,13 @@ const ChatMonitorPanel = ({
     const isNewChat = selectedChat && lastChatId.current !== selectedChat.id;
     const hasNewMessages = chatMessages && chatMessages.length > prevMessagesLength.current;
     
-    if (isNewChat || hasNewMessages) {
+    // Só scrolla se mudou de chat ou se chegou mensagem nova e não estamos carregando
+    if ((isNewChat || hasNewMessages) && !chatMessagesLoading) {
        scrollToBottom();
        if (selectedChat) lastChatId.current = selectedChat.id;
     }
     prevMessagesLength.current = chatMessages?.length || 0;
-  }, [chatMessages, selectedChat]);
+  }, [chatMessages?.length, selectedChat?.id, chatMessagesLoading]);
 
   return (
     <div className="chat-monitor-container reveal-item" style={{ 
