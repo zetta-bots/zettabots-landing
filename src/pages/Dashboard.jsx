@@ -21,6 +21,7 @@ import AIConfigPanel from '../components/dashboard/AIConfigPanel'
 import SettingsPanel from '../components/dashboard/SettingsPanel'
 import SubModal from '../components/dashboard/SubModal'
 import FastTestChat from '../components/dashboard/FastTestChat'
+import ZettaCostPanel from '../components/dashboard/ZettaCostPanel'
 
 export default function Dashboard() {
   const [selectedInstance, setSelectedInstance] = useState(null)
@@ -823,19 +824,23 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'bot' && (
-          <AIConfigPanel 
-            prompt={prompt} 
-            setPrompt={setPrompt} 
-            handleSavePrompt={handleSavePrompt} 
-            saving={saving} 
-            session={session} 
-            showToast={showToast} 
+          <AIConfigPanel
+            prompt={prompt}
+            setPrompt={setPrompt}
+            handleSavePrompt={handleSavePrompt}
+            saving={saving}
+            session={session}
+            showToast={showToast}
             selectedInstance={selectedInstance}
             files={knowledgeFiles}
             handleUpload={handleUploadKnowledge}
             handleDelete={handleDeleteKnowledge}
             handleRefresh={handleRefreshData}
           />
+        )}
+
+        {activeTab === 'custos' && (
+          <ZettaCostPanel session={session} selectedInstance={selectedInstance} />
         )}
 
         {activeTab === 'financeiro' && (

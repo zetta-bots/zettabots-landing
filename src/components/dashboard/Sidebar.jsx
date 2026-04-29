@@ -33,6 +33,7 @@ const Sidebar = ({ activeTab, setActiveTab, isAdmin, handleLogout, isGlobalPause
           { id: 'leads', label: 'Meus Leads', icon: '👤' },
           { id: 'mensagens', label: 'Monitor de Chat', icon: '💬' },
           { id: 'bot', label: 'Cérebro da IA', icon: '🧠' },
+          { id: 'custos', label: 'Custos IA', icon: '💸' },
           { id: 'financeiro', label: 'Financeiro', icon: '💰' },
           { id: 'integracoes', label: 'Integrações', icon: '🔌' },
           { id: 'conexao', label: 'Conexão', icon: '🔗' }
