@@ -64,9 +64,15 @@ O sistema está em produção. Hoje implementamos **Zetta-Cost (4.2)** e **Trans
 - ⚠️ Dashboard botão "IA ATIVA" não atualizou (problema de cache/sincronização)
 - 🔄 **PENDENTE:** Testar limpeza de cache no DevTools e se botão atualiza
 
-**Issue para resolver:**
-- Dashboard `isAIPaused` state não sincroniza com Supabase automaticamente
-- Solução: Fazer polling de `instances.ai_paused` a cada 3-5 segundos OR usar Supabase Realtime
+**Issues para resolver (HOJE - 29/04):**
+1. Dashboard `isAIPaused` state não sincroniza com Supabase (só visual, cache)
+   - Solução: Polling ou Supabase Realtime
+   
+2. **Detector de Transbordo não executando corretamente** 🚨
+   - Problema: Código tenta acessar `$("Busca Inteligente (Sarah)").first().json` mas node pode estar vazio
+   - Solução: Modificar "Filtro de Resposta" para passar dados originais adiante
+   - Status: Detector está no workflow mas não funciona (No output data)
+   - FIX: Refazer jsCode do Detector para usar `$json` direto ou passar dados através da cadeia
 
 ---
 
