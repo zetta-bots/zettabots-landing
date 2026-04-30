@@ -1,8 +1,11 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const action = req.body?.action || req.query?.action;
   
-  const action = req.body.action || req.query?.action;
-  let instanceName = req.body.instanceName || req.query?.instanceName;
+  if (req.method !== 'POST' && action !== 'scheduler-cron') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+  
+  let instanceName = req.body?.instanceName || req.query?.instanceName;
   const { remoteJid, recordId, email, name, payment_method, amount, planName, systemPrompt, webhookUrl, googleCalendarId, notificationEmail } = req.body;
   const planPrice = parseFloat(amount || 247);
   const planLabel = planName || 'Pro';
