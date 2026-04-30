@@ -159,6 +159,7 @@ O sistema está em produção. Hoje implementamos **Zetta-Cost (4.2)** e **Trans
 | 5680de3 | docs: atualizar HANDOVER com Transbordo completo | ✅ Merged |
 | 2511853 | feat: adicione endpoint send-transbordo-email | ✅ Merged |
 | faf2274 | feat: adicione polling contínuo de notificações | ✅ Merged |
+| 0056c08 | fix: ajustar extração de action para suportar query params | ✅ Merged |
 
 ---
 
