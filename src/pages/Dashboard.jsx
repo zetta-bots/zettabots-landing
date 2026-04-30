@@ -416,6 +416,10 @@ export default function Dashboard() {
       const data = await res.json()
       if (data.success) {
         setChats(data.chats || [])
+        // Sincronizar estado de pausa com Supabase
+        if (data.chats && data.chats.length > 0 && data.chats[0].ai_paused !== undefined) {
+          setIsAIPaused(data.chats[0].ai_paused);
+        }
       }
     } catch (err) {
       console.error('ERRO CHATS:', err)
