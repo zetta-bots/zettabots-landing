@@ -1186,32 +1186,16 @@ export default async function handler(req, res) {
 
       case 'send-transbordo-email':
         try {
-          const { clientPhone, clientName, ownerEmail } = req.body;
+          const { clientPhone, clientName } = req.body;
           const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
           if (!BREVO_API_KEY) {
             return res.status(500).json({ error: 'Brevo not configured' });
           }
 
-          // Se não receber email, busca de Supabase
-          let emailToSend = ownerEmail;
-          if (!emailToSend && instanceName) {
-            try {
-              const profileRes = await fetch(`${sbUrl}/rest/v1/profiles?instance_name=eq.${instanceName}&select=email`, {
-                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-              });
-              const profiles = await profileRes.json();
-              if (profiles.length > 0) {
-                emailToSend = profiles[0].email;
-              }
-            } catch (err) {
-              console.error('Erro ao buscar email:', err.message);
-            }
-          }
-
-          if (!emailToSend) {
-            return res.status(400).json({ error: 'Owner email not found' });
-          }
+          // Email fixo para todos os Transbordo
+          const emailToSend = 'contato@zettabots.ia.br';
+          console.log('[send-transbordo-email] Enviando para:', emailToSend);
 
           // Enviar email via Brevo
           const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
