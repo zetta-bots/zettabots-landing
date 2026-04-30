@@ -1273,7 +1273,7 @@ export default async function handler(req, res) {
             body: JSON.stringify({
               sender: { name: 'ZettaBots Alerts', email: 'contato@zettabots.ia.br' },
               to: [{ email: emailToSend }],
-              subject: `🚨 Transbordo Ativo — ${clientName}`,
+              subject: `🚨 Transbordo: ${instanceName || 'ZettaBots'}`,
               htmlContent: `
                 <!DOCTYPE html>
                 <html>
