@@ -45,6 +45,7 @@ export default function Dashboard() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatMessagesLoading, setChatMessagesLoading] = useState(false)
   const [webhookUrl, setWebhookUrl] = useState('')
+  const [googleCalendarId, setGoogleCalendarId] = useState('')
   const [notificationEmail, setNotificationEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [allInstances, setAllInstances] = useState([])
@@ -75,6 +76,7 @@ export default function Dashboard() {
     setSelectedInstance(parsed.instanceName)
     setPrompt(parsed.systemPrompt?.replace(/\[SISTEMA - SILÊNCIO TOTAL\][\s\S]*?Fim\.\n\n/, '') || '')
     setWebhookUrl(parsed.webhookUrl || '')
+    setGoogleCalendarId(parsed.googleCalendarId || '')
     setNotificationEmail(parsed.notificationEmail || '')
     setIsAdmin(String(parsed.phone || '').includes('21969875522'))
 
@@ -626,9 +628,9 @@ export default function Dashboard() {
       await fetch('/api/update-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId: session.recordId, webhookUrl, notificationEmail })
+        body: JSON.stringify({ recordId: session.recordId, webhookUrl, googleCalendarId, notificationEmail })
       })
-      const updated = { ...session, webhookUrl, notificationEmail }
+      const updated = { ...session, webhookUrl, googleCalendarId, notificationEmail }
       localStorage.setItem('zb_session', JSON.stringify(updated))
       setSession(updated)
       showToast('🔌 Integrações salvas!', 'success')
@@ -880,6 +882,8 @@ export default function Dashboard() {
           <IntegrationsPanel 
             webhookUrl={webhookUrl} 
             setWebhookUrl={setWebhookUrl} 
+            googleCalendarId={googleCalendarId}
+            setGoogleCalendarId={setGoogleCalendarId}
             handleSaveIntegrations={handleSaveIntegrations} 
           />
         )}
