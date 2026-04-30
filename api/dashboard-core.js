@@ -1405,31 +1405,57 @@ export default async function handler(req, res) {
 
       case 'scheduler-cron':
         try {
-          const { data: pendingSchedules, error: sbErr } = await fetch(`${sbUrl}/rest/v1/schedules?status=eq.pending&scheduled_at=lte.${new Date().toISOString()}`, {
+          console.log('[scheduler-cron] Iniciando...');
+          const now = new Date().toISOString();
+          
+          const sbRes = await fetch(`${sbUrl}/rest/v1/schedules?status=eq.pending&scheduled_at=lte.${now}`, {
             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
-          }).then(r => r.json().then(data => ({ data, error: !r.ok ? data : null })));
+          });
 
-          if (sbErr) throw new Error(JSON.stringify(sbErr));
-          if (!pendingSchedules || pendingSchedules.length === 0) return res.status(200).json({ success: true, message: 'Nada pendente' });
+          if (!sbRes.ok) {
+            const errText = await sbRes.text();
+            console.error('[scheduler-cron] Erro Supabase:', sbRes.status, errText);
+            return res.status(500).json({ error: 'Erro ao buscar no banco', details: errText });
+          }
+
+          const pendingSchedules = await sbRes.json();
+          console.log(`[scheduler-cron] Pendentes: ${pendingSchedules?.length || 0}`);
+
+          if (!pendingSchedules || pendingSchedules.length === 0) {
+            return res.status(200).json({ success: true, message: 'Nada pendente' });
+          }
 
           const results = [];
           for (const schedule of pendingSchedules) {
-            const sendRes = await fetch(`${url}/message/sendText/${schedule.instance_name}`, {
-              method: 'POST',
-              headers: { 'apikey': key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ number: schedule.contact_phone, text: schedule.message })
-            });
-            if (sendRes.ok) {
-              await fetch(`${sbUrl}/rest/v1/schedules?id=eq.${schedule.id}`, {
-                method: 'PATCH',
-                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'sent' })
+            try {
+              console.log(`[scheduler-cron] Enviando para ${schedule.contact_phone}...`);
+              const sendRes = await fetch(`${url}/message/sendText/${schedule.instance_name}`, {
+                method: 'POST',
+                headers: { 'apikey': key, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number: schedule.contact_phone, text: schedule.message })
               });
-              results.push({ id: schedule.id, status: 'success' });
+
+              if (sendRes.ok) {
+                await fetch(`${sbUrl}/rest/v1/schedules?id=eq.${schedule.id}`, {
+                  method: 'PATCH',
+                  headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                  body: JSON.stringify({ status: 'sent' })
+                });
+                results.push({ id: schedule.id, status: 'success' });
+                console.log(`[scheduler-cron] Sucesso: ${schedule.id}`);
+              } else {
+                const errMsg = await sendRes.text();
+                console.error(`[scheduler-cron] Erro Evolution:`, errMsg);
+                results.push({ id: schedule.id, status: 'failed', error: errMsg });
+              }
+            } catch (innerErr) {
+              console.error(`[scheduler-cron] Erro interno no loop:`, innerErr.message);
+              results.push({ id: schedule.id, status: 'error', error: innerErr.message });
             }
           }
           return res.status(200).json({ success: true, results });
         } catch (error) {
+          console.error('[scheduler-cron] Erro fatal:', error.message);
           return res.status(500).json({ error: error.message });
         }
 
