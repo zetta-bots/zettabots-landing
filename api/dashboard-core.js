@@ -1428,12 +1428,16 @@ export default async function handler(req, res) {
           const results = [];
           for (const schedule of pendingSchedules) {
             try {
-              console.log(`[scheduler-cron] Enviando para ${schedule.contact_phone}...`);
+              const cleanNumber = schedule.contact_phone.replace(/\D/g, '');
+              console.log(`[scheduler-cron] Enviando para ${cleanNumber} via ${schedule.instance_name}...`);
+              
               const sendRes = await fetch(`${url}/message/sendText/${schedule.instance_name}`, {
                 method: 'POST',
                 headers: { 'apikey': key, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ number: schedule.contact_phone, text: schedule.message })
+                body: JSON.stringify({ number: cleanNumber, text: schedule.message })
               });
+
+              const resData = await sendRes.json().catch(() => ({}));
 
               if (sendRes.ok) {
                 await fetch(`${sbUrl}/rest/v1/schedules?id=eq.${schedule.id}`, {
@@ -1441,12 +1445,11 @@ export default async function handler(req, res) {
                   headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
                   body: JSON.stringify({ status: 'sent' })
                 });
-                results.push({ id: schedule.id, status: 'success' });
+                results.push({ id: schedule.id, status: 'success', evolution: resData });
                 console.log(`[scheduler-cron] Sucesso: ${schedule.id}`);
               } else {
-                const errMsg = await sendRes.text();
-                console.error(`[scheduler-cron] Erro Evolution:`, errMsg);
-                results.push({ id: schedule.id, status: 'failed', error: errMsg });
+                console.error(`[scheduler-cron] Erro Evolution (${sendRes.status}):`, resData);
+                results.push({ id: schedule.id, status: 'failed', statusHttp: sendRes.status, evolution: resData });
               }
             } catch (innerErr) {
               console.error(`[scheduler-cron] Erro interno no loop:`, innerErr.message);
