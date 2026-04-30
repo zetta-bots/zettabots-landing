@@ -1186,11 +1186,12 @@ export default async function handler(req, res) {
 
       case 'send-transbordo-email':
         try {
-          const { clientPhone, clientName } = req.body;
+          const { clientPhone, clientName, instanceName } = req.body;
           const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
           console.log('[send-transbordo-email] START');
           console.log('[send-transbordo-email] Body:', JSON.stringify(req.body));
+          console.log('[send-transbordo-email] instanceName:', instanceName);
           console.log('[send-transbordo-email] BREVO_API_KEY exists:', !!BREVO_API_KEY);
 
           if (!BREVO_API_KEY) {
@@ -1198,8 +1199,34 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Brevo not configured' });
           }
 
-          // Email fixo para todos os Transbordo
-          const emailToSend = 'contato@zettabots.ia.br';
+          if (!instanceName) {
+            console.error('[send-transbordo-email] instanceName required');
+            return res.status(400).json({ error: 'instanceName required' });
+          }
+
+          // Buscar email do proprietário em profiles
+          let emailToSend = null;
+          try {
+            const profileRes = await fetch(
+              `${sbUrl}/rest/v1/profiles?instance_name=eq.${encodeURIComponent(instanceName)}&select=email&limit=1`,
+              { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
+            );
+            if (profileRes.ok) {
+              const profileData = await profileRes.json();
+              if (profileData && profileData.length > 0 && profileData[0].email) {
+                emailToSend = profileData[0].email;
+                console.log('[send-transbordo-email] Encontrado email do proprietário:', emailToSend);
+              }
+            }
+          } catch (e) {
+            console.error('[send-transbordo-email] Erro ao buscar email:', e.message);
+          }
+
+          if (!emailToSend) {
+            console.error('[send-transbordo-email] Email do proprietário não encontrado');
+            return res.status(400).json({ error: 'Owner email not found' });
+          }
+
           console.log('[send-transbordo-email] Enviando para:', emailToSend);
 
           // Enviar email via Brevo
