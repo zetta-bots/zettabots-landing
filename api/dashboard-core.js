@@ -2,14 +2,16 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const action = req.body.action || req.query?.action;
-  const { instanceName, remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
+  const instanceName = req.body.instanceName || req.query?.instanceName;
+  const { remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
   const planPrice = parseFloat(amount || 247);
   const planLabel = planName || 'Pro';
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 'test-reset-atlas'].includes(action);
+  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 'test-reset-atlas', 'test-email'].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
+    console.error('[dashboard-core] Missing required params:', { action, instanceName, isAdminAction });
     return res.status(400).json({ error: 'Action and Instance required' });
   }
 
@@ -1212,44 +1214,41 @@ export default async function handler(req, res) {
           // Buscar email do proprietário
           let emailToSend = null;
           try {
-            const cleanName = instanceName.trim();
+            const cleanName = (instanceName || "").trim();
             console.log('[send-transbordo-email] Buscando e-mail para:', cleanName);
 
-            // Estratégia 1: Buscar na tabela 'instances' (suporta nome interno ou display_name - case insensitive)
-            const instRes = await fetch(
-              `${sbUrl}/rest/v1/instances?or=(instance_name.ilike.*${encodeURIComponent(cleanName)}*,display_name.ilike.*${encodeURIComponent(cleanName)}*)&select=email&limit=1`,
-              { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
-            );
-            
-            if (instRes.ok) {
-              const instData = await instRes.json();
-              if (instData && instData.length > 0 && instData[0].email) {
-                emailToSend = instData[0].email;
-                console.log('[send-transbordo-email] E-mail encontrado em instances:', emailToSend);
+            // 1. Tentar por instance_name na tabela 'instances'
+            const res1 = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${encodeURIComponent(cleanName)}&select=email&limit=1`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } });
+            if (res1.ok) {
+              const data1 = await res1.json();
+              if (data1?.[0]?.email) emailToSend = data1[0].email;
+            }
+
+            // 2. Se não achou, tentar por display_name na tabela 'instances'
+            if (!emailToSend) {
+              const res2 = await fetch(`${sbUrl}/rest/v1/instances?display_name=ilike.*${encodeURIComponent(cleanName)}*&select=email&limit=1`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } });
+              if (res2.ok) {
+                const data2 = await res2.json();
+                if (data2?.[0]?.email) emailToSend = data2[0].email;
               }
             }
 
-            // Estratégia 2: Se não encontrou, tenta na tabela 'profiles' (nome interno)
+            // 3. Se não achou, tentar na tabela 'profiles'
             if (!emailToSend) {
-              const profileRes = await fetch(
-                `${sbUrl}/rest/v1/profiles?instance_name=ilike.*${encodeURIComponent(cleanName)}*&select=email&limit=1`,
-                { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
-              );
-              if (profileRes.ok) {
-                const profileData = await profileRes.json();
-                if (profileData && profileData.length > 0 && profileData[0].email) {
-                  emailToSend = profileData[0].email;
-                  console.log('[send-transbordo-email] E-mail encontrado em profiles:', emailToSend);
-                }
+              const res3 = await fetch(`${sbUrl}/rest/v1/profiles?instance_name=eq.${encodeURIComponent(cleanName)}&select=email&limit=1`, { headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` } });
+              if (res3.ok) {
+                const data3 = await res3.json();
+                if (data3?.[0]?.email) emailToSend = data3[0].email;
               }
             }
+
+            if (emailToSend) console.log('[send-transbordo-email] Sucesso! E-mail encontrado:', emailToSend);
           } catch (e) {
-            console.error('[send-transbordo-email] Erro na busca de e-mail:', e.message);
+            console.error('[send-transbordo-email] Erro crítico na busca:', e.message);
           }
 
-          // Fallback: se não encontrar em lugar nenhum, usa email padrão
+          // Fallback final
           if (!emailToSend) {
-            console.warn('[send-transbordo-email] Email do proprietário não encontrado para:', instanceName);
             emailToSend = 'contato@zettabots.ia.br';
             console.log('[send-transbordo-email] Usando fallback:', emailToSend);
           }
