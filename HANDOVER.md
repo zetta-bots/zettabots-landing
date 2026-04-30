@@ -42,7 +42,7 @@ O sistema está em produção. Hoje implementamos **Zetta-Cost (4.2)** e **Trans
 ---
 
 ### 2. ✅ Transbordo Inteligente (2.3) — Smart Handoff para Humano
-**Status:** COMPLETO E TESTADO ✅ (30/04/2026 → Expandido 30/04 23:15)
+**Status:** COMPLETO E TESTADO ✅ (30/04/2026 → Expandido 01/05 14:30 — Email 100% funcional)
 
 **O que foi implementado:**
 - n8n: novo node "Detector de Transbordo" com detecção dupla (palavras-chave + IA)
@@ -244,7 +244,13 @@ O sistema está em produção. Hoje implementamos **Zetta-Cost (4.2)** e **Trans
 
 ---
 
-**Status Final (30/04 23:15):**  
+**Status Final (01/05 14:30):**  
 ✅ **Zetta-Cost (4.2)** — Monitoramento de custos IA  
-✅ **Transbordo Inteligente (2.3)** — Detecção + Pausa + Notificações + Email  
-🎯 Pronto para testes end-to-end. Próximo: Zetta-Scheduler (2.2) 🚀
+✅ **Transbordo Inteligente (2.3)** — Detecção + Pausa + Notificações + Email (100% FUNCIONAL)
+   - Bot pausa automáticamente ao detectar transbordo
+   - Cliente recebe mensagem WhatsApp
+   - Dashboard exibe notificações em tempo real
+   - **Email enviado com sucesso** para proprietário (via Brevo)
+   - Remetente: contato@zettabots.ia.br
+   - Destinatário: profiles.email do proprietário (fallback: contato@zettabots.ia.br)
+🎯 **Transbordo 2.3 pronto para produção!** Próximo: Zetta-Scheduler (2.2) 🚀
