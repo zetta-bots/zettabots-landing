@@ -3,7 +3,7 @@ export default async function handler(req, res) {
   
   const action = req.body.action || req.query?.action;
   let instanceName = req.body.instanceName || req.query?.instanceName;
-  const { remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
+  const { remoteJid, recordId, email, name, payment_method, amount, planName, systemPrompt, webhookUrl, googleCalendarId, notificationEmail } = req.body;
   const planPrice = parseFloat(amount || 247);
   const planLabel = planName || 'Pro';
   
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   const isAdminAction = [
     'get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 
     'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 
-    'test-reset-atlas', 'test-email', 'send-transbordo-email'
+    'test-reset-atlas', 'test-email', 'send-transbordo-email', 'scheduler-cron'
   ].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
@@ -1353,6 +1353,80 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, email: emailToSend, brevoId: brevoData.messageId });
         } catch (error) {
           console.error('[send-transbordo-email] Error:', error.message);
+          return res.status(500).json({ error: error.message });
+        }
+
+      case 'get-qr':
+        try {
+          const stateRes = await fetch(`${url}/instance/connectionState/${instanceName}`, fetchOptions);
+          if (!stateRes.ok) return res.status(200).json({ status: 'NOT_FOUND', message: 'Instância não encontrada.' });
+          const stateData = await stateRes.json();
+          const isConnected = stateData.instance?.state === 'open' || stateData.status === 'open' || stateData.state === 'open';
+          if (isConnected) return res.status(200).json({ status: 'CONNECTED' });
+          const connectRes = await fetch(`${url}/instance/connect/${instanceName}`, { method: 'GET', ...fetchOptions });
+          const connectData = await connectRes.json();
+          const rawQr = connectData.base64 || connectData.qrcode?.base64 || '';
+          const qrcode = rawQr && !rawQr.startsWith('data:') ? `data:image/png;base64,${rawQr}` : rawQr;
+          return res.status(200).json({ status: qrcode ? 'QRCODE' : 'DISCONNECTED', qrcode: qrcode || null });
+        } catch (error) {
+          return res.status(500).json({ error: error.message });
+        }
+
+      case 'update-prompt':
+        if (!recordId) return res.status(400).json({ error: 'ID do cliente é obrigatório' });
+        try {
+          const updateData = {};
+          if (systemPrompt !== undefined) updateData.system_prompt = systemPrompt;
+          if (webhookUrl !== undefined) updateData.webhook_url = webhookUrl;
+          if (googleCalendarId !== undefined) updateData.google_calendar_id = googleCalendarId;
+          if (notificationEmail !== undefined) updateData.email = notificationEmail;
+          if (Object.keys(updateData).length > 0) {
+            const queryParam = instanceName ? `instance_name=eq.${instanceName}` : `id=eq.${recordId}`;
+            await fetch(`${sbUrl}/rest/v1/instances?${queryParam}`, {
+              method: 'PATCH',
+              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify(updateData)
+            });
+          }
+          if (instanceName && systemPrompt) {
+            await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
+              method: 'POST',
+              headers: { 'apikey': key, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ enabled: true, systemPrompt, model: "gpt-4o", timezone: "America/Sao_Paulo" })
+            });
+          }
+          return res.status(200).json({ success: true });
+        } catch (error) {
+          return res.status(500).json({ error: error.message });
+        }
+
+      case 'scheduler-cron':
+        try {
+          const { data: pendingSchedules, error: sbErr } = await fetch(`${sbUrl}/rest/v1/schedules?status=eq.pending&scheduled_at=lte.${new Date().toISOString()}`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          }).then(r => r.json().then(data => ({ data, error: !r.ok ? data : null })));
+
+          if (sbErr) throw new Error(JSON.stringify(sbErr));
+          if (!pendingSchedules || pendingSchedules.length === 0) return res.status(200).json({ success: true, message: 'Nada pendente' });
+
+          const results = [];
+          for (const schedule of pendingSchedules) {
+            const sendRes = await fetch(`${url}/message/sendText/${schedule.instance_name}`, {
+              method: 'POST',
+              headers: { 'apikey': key, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ number: schedule.contact_phone, text: schedule.message })
+            });
+            if (sendRes.ok) {
+              await fetch(`${sbUrl}/rest/v1/schedules?id=eq.${schedule.id}`, {
+                method: 'PATCH',
+                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'sent' })
+              });
+              results.push({ id: schedule.id, status: 'success' });
+            }
+          }
+          return res.status(200).json({ success: true, results });
+        } catch (error) {
           return res.status(500).json({ error: error.message });
         }
 

@@ -367,10 +367,10 @@ export default function Dashboard() {
     try {
       setQrStatus('loading')
       setQrCode(null)
-      const res = await fetch('/api/get-qr', {
+      const res = await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName })
+        body: JSON.stringify({ action: 'get-qr', instanceName })
       })
 
       if (!res.ok) {
@@ -608,10 +608,10 @@ export default function Dashboard() {
   const handleSavePrompt = async () => {
     setSaving(true)
     try {
-      await fetch('/api/update-prompt', {
+      await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId: session.recordId, systemPrompt: prompt, instanceName: selectedInstance })
+        body: JSON.stringify({ action: 'update-prompt', recordId: session.recordId, systemPrompt: prompt, instanceName: selectedInstance })
       })
       const updated = { ...session, systemPrompt: prompt }
       localStorage.setItem('zb_session', JSON.stringify(updated))
@@ -625,10 +625,10 @@ export default function Dashboard() {
   const handleSaveIntegrations = async () => {
     setSaving(true)
     try {
-      await fetch('/api/update-prompt', {
+      await fetch('/api/dashboard-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recordId: session.recordId, webhookUrl, googleCalendarId, notificationEmail })
+        body: JSON.stringify({ action: 'update-prompt', recordId: session.recordId, webhookUrl, googleCalendarId, notificationEmail, instanceName: selectedInstance })
       })
       const updated = { ...session, webhookUrl, googleCalendarId, notificationEmail }
       localStorage.setItem('zb_session', JSON.stringify(updated))
