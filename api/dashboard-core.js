@@ -1209,25 +1209,41 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'instanceName required' });
           }
 
-          // Buscar email do proprietário em profiles
+          // Buscar email do proprietário
           let emailToSend = null;
           try {
-            const profileRes = await fetch(
-              `${sbUrl}/rest/v1/profiles?instance_name=eq.${encodeURIComponent(instanceName)}&select=email&limit=1`,
+            // Estratégia 1: Buscar na tabela 'instances' (suporta nome interno ou display_name)
+            const instRes = await fetch(
+              `${sbUrl}/rest/v1/instances?or=(instance_name.eq.${encodeURIComponent(instanceName)},display_name.eq.${encodeURIComponent(instanceName)})&select=email&limit=1`,
               { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
             );
-            if (profileRes.ok) {
-              const profileData = await profileRes.json();
-              if (profileData && profileData.length > 0 && profileData[0].email) {
-                emailToSend = profileData[0].email;
-                console.log('[send-transbordo-email] Encontrado email do proprietário:', emailToSend);
+            if (instRes.ok) {
+              const instData = await instRes.json();
+              if (instData && instData.length > 0 && instData[0].email) {
+                emailToSend = instData[0].email;
+                console.log('[send-transbordo-email] Encontrado email em instances:', emailToSend);
+              }
+            }
+
+            // Estratégia 2: Se não encontrou, tenta na tabela 'profiles' (nome interno)
+            if (!emailToSend) {
+              const profileRes = await fetch(
+                `${sbUrl}/rest/v1/profiles?instance_name=eq.${encodeURIComponent(instanceName)}&select=email&limit=1`,
+                { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
+              );
+              if (profileRes.ok) {
+                const profileData = await profileRes.json();
+                if (profileData && profileData.length > 0 && profileData[0].email) {
+                  emailToSend = profileData[0].email;
+                  console.log('[send-transbordo-email] Encontrado email em profiles:', emailToSend);
+                }
               }
             }
           } catch (e) {
             console.error('[send-transbordo-email] Erro ao buscar email:', e.message);
           }
 
-          // Fallback: se não encontrar, usa email padrão
+          // Fallback: se não encontrar em lugar nenhum, usa email padrão
           if (!emailToSend) {
             console.warn('[send-transbordo-email] Email do proprietário não encontrado para:', instanceName);
             emailToSend = 'contato@zettabots.ia.br';
