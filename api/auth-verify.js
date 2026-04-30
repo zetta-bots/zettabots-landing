@@ -55,6 +55,7 @@ export default async function handler(req, res) {
       status: isAdmin ? 'admin' : (record.status || 'trial'),
       name: isAdmin ? 'ZettaBots Admin' : (companyName || 'Cliente ZettaBots'),
       systemPrompt: record.system_prompt || '',
+      googleCalendarId: record.google_calendar_id || '',
       email: record.email || ''
     });
 

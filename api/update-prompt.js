@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { recordId, systemPrompt, instanceName, webhookUrl, notificationEmail } = req.body;
+  const { recordId, systemPrompt, instanceName, webhookUrl, googleCalendarId, notificationEmail } = req.body;
   if (!recordId) return res.status(400).json({ error: 'ID do cliente é obrigatório' });
 
   const sbUrl = process.env.VITE_SUPABASE_URL || 'https://ugtsqlhkyrjmmopakyho.supabase.co';
@@ -16,6 +16,7 @@ export default async function handler(req, res) {
     const updateData = {};
     if (systemPrompt !== undefined) updateData.system_prompt = systemPrompt;
     if (webhookUrl !== undefined) updateData.webhook_url = webhookUrl;
+    if (googleCalendarId !== undefined) updateData.google_calendar_id = googleCalendarId;
     if (notificationEmail !== undefined) updateData.email = notificationEmail;
 
     if (Object.keys(updateData).length > 0) {
