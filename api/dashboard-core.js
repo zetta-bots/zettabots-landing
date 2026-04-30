@@ -1189,7 +1189,12 @@ export default async function handler(req, res) {
           const { clientPhone, clientName } = req.body;
           const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
+          console.log('[send-transbordo-email] START');
+          console.log('[send-transbordo-email] Body:', JSON.stringify(req.body));
+          console.log('[send-transbordo-email] BREVO_API_KEY exists:', !!BREVO_API_KEY);
+
           if (!BREVO_API_KEY) {
+            console.error('[send-transbordo-email] BREVO_API_KEY not configured');
             return res.status(500).json({ error: 'Brevo not configured' });
           }
 
@@ -1223,7 +1228,7 @@ export default async function handler(req, res) {
                       <td style="padding:12px"><strong>${clientPhone}</strong></td>
                     </tr>
                   </table>
-                  <a href="https://zettabots.com/dashboard" style="display:inline-block;padding:12px 24px;background:#dc2626;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;margin-top:12px">
+                  <a href="https://zettabots.ia.br/dashboard" style="display:inline-block;padding:12px 24px;background:#dc2626;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;margin-top:12px">
                     Ir para o Painel
                   </a>
                   <p style="color:#999;font-size:12px;margin-top:32px">Este é um alerta automático do ZettaBots</p>
@@ -1234,11 +1239,13 @@ export default async function handler(req, res) {
 
           if (!brevoRes.ok) {
             const errorText = await brevoRes.text();
-            console.error('Brevo error:', brevoRes.status, errorText);
-            return res.status(500).json({ error: 'Failed to send email' });
+            console.error('[send-transbordo-email] Brevo error:', brevoRes.status, errorText);
+            return res.status(500).json({ error: 'Failed to send email', details: errorText });
           }
 
-          return res.status(200).json({ success: true, email: emailToSend });
+          const brevoData = await brevoRes.json();
+          console.log('[send-transbordo-email] Brevo success:', brevoData);
+          return res.status(200).json({ success: true, email: emailToSend, brevoId: brevoData.messageId });
         } catch (error) {
           console.error('[send-transbordo-email] Error:', error.message);
           return res.status(500).json({ error: error.message });
