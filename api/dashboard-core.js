@@ -515,6 +515,22 @@ export default async function handler(req, res) {
           }
 
 
+          // Buscar ai_paused do Supabase
+          let aiPausedMap = {};
+          try {
+            const sbRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${instanceName}&select=ai_paused`, {
+              headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+            });
+            if (sbRes.ok) {
+              const instances = await sbRes.json();
+              if (instances.length > 0) {
+                aiPausedMap[instanceName] = instances[0].ai_paused || false;
+              }
+            }
+          } catch (e) {
+            console.error('[get-chats] Error fetching ai_paused:', e.message);
+          }
+
           return res.status(200).json({
             success: true,
             chats: raw.slice(0, 20).map(c => ({
@@ -522,7 +538,8 @@ export default async function handler(req, res) {
               remoteJid: c.remoteJid || c.id,
               user: c.name || c.pushName || (c.remoteJid ? c.remoteJid.split('@')[0] : (c.id ? c.id.split('@')[0] : 'Cliente')),
               lastMsg: c.lastMsg || 'Monitorado via IA',
-              time: 'Ativo'
+              time: 'Ativo',
+              ai_paused: aiPausedMap[instanceName] || false
             }))
           });
         } catch (e) {
