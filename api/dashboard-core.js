@@ -2,13 +2,17 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   const action = req.body.action || req.query?.action;
-  const instanceName = req.body.instanceName || req.query?.instanceName;
+  let instanceName = req.body.instanceName || req.query?.instanceName;
   const { remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
   const planPrice = parseFloat(amount || 247);
   const planLabel = planName || 'Pro';
   
   // Ações que não precisam de instanceName obrigatoriamente
-  const isAdminAction = ['get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 'test-reset-atlas', 'test-email'].includes(action);
+  const isAdminAction = [
+    'get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 
+    'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 
+    'test-reset-atlas', 'test-email', 'send-transbordo-email'
+  ].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
     console.error('[dashboard-core] Missing required params:', { action, instanceName, isAdminAction });
@@ -1193,7 +1197,10 @@ export default async function handler(req, res) {
 
       case 'send-transbordo-email':
         try {
-          const { clientPhone, clientName, instanceName } = req.body;
+          console.log('[send-transbordo-email] Payload received:', JSON.stringify({ body: req.body, query: req.query }));
+          
+          const clientPhone = req.body.clientPhone || 'N/A';
+          const clientName = req.body.clientName || 'Cliente ZettaBots';
           const BREVO_API_KEY = process.env.BREVO_API_KEY;
 
           console.log('[send-transbordo-email] START');
