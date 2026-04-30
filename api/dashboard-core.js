@@ -1184,6 +1184,82 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'send-transbordo-email':
+        try {
+          const { clientPhone, clientName, ownerEmail } = req.body;
+          const BREVO_API_KEY = process.env.BREVO_API_KEY;
+
+          if (!BREVO_API_KEY) {
+            return res.status(500).json({ error: 'Brevo not configured' });
+          }
+
+          // Se não receber email, busca de Supabase
+          let emailToSend = ownerEmail;
+          if (!emailToSend && instanceName) {
+            try {
+              const profileRes = await fetch(`${sbUrl}/rest/v1/profiles?instance_name=eq.${instanceName}&select=email`, {
+                headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+              });
+              const profiles = await profileRes.json();
+              if (profiles.length > 0) {
+                emailToSend = profiles[0].email;
+              }
+            } catch (err) {
+              console.error('Erro ao buscar email:', err.message);
+            }
+          }
+
+          if (!emailToSend) {
+            return res.status(400).json({ error: 'Owner email not found' });
+          }
+
+          // Enviar email via Brevo
+          const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'accept': 'application/json',
+              'api-key': BREVO_API_KEY,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              sender: { name: 'ZettaBots Alerts', email: 'noreply@zettabots.com' },
+              to: [{ email: emailToSend }],
+              subject: `🚨 Transbordo Ativo — ${clientName}`,
+              htmlContent: `
+                <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#f9fafb;padding:24px;border-radius:12px">
+                  <h2 style="color:#dc2626;margin-top:0">🚨 Cliente Solicita Atendimento Humano</h2>
+                  <p style="color:#374151;line-height:1.6">Um cliente está aguardando atendimento de um humano.</p>
+                  <table style="width:100%;border-collapse:collapse;margin:24px 0;background:#fff;border-radius:8px;overflow:hidden">
+                    <tr style="background:#f3f4f6">
+                      <td style="padding:12px;color:#666;font-weight:600">Cliente</td>
+                      <td style="padding:12px"><strong>${clientName}</strong></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:12px;color:#666;font-weight:600">WhatsApp</td>
+                      <td style="padding:12px"><strong>${clientPhone}</strong></td>
+                    </tr>
+                  </table>
+                  <a href="https://zettabots.com/dashboard" style="display:inline-block;padding:12px 24px;background:#dc2626;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;margin-top:12px">
+                    Ir para o Painel
+                  </a>
+                  <p style="color:#999;font-size:12px;margin-top:32px">Este é um alerta automático do ZettaBots</p>
+                </div>
+              `,
+            }),
+          });
+
+          if (!brevoRes.ok) {
+            const errorText = await brevoRes.text();
+            console.error('Brevo error:', brevoRes.status, errorText);
+            return res.status(500).json({ error: 'Failed to send email' });
+          }
+
+          return res.status(200).json({ success: true, email: emailToSend });
+        } catch (error) {
+          console.error('[send-transbordo-email] Error:', error.message);
+          return res.status(500).json({ error: error.message });
+        }
+
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }
