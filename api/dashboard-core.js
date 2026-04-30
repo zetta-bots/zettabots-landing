@@ -1217,7 +1217,7 @@ export default async function handler(req, res) {
 
             // Estratégia 1: Buscar na tabela 'instances' (suporta nome interno ou display_name - case insensitive)
             const instRes = await fetch(
-              `${sbUrl}/rest/v1/instances?or=(instance_name.ilike.${encodeURIComponent(cleanName)},display_name.ilike.${encodeURIComponent(cleanName)})&select=email&limit=1`,
+              `${sbUrl}/rest/v1/instances?or=(instance_name.ilike.*${encodeURIComponent(cleanName)}*,display_name.ilike.*${encodeURIComponent(cleanName)}*)&select=email&limit=1`,
               { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
             );
             
@@ -1232,7 +1232,7 @@ export default async function handler(req, res) {
             // Estratégia 2: Se não encontrou, tenta na tabela 'profiles' (nome interno)
             if (!emailToSend) {
               const profileRes = await fetch(
-                `${sbUrl}/rest/v1/profiles?instance_name=ilike.${encodeURIComponent(cleanName)}&select=email&limit=1`,
+                `${sbUrl}/rest/v1/profiles?instance_name=ilike.*${encodeURIComponent(cleanName)}*&select=email&limit=1`,
                 { headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` } }
               );
               if (profileRes.ok) {
