@@ -886,32 +886,6 @@ export default async function handler(req, res) {
         }
       }
 
-      case 'toggle-ai': {
-        try {
-          const { instanceName, enabled } = req.body;
-          if (!instanceName) return res.status(400).json({ error: 'Instance missing' });
-
-          const sbRes = await fetch(
-            `${sbUrl}/rest/v1/profiles?instance_name=eq.${encodeURIComponent(instanceName)}`,
-            {
-              method: 'PATCH',
-              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-              body: JSON.stringify({ bot_paused: !enabled }),
-            }
-          );
-
-          if (!sbRes.ok) {
-            const errText = await sbRes.text();
-            throw new Error('Supabase Error: ' + errText);
-          }
-
-          return res.status(200).json({ success: true });
-        } catch (e) {
-          console.error('[toggle-ai] Error:', e);
-          return res.status(500).json({ error: 'Toggle AI error' });
-        }
-      }
-
 
       case 'test-update-atlas': {
         try {
