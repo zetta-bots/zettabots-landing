@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
   
   let instanceName = req.body?.instanceName || req.query?.instanceName;
-  const { remoteJid, recordId, email, name, payment_method, amount, planName, systemPrompt, webhookUrl, googleCalendarId, notificationEmail } = req.body;
+  const { remoteJid, recordId, email, name, payment_method, amount, planName, systemPrompt, webhookUrl, googleCalendarId, notificationEmail } = req.body || {};
   const planPrice = parseFloat(amount || 247);
   const planLabel = planName || 'Pro';
   
