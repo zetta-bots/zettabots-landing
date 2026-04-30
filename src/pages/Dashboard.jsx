@@ -133,6 +133,14 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [activeTab, selectedInstance, selectedChat]);
 
+  // Polling contínuo para notificações
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 10000); // Atualiza a cada 10 segundos
+    return () => clearInterval(interval);
+  }, []);
+
   const handleGeneratePix = async (method = 'pix', price = 247, planName = 'Pro') => {
     try {
       setCheckoutLoading(true)
