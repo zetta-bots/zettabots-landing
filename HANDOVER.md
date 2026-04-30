@@ -42,37 +42,45 @@ O sistema está em produção. Hoje implementamos **Zetta-Cost (4.2)** e **Trans
 ---
 
 ### 2. ✅ Transbordo Inteligente (2.3) — Smart Handoff para Humano
-**Status:** IMPLEMENTADO, PARCIALMENTE TESTADO ⚠️
+**Status:** COMPLETO E TESTADO ✅ (30/04/2026)
 
 **O que foi implementado:**
-- n8n: novo node "Detector de Transbordo" após "Filtro de Resposta"
-- **Detecção dupla:**
-  - Palavras-chave do cliente: "atendente", "gerente", "reclamação", "cancelar", "reembolso", "supervisor"
-  - Palavras-chave da IA: "vou transferir", "humano irá", "nossa equipe irá", etc.
-- **Quando acionado:**
-  - Pausa bot: `instances.ai_paused = true`
-  - Avisa cliente: "Aguarde, um atendente irá te ajudar em breve! 👋"
-  - Notifica dono via WhatsApp com alerta
-  - Insere em `human_takeovers` com `activation_reason = 'auto_sentiment'`
-- Dashboard: adicionado badge 🔴 ESPERA em ChatMonitorPanel para conversas pausadas
-- **Commit:** `9e7be57`
+- n8n: novo node "Detector de Transbordo" com detecção dupla (palavras-chave + IA)
+- **Detecção:**
+  - Cliente: "atendente", "gerente", "reclamação", "cancelar", "reembolso", "supervisor"
+  - IA: "vou transferir", "encaminhar para", "humano irá", "atendente irá", "nossa equipe irá"
+- **Ação ao acionar:**
+  - ✅ Pausa bot: `instances.ai_paused = true`
+  - ✅ Envia mensagem para cliente: "Aguarde, um atendente irá te ajudar em breve! 👋"
+  - ✅ Insere em `human_takeovers` com timestamp e dados da conversa
+- **Dashboard:**
+  - ✅ Badge 🔴 ESPERA em conversas pausadas (ChatMonitorPanel)
+  - ✅ Botão mostra "🤖 IA ATIVA" ou "🚫 IA PAUSADA" com sincronização em tempo real
+  - ✅ Admin consegue despausar clicando no botão
+  - ✅ Polling de 5s atualiza o status automaticamente
+- **Commits:** `4170a87`, `333d917`, `9231d9d`
 
-**Verificação (29/04 às 19:33):**
-- ✅ Mensagem "quero falar com atendente" acionou detector
-- ✅ `instances.ai_paused = TRUE` confirmado no Supabase
-- ✅ Cliente recebeu mensagem de espera
-- ⚠️ Dashboard botão "IA ATIVA" não atualizou (problema de cache/sincronização)
-- 🔄 **PENDENTE:** Testar limpeza de cache no DevTools e se botão atualiza
+**Verificação (30/04):**
+- ✅ Detector detecta palavras-chave corretamente
+- ✅ `instances.ai_paused` é setado para true no Supabase
+- ✅ `human_takeovers` é preenchido com dados do handoff
+- ✅ Dashboard mostra badge e botão corretos
+- ✅ Botão "IA PAUSADA" consegue despausar (volta para "IA ATIVA")
+- ✅ Polling sincroniza estado em tempo real
 
-**Issues para resolver (HOJE - 29/04):**
-1. Dashboard `isAIPaused` state não sincroniza com Supabase (só visual, cache)
-   - Solução: Polling ou Supabase Realtime
-   
-2. **Detector de Transbordo não executando corretamente** 🚨
-   - Problema: Código tenta acessar `$("Busca Inteligente (Sarah)").first().json` mas node pode estar vazio
-   - Solução: Modificar "Filtro de Resposta" para passar dados originais adiante
-   - Status: Detector está no workflow mas não funciona (No output data)
-   - FIX: Refazer jsCode do Detector para usar `$json` direto ou passar dados através da cadeia
+**Fluxo Completo (testado):**
+1. Cliente manda: "quero falar com um atendente"
+2. Detector identifica palavra-chave
+3. Bot pausa (`ai_paused = true`)
+4. Cliente recebe: "Aguarde, um atendente irá te ajudar em breve! 👋"
+5. Dashboard mostra badge 🔴 ESPERA + botão "IA PAUSADA"
+6. Admin clica botão → bot retoma (`ai_paused = false`)
+7. Dashboard atualiza automaticamente
+
+**PENDENTE - PRÓXIMO PASSO:**
+- ⚠️ **Cliente (quem contratou o bot) precisa saber que o bot pausou**
+  - Atualmente: apenas o admin (dono) sabe pelo Dashboard
+  - Solução: notificar cliente que atendente está a caminho (WhatsApp/Email/In-app)
 
 ---
 
