@@ -1,7 +1,8 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
-  const { action, instanceName, remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
+  const action = req.body.action || req.query?.action;
+  const { instanceName, remoteJid, recordId, email, name, payment_method, amount, planName } = req.body;
   const planPrice = parseFloat(amount || 247);
   const planLabel = planName || 'Pro';
   
