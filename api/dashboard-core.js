@@ -1222,9 +1222,11 @@ export default async function handler(req, res) {
             console.error('[send-transbordo-email] Erro ao buscar email:', e.message);
           }
 
+          // Fallback: se não encontrar, usa email padrão
           if (!emailToSend) {
-            console.error('[send-transbordo-email] Email do proprietário não encontrado');
-            return res.status(400).json({ error: 'Owner email not found' });
+            console.warn('[send-transbordo-email] Email do proprietário não encontrado para:', instanceName);
+            emailToSend = 'contato@zettabots.ia.br';
+            console.log('[send-transbordo-email] Usando fallback:', emailToSend);
           }
 
           console.log('[send-transbordo-email] Enviando para:', emailToSend);
