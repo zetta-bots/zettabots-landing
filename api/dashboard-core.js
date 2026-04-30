@@ -1184,6 +1184,10 @@ export default async function handler(req, res) {
         }
       }
 
+      case 'test-email':
+        console.log('[TEST-EMAIL] Endpoint está funcionando!');
+        return res.status(200).json({ success: true, message: 'Endpoint OK' });
+
       case 'send-transbordo-email':
         try {
           const { clientPhone, clientName, instanceName } = req.body;
