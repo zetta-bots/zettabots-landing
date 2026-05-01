@@ -1361,17 +1361,41 @@ export default async function handler(req, res) {
 
       case 'get-qr':
         try {
-          const stateRes = await fetch(`${url}/instance/connectionState/${instanceName}`, fetchOptions);
-          if (!stateRes.ok) return res.status(200).json({ status: 'NOT_FOUND', message: 'Instância não encontrada.' });
+          console.log(`[get-qr] Checking state for: ${instanceName}`);
+          const headers = { 'apikey': key, 'Content-Type': 'application/json' };
+          
+          // 1. Checa estado da conexão
+          const stateRes = await fetch(`${url}/instance/connectionState/${instanceName}`, { headers });
+          
+          if (!stateRes.ok) {
+            console.error(`[get-qr] Instance not found: ${instanceName}`);
+            return res.status(200).json({ status: 'NOT_FOUND', message: 'Instância não encontrada.' });
+          }
+          
           const stateData = await stateRes.json();
-          const isConnected = stateData.instance?.state === 'open' || stateData.status === 'open' || stateData.state === 'open';
-          if (isConnected) return res.status(200).json({ status: 'CONNECTED' });
-          const connectRes = await fetch(`${url}/instance/connect/${instanceName}`, { method: 'GET', ...fetchOptions });
+          const state = stateData.instance?.state || stateData.status || stateData.state;
+          const isConnected = state === 'open';
+          
+          console.log(`[get-qr] Connection state: ${state}`);
+
+          if (isConnected) {
+            return res.status(200).json({ status: 'CONNECTED' });
+          }
+
+          // 2. Se não estiver conectado, gera o QR Code
+          console.log(`[get-qr] Generating QR for: ${instanceName}`);
+          const connectRes = await fetch(`${url}/instance/connect/${instanceName}`, { method: 'GET', headers });
           const connectData = await connectRes.json();
+
           const rawQr = connectData.base64 || connectData.qrcode?.base64 || '';
           const qrcode = rawQr && !rawQr.startsWith('data:') ? `data:image/png;base64,${rawQr}` : rawQr;
-          return res.status(200).json({ status: qrcode ? 'QRCODE' : 'DISCONNECTED', qrcode: qrcode || null });
+          
+          return res.status(200).json({ 
+            status: qrcode ? 'QRCODE' : 'DISCONNECTED', 
+            qrcode: qrcode || null 
+          });
         } catch (error) {
+          console.error('[get-qr] Error:', error.message);
           return res.status(500).json({ error: error.message });
         }
 
