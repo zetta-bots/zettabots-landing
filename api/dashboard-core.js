@@ -1117,9 +1117,12 @@ export default async function handler(req, res) {
           
           // 2. Montar o Contexto Final
           let finalPrompt = systemPrompt || 'Você é a Sarah, assistente virtual da ZettaBots.';
-          if (knowledgeBase) {
-            finalPrompt += '\n\nBASE DE CONHECIMENTO (Use estes dados para responder):\n' + knowledgeBase;
+          
+          if (knowledgeBase && knowledgeBase.trim().length > 0) {
+            finalPrompt += '\n\nBASE DE CONHECIMENTO (Use estes dados como prioridade para respostas técnicas):\n' + knowledgeBase;
           }
+
+          finalPrompt += '\n\nIMPORTANTE: Se o usuário pedir o site ou link de cadastro, use sempre https://zettabots.ia.br/. Seja prestativo e siga o tom de voz definido.';
 
           // 3. Função Gemini (Fallback de Alta Disponibilidade)
           const callGemini = async () => {
