@@ -683,10 +683,13 @@ export default function Dashboard() {
         return;
       }
 
-      const fileName = `${Date.now()}_${file.name}`;
+      const userId = session.recordId || session.id || session.user_id;
+      const sanitizedName = file.name.replace(/[^\w.-]/g, '_');
+      const fileName = `${Date.now()}_${sanitizedName}`;
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('knowledge_base')
-        .upload(`${session.id}/${fileName}`, file);
+        .upload(`${userId}/${fileName}`, file);
 
       if (uploadError) throw uploadError;
 
