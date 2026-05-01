@@ -1,12 +1,10 @@
-const ConnectionPanel = ({ qrStatus, qrCode, qrTimer, fetchQrCode, selectedInstance }) => {
+const ConnectionPanel = ({ qrStatus, qrCode, qrTimer, fetchQrCode, selectedInstance, allInstances }) => {
   const qrSize = 180;
 
   const getInstanceDisplayName = (name) => {
-    const map = {
-      'zbab2f7c727336': 'Atlas da Fé',
-      'ZettaBots': 'Zetta Master'
-    };
-    return map[name] || name;
+    if (!name) return 'Zetta Master';
+    const found = (allInstances || []).find(i => i.instance_name === name);
+    return found?.display_name || found?.name || name;
   };
 
   return (

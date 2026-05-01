@@ -898,6 +898,7 @@ export default function Dashboard() {
             qrTimer={qrTimer} 
             fetchQrCode={fetchQrCode} 
             selectedInstance={selectedInstance} 
+            allInstances={allInstances}
           />
         )}
 
