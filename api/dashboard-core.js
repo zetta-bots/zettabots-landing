@@ -1421,7 +1421,7 @@ export default async function handler(req, res) {
           }
           if (instanceName && systemPrompt) {
             // Regra mestre para evitar placeholders feios no WhatsApp e suportar agendamento
-            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: Nunca use colchetes [] para links. O site oficial é EXATAMENTE https://zettabots.ia.br/. NUNCA use .com.br. Responda sempre como Sarah. AGENDAMENTO: Se o usuário solicitar um agendamento ou lembrete, confirme com ele e ao final da sua resposta adicione EXATAMENTE o comando: [SCHED: YYYY-MM-DD HH:MM | Mensagem do lembrete]. Exemplo: [SCHED: 2026-05-10 14:30 | Lembrete de reunião].]";
+            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: O ÚNICO site oficial é https://zettabots.ia.br/. NUNCA use zetta.site ou .com.br. Responda sempre como Sarah. AGENDAMENTO: Se o usuário solicitar um agendamento ou lembrete, confirme com ele e ao final da sua resposta adicione EXATAMENTE o comando: [SCHED: YYYY-MM-DD HH:MM | Mensagem do lembrete].]";
             const promptForEvolution = systemPrompt + masterInstruction;
             
             await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
