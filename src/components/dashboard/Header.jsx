@@ -48,14 +48,14 @@ const Header = ({
     }}>
       <div className="header-title">
         <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
-          {isAdmin ? 'ZettaBots Master' : `Bem-vindo, ${session?.name || session?.instanceName || ''}`}
+          {isAdmin ? 'ZettaBots Master' : (session?.name || session?.instanceName || 'Dashboard')}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
           <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>
             {activeTab === 'conexao' ? 'CONEXÃO ATIVA' : activeTab.toUpperCase()}
           </p>
-          {isAdmin && allInstances.length > 0 && (
+          {allInstances.length > 0 && (
             <select 
               className="instance-selector-mini"
               value={selectedInstance || ''}
