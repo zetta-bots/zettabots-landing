@@ -258,27 +258,19 @@ O sistema estÃ¡ em produÃ§Ã£o. Hoje implementamos **Zetta-Cost (4.2)** e *
 ✅ **Transbordo Inteligente (2.3)** — Detecção + Pausa + Notificações + Email (100% FUNCIONAL)
 
 🚀 **PRÓXIMO PASSO:**  
-**2.2 Zetta-Scheduler** — Implementar o agendamento de mensagens/lembretes via IA integrado ao Google Calendar e disparo automático pelo WhatsApp.
+**n8n Integration** — Concluir a conexão entre o n8n e a tabela `schedules` para habilitar a inteligência de agendamento.
 
 ---
 
-## 🗓 Zetta-Scheduler: Status da Implementação (30/04)
+## 📅 Zetta-Scheduler: Status da Implementação (01/05)
 
-O sistema de agendamento está com o 'motor' pronto e validado.
-
-**O que foi entregue:**
-- [x] **UI Integrations:** Card de Google Calendar funcional no Dashboard.
-- [x] **DB Schema:** - **Zetta-Scheduler (Motor de Agendamento):** Backend cron (`scheduler-cron`) validado.
-- **Otimização Vercel:** Funções unificadas no `dashboard-core.js` (limite Hobby contornado).
-- **Sensor de Conexão:** Corrigido falso positivo de "Offline" na Evolution API.
-- **Upload de Conhecimento:** Resolvido erro "Invalid Key" e higienização de nomes de arquivos.
-- **UX Premium:** Cabeçalho padronizado e seletor de instâncias liberado para clientes.
-- **IA Link Delivery:** Injetada regra mestre para evitar placeholders `[...]` e forçar o link real.
+✅ **Dashboard UI:** Nova aba "Agendamentos" funcional com monitor em tempo real.
+✅ **Backend Motor:** `scheduler-cron` ativo na Vercel (disparos a cada 5 min).
+✅ **IA Sarah:** Calibrada para gerar o comando `[SCHED: ...]` quando solicitada.
 
 **Próximos Passos Agendamento:**
-1. Configurar o **n8n** para extrair datas/horas e salvar na tabela schedules.
-2. Configurar o n8n para criar o evento no **Google Calendar** do ID configurado.
-3. Ativar o Cron na Vercel para rodar o motor a cada minuto.
+1. Configurar o **n8n** (Webhook -> IF -> Code -> Supabase) com o JSON fornecido.
+2. Ativar integração com Google Calendar no n8n.
 
 ---
-*Próximo passo: Resolver novo problema relatado pelo usuário.*
+*Próximo passo: Apoiar na configuração do n8n.*
