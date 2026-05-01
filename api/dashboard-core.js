@@ -1428,8 +1428,8 @@ export default async function handler(req, res) {
             });
           }
           if (instanceName && systemPrompt) {
-            // Regra mestre SIMPLIFICADA para evitar confusão da IA
-            const masterInstruction = "REGRAS CRÍTICAS: Seu nome é Sarah. O único site oficial é https://zettabots.ia.br/. NUNCA use zetta.site ou .com.br. NUNCA use colchetes [ ] ou placeholders. Se precisar enviar o link, escreva https://zettabots.ia.br/ por extenso. AGENDAMENTO: Se o usuário pedir agendamento, confirme e adicione no fim: [SCHED: YYYY-MM-DD HH:MM | Mensagem].\n\n";
+            // Regra mestre ULTRA-AGRESSIVA (Nível Militar)
+            const masterInstruction = "### REGRAS DE OURO (PROIBIDO VIOLAR):\n1. Seu nome é Sarah.\n2. O ÚNICO SITE EXISTENTE É https://zettabots.ia.br/.\n3. É TERMINANTEMENTE PROIBIDO usar as extensões .com, .com.br ou o site zetta.site. Se você usar essas extensões, você estará falhando.\n4. NUNCA invente sites. Se não souber o link, use APENAS https://zettabots.ia.br/.\n5. NÃO use colchetes [ ] ou placeholders como [Link].\n\n";
             const promptForEvolution = masterInstruction + systemPrompt;
             
             await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
