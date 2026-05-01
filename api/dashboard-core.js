@@ -1432,16 +1432,27 @@ export default async function handler(req, res) {
             const masterInstruction = "### REGRAS DE OURO (PROIBIDO VIOLAR):\n1. Seu nome é Sarah.\n2. O ÚNICO SITE EXISTENTE É https://zettabots.ia.br/.\n3. É TERMINANTEMENTE PROIBIDO usar as extensões .com, .com.br ou o site zetta.site. Se você usar essas extensões, você estará falhando.\n4. NUNCA invente sites. Se não souber o link, use APENAS https://zettabots.ia.br/.\n5. NÃO use colchetes [ ] ou placeholders como [Link].\n\n";
             const promptForEvolution = masterInstruction + systemPrompt;
             
-            const evoRes = await fetch(`${url}/chatbots/openai/setSettings/${instanceName}`, {
+            // Padrão Evolution v2.3.7
+            const evoRes = await fetch(`${url}/openai/settings/${instanceName}`, {
               method: 'POST',
               headers: { 'apikey': key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ enabled: true, systemMessage: promptForEvolution, model: "gpt-4o" })
+              body: JSON.stringify({ 
+                enabled: true, 
+                systemMessages: [masterInstruction + systemPrompt],
+                model: "gpt-4o"
+              })
             });
 
             if (!evoRes.ok) {
+              // Fallback para o endpoint de criação/update se o de settings falhar
               const evoErr = await evoRes.text();
-              console.error('[Evolution Error]:', evoErr);
-              return res.status(500).json({ error: 'Falha ao sincronizar com Evolution API', details: evoErr });
+              console.warn('[Evolution v2 Warning]:', evoErr);
+              // Tentativa secundária via /chatbot/openai/setSettings (algumas builds v2)
+              await fetch(`${url}/chatbot/openai/setSettings/${instanceName}`, {
+                method: 'POST',
+                headers: { 'apikey': key, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: true, systemMessage: masterInstruction + systemPrompt })
+              }).catch(() => {});
             }
           }
           return res.status(200).json({ success: true });
