@@ -22,9 +22,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Action and Instance required' });
   }
 
-  const url = (process.env.EVOLUTION_URL || 'https://seriousokapi-evolution.cloudfy.live').replace(/\/$/, '');
-  const key = process.env.EVOLUTION_APIKEY || '1V1stsMi2TBi2qNY4sk6Ze74Gcv6g2Pk';
-  const sbUrl = process.env.VITE_SUPABASE_URL || 'https://ugtsqlhkyrjmmopakyho.supabase.co';
+  const url = (process.env.EVOLUTION_URL).replace(/\/$/, '');
+  const key = process.env.EVOLUTION_APIKEY;
+  const sbUrl = process.env.VITE_SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
   try {
@@ -1471,11 +1471,38 @@ export default async function handler(req, res) {
               const cleanNumber = schedule.contact_phone.replace(/\D/g, '');
               console.log(`[scheduler-cron] Enviando para ${cleanNumber} via ${schedule.instance_name}...`);
               
+              // 1. Enviar WhatsApp
               const sendRes = await fetch(`${url}/message/sendText/${schedule.instance_name}`, {
                 method: 'POST',
                 headers: { 'apikey': key, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ number: cleanNumber, text: schedule.message })
               });
+
+              // 2. Se tiver Google Calendar ID, notificar n8n para sincronizar
+              try {
+                const instRes = await fetch(`${sbUrl}/rest/v1/instances?instance_name=eq.${schedule.instance_name}&select=google_calendar_id,webhook_url`, {
+                  headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+                });
+                const instData = await instRes.json();
+                const calId = instData?.[0]?.google_calendar_id;
+                const hookUrl = instData?.[0]?.webhook_url;
+
+                if (calId && hookUrl) {
+                  // Dispara o webhook do n8n para criar o evento no Google
+                  fetch(hookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      event: 'calendar_sync',
+                      calendarId: calId,
+                      summary: `Agendamento: ${schedule.message}`,
+                      description: `Lembrete enviado para ${schedule.contact_phone}`,
+                      start: schedule.scheduled_at,
+                      scheduleId: schedule.id
+                    })
+                  }).catch(e => console.error('[scheduler-cron] Webhook error:', e.message));
+                }
+              } catch (e) {}
 
               const resData = await sendRes.json().catch(() => ({}));
 

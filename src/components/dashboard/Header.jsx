@@ -48,7 +48,7 @@ const Header = ({
     }}>
       <div className="header-title">
         <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
-          {isAdmin ? 'ZettaBots Master' : (session?.name || session?.instanceName || 'Dashboard')}
+          {isAdmin ? 'ZettaBots Master' : (session?.name || (session?.instanceName?.startsWith('zba') ? 'Atlas da Fé' : session?.instanceName) || 'ZettaBots Dashboard')}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px #10b981' }} />

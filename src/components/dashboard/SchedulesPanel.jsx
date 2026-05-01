@@ -127,6 +127,21 @@ const SchedulesPanel = ({ selectedInstance, showToast }) => {
                   }}>
                     {item.status === 'pending' ? 'Pendente' : item.status === 'sent' ? 'Enviado' : 'Falhou'}
                   </span>
+                  {item.google_event_id && (
+                    <span style={{ 
+                      padding: '2px 8px', 
+                      borderRadius: '6px', 
+                      fontSize: '0.65rem', 
+                      fontWeight: '800', 
+                      background: 'rgba(66, 133, 244, 0.1)', 
+                      color: '#4285f4',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <span style={{ fontSize: '10px' }}>🗓️</span> Google
+                    </span>
+                  )}
                 </div>
                 <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.4' }}>
                   {item.message}
