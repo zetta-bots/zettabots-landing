@@ -1432,11 +1432,17 @@ export default async function handler(req, res) {
             const masterInstruction = "### REGRAS DE OURO (PROIBIDO VIOLAR):\n1. Seu nome é Sarah.\n2. O ÚNICO SITE EXISTENTE É https://zettabots.ia.br/.\n3. É TERMINANTEMENTE PROIBIDO usar as extensões .com, .com.br ou o site zetta.site. Se você usar essas extensões, você estará falhando.\n4. NUNCA invente sites. Se não souber o link, use APENAS https://zettabots.ia.br/.\n5. NÃO use colchetes [ ] ou placeholders como [Link].\n\n";
             const promptForEvolution = masterInstruction + systemPrompt;
             
-            await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
+            const evoRes = await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
               method: 'POST',
               headers: { 'apikey': key, 'Content-Type': 'application/json' },
               body: JSON.stringify({ enabled: true, systemPrompt: promptForEvolution, model: "gpt-4o", timezone: "America/Sao_Paulo" })
             });
+
+            if (!evoRes.ok) {
+              const evoErr = await evoRes.text();
+              console.error('[Evolution Error]:', evoErr);
+              return res.status(500).json({ error: 'Falha ao sincronizar com Evolution API', details: evoErr });
+            }
           }
           return res.status(200).json({ success: true });
         } catch (error) {
