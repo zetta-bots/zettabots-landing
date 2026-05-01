@@ -88,8 +88,8 @@ export default function Dashboard() {
 
     if (String(parsed.phone || '').includes('21969875522')) {
       fetchAdminStats(parsed.email)
-      fetchAllInstances(parsed.email)
     }
+    fetchAllInstances(parsed.email)
 
   }, [navigate])
 
