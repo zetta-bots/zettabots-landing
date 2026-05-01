@@ -1432,10 +1432,10 @@ export default async function handler(req, res) {
             const masterInstruction = "### REGRAS DE OURO (PROIBIDO VIOLAR):\n1. Seu nome é Sarah.\n2. O ÚNICO SITE EXISTENTE É https://zettabots.ia.br/.\n3. É TERMINANTEMENTE PROIBIDO usar as extensões .com, .com.br ou o site zetta.site. Se você usar essas extensões, você estará falhando.\n4. NUNCA invente sites. Se não souber o link, use APENAS https://zettabots.ia.br/.\n5. NÃO use colchetes [ ] ou placeholders como [Link].\n\n";
             const promptForEvolution = masterInstruction + systemPrompt;
             
-            const evoRes = await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
+            const evoRes = await fetch(`${url}/chatbots/openai/setSettings/${instanceName}`, {
               method: 'POST',
               headers: { 'apikey': key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ enabled: true, systemPrompt: promptForEvolution, model: "gpt-4o", timezone: "America/Sao_Paulo" })
+              body: JSON.stringify({ enabled: true, systemMessage: promptForEvolution, model: "gpt-4o" })
             });
 
             if (!evoRes.ok) {
