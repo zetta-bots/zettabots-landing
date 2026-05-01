@@ -1191,6 +1191,14 @@ export default async function handler(req, res) {
           };
 
           const result = await callGroq('llama-3.3-70b-versatile');
+          
+          if (result && result.response) {
+            // Limpeza Final Anti-Alucinação (Segurança Absoluta)
+            result.response = result.response.replace(/zetta\.site/gi, 'zettabots.ia.br');
+            result.response = result.response.replace(/zettabots\.com\.br/gi, 'zettabots.ia.br');
+            result.response = result.response.replace(/\[(https:\/\/zettabots\.ia\.br\/?)\]/gi, '$1');
+          }
+          
           return res.status(200).json(result);
         } catch (error) {
           console.error('[Dashboard-Test] Erro:', error.message);
@@ -1420,9 +1428,9 @@ export default async function handler(req, res) {
             });
           }
           if (instanceName && systemPrompt) {
-            // Regra mestre para evitar placeholders feios no WhatsApp e suportar agendamento
-            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: O ÚNICO site oficial é https://zettabots.ia.br/. NUNCA use zetta.site ou .com.br. Responda sempre como Sarah. AGENDAMENTO: Se o usuário solicitar um agendamento ou lembrete, confirme com ele e ao final da sua resposta adicione EXATAMENTE o comando: [SCHED: YYYY-MM-DD HH:MM | Mensagem do lembrete].]";
-            const promptForEvolution = systemPrompt + masterInstruction;
+            // Regra mestre no INÍCIO para prioridade máxima da IA
+            const masterInstruction = "[SISTEMA - REGRAS MESTRE: O ÚNICO site oficial é https://zettabots.ia.br/. NUNCA use zetta.site ou .com.br. Responda sempre como Sarah. AGENDAMENTO: Se o usuário solicitar um agendamento ou lembrete, confirme com ele e ao final da sua resposta adicione EXATAMENTE o comando: [SCHED: YYYY-MM-DD HH:MM | Mensagem do lembrete].]\n\n";
+            const promptForEvolution = masterInstruction + systemPrompt;
             
             await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
               method: 'POST',
