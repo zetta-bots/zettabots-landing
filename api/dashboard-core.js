@@ -193,7 +193,7 @@ export default async function handler(req, res) {
               description: `Assinatura ZettaBots ${planLabel} (30 dias)`,
               payment_method_id: 'pix',
               payer: {
-                email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br',
+                email: (email && email.includes('@')) ? email : 'cliente@zettabots.ia.br',
                 first_name: name || 'Cliente ZettaBots'
               },
               external_reference: String(recordId),
@@ -231,13 +231,13 @@ export default async function handler(req, res) {
                 }
               ],
               payer: {
-                email: (email && email.includes('@')) ? email : 'cliente@zettabots.com.br'
+                email: (email && email.includes('@')) ? email : 'cliente@zettabots.ia.br'
               },
               external_reference: String(recordId),
               back_urls: {
-                success: 'https://zettabots.com.br/dashboard?status=success',
-                failure: 'https://zettabots.com.br/dashboard?status=failure',
-                pending: 'https://zettabots.com.br/dashboard?status=pending'
+                success: 'https://zettabots.ia.br/dashboard?status=success',
+                failure: 'https://zettabots.ia.br/dashboard?status=failure',
+                pending: 'https://zettabots.ia.br/dashboard?status=pending'
               },
               auto_return: 'approved'
             }
@@ -1421,7 +1421,7 @@ export default async function handler(req, res) {
           }
           if (instanceName && systemPrompt) {
             // Regra mestre para evitar placeholders feios no WhatsApp
-            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: Nunca use colchetes [] para links. Sempre escreva o link real: https://zettabots.ia.br/. Nunca diga 'Link para o site', diga apenas o link. Responda sempre como Sarah.]";
+            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: Nunca use colchetes [] para links. O site oficial é EXATAMENTE https://zettabots.ia.br/. NUNCA use .com.br. Responda sempre como Sarah.]";
             const promptForEvolution = systemPrompt + masterInstruction;
             
             await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
