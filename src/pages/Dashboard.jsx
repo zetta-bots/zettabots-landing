@@ -360,6 +360,14 @@ export default function Dashboard() {
       if (data.success) setFinanceData(data)
     } catch (err) {
       console.error('ERRO FINANCE:', err);
+      // Fallback para não travar a tela do cliente
+      setFinanceData({
+        plan: 'ZettaBots Trial',
+        status: 'trial',
+        nextBilling: '—',
+        value: 'Grátis',
+        invoices: []
+      });
     }
   }
 

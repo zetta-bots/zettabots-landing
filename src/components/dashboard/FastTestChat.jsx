@@ -56,6 +56,7 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance,
 
     const getInstanceDisplayName = (name) => {
       if (!name) return 'Zetta Master';
+      if (name === 'zba5b8f4b6e848') return 'Atlas da Fé';
       const found = (allInstances || []).find(i => i.instance_name === name);
       return found?.display_name || found?.name || name;
     };
