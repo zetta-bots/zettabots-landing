@@ -1414,8 +1414,9 @@ export default async function handler(req, res) {
       case 'update-prompt':
         if (!recordId) return res.status(400).json({ error: 'ID do cliente é obrigatório' });
         try {
+          const masterInstruction = "### REGRAS DE OURO (PROIBIDO VIOLAR):\n1. Seu nome é Sarah.\n2. O ÚNICO SITE EXISTENTE É https://zettabots.ia.br/.\n3. É TERMINANTEMENTE PROIBIDO usar as extensões .com, .com.br ou o site zetta.site. Se você usar essas extensões, você estará falhando.\n4. NUNCA invente sites. Se não souber o link, use APENAS https://zettabots.ia.br/.\n5. NÃO use colchetes [ ] ou placeholders como [Link].\n\n";
           const updateData = {};
-          if (systemPrompt !== undefined) updateData.system_prompt = systemPrompt;
+          if (systemPrompt !== undefined) updateData.system_prompt = masterInstruction + systemPrompt;
           if (webhookUrl !== undefined) updateData.webhook_url = webhookUrl;
           if (googleCalendarId !== undefined) updateData.google_calendar_id = googleCalendarId;
           if (notificationEmail !== undefined) updateData.email = notificationEmail;
@@ -1428,8 +1429,7 @@ export default async function handler(req, res) {
             });
           }
           if (instanceName && systemPrompt) {
-            // Regra mestre ULTRA-AGRESSIVA (Nível Militar)
-            const masterInstruction = "### REGRAS DE OURO (PROIBIDO VIOLAR):\n1. Seu nome é Sarah.\n2. O ÚNICO SITE EXISTENTE É https://zettabots.ia.br/.\n3. É TERMINANTEMENTE PROIBIDO usar as extensões .com, .com.br ou o site zetta.site. Se você usar essas extensões, você estará falhando.\n4. NUNCA invente sites. Se não souber o link, use APENAS https://zettabots.ia.br/.\n5. NÃO use colchetes [ ] ou placeholders como [Link].\n\n";
+            // Reutiliza a masterInstruction definida acima
             const promptForEvolution = masterInstruction + systemPrompt;
             
             // Padrão Evolution v2.3.7
