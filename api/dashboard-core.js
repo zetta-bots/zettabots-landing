@@ -1420,10 +1420,14 @@ export default async function handler(req, res) {
             });
           }
           if (instanceName && systemPrompt) {
+            // Regra mestre para evitar placeholders feios no WhatsApp
+            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: Nunca use colchetes [] para links. Sempre escreva o link real: https://zettabots.ia.br/. Nunca diga 'Link para o site', diga apenas o link. Responda sempre como Sarah.]";
+            const promptForEvolution = systemPrompt + masterInstruction;
+            
             await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
               method: 'POST',
               headers: { 'apikey': key, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ enabled: true, systemPrompt, model: "gpt-4o", timezone: "America/Sao_Paulo" })
+              body: JSON.stringify({ enabled: true, systemPrompt: promptForEvolution, model: "gpt-4o", timezone: "America/Sao_Paulo" })
             });
           }
           return res.status(200).json({ success: true });
