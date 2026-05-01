@@ -22,6 +22,7 @@ import SettingsPanel from '../components/dashboard/SettingsPanel'
 import SubModal from '../components/dashboard/SubModal'
 import FastTestChat from '../components/dashboard/FastTestChat'
 import ZettaCostPanel from '../components/dashboard/ZettaCostPanel'
+import SchedulesPanel from '../components/dashboard/SchedulesPanel'
 
 export default function Dashboard() {
   const [selectedInstance, setSelectedInstance] = useState(null)
@@ -858,6 +859,10 @@ export default function Dashboard() {
 
         {activeTab === 'custos' && (
           <ZettaCostPanel session={session} selectedInstance={selectedInstance} />
+        )}
+
+        {activeTab === 'agendamentos' && (
+          <SchedulesPanel selectedInstance={selectedInstance} showToast={showToast} />
         )}
 
         {activeTab === 'financeiro' && (

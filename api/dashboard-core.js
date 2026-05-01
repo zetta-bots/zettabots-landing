@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   const isAdminAction = [
     'get-admin-stats', 'get-all-instances', 'admin-extend', 'admin-toggle-status', 
     'list-instances', 'create-payment', 'create-checkout', 'test-update-atlas', 
-    'test-reset-atlas', 'test-email', 'send-transbordo-email', 'scheduler-cron'
+    'test-reset-atlas', 'test-email', 'send-transbordo-email', 'scheduler-cron', 'get-schedules'
   ].includes(action);
   
   if (!action || (!isAdminAction && !instanceName)) {
@@ -1419,9 +1419,8 @@ export default async function handler(req, res) {
               body: JSON.stringify(updateData)
             });
           }
-          if (instanceName && systemPrompt) {
-            // Regra mestre para evitar placeholders feios no WhatsApp
-            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: Nunca use colchetes [] para links. O site oficial é EXATAMENTE https://zettabots.ia.br/. NUNCA use .com.br. Responda sempre como Sarah.]";
+            // Regra mestre para evitar placeholders feios no WhatsApp e suportar agendamento
+            const masterInstruction = "\n\n[SISTEMA - REGRAS MESTRE: Nunca use colchetes [] para links. O site oficial é EXATAMENTE https://zettabots.ia.br/. NUNCA use .com.br. Responda sempre como Sarah. AGENDAMENTO: Se o usuário solicitar um agendamento ou lembrete, confirme com ele e ao final da sua resposta adicione EXATAMENTE o comando: [SCHED: YYYY-MM-DD HH:MM | Mensagem do lembrete]. Exemplo: [SCHED: 2026-05-10 14:30 | Lembrete de reunião].]";
             const promptForEvolution = systemPrompt + masterInstruction;
             
             await fetch(`${url}/chatgpt/setSettings/${instanceName}`, {
@@ -1491,6 +1490,17 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, results });
         } catch (error) {
           console.error('[scheduler-cron] Erro fatal:', error.message);
+          return res.status(500).json({ error: error.message });
+        }
+
+      case 'get-schedules':
+        try {
+          const sbRes = await fetch(`${sbUrl}/rest/v1/schedules?instance_name=eq.${instanceName}&order=scheduled_at.asc`, {
+            headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
+          });
+          const schedules = await sbRes.json() || [];
+          return res.status(200).json({ success: true, schedules });
+        } catch (error) {
           return res.status(500).json({ error: error.message });
         }
 

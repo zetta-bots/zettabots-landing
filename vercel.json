@@ -5,6 +5,7 @@
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/billing-cron", "schedule": "0 3 * * *" }
+    { "path": "/api/billing-cron", "schedule": "0 3 * * *" },
+    { "path": "/api/dashboard-core?action=scheduler-cron", "schedule": "*/5 * * * *" }
   ]
 }
