@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance }) => {
+const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance, allInstances }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Olá! Sou o assistente de testes da ZettaBots. Como posso ajudar você hoje?' }
@@ -56,11 +56,8 @@ const FastTestChat = ({ session, systemPrompt, knowledgeFiles, selectedInstance 
 
     const getInstanceDisplayName = (name) => {
       if (!name) return 'Zetta Master';
-      const mapping = {
-        'zbab2f7c727336': 'Atlas da Fé',
-        'ZettaBots': 'Zetta Master'
-      };
-      return mapping[name] || name;
+      const found = (allInstances || []).find(i => i.instance_name === name);
+      return found?.display_name || found?.name || name;
     };
 
     return (

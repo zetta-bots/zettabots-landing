@@ -929,6 +929,7 @@ export default function Dashboard() {
         systemPrompt={prompt} 
         knowledgeFiles={knowledgeFiles} 
         selectedInstance={selectedInstance}
+        allInstances={allInstances}
       />
 
       {showSubModal && (

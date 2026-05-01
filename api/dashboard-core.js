@@ -961,15 +961,16 @@ export default async function handler(req, res) {
 
       case 'get-all-instances':
         try {
-          const { email } = req.body;
-          if (email !== 'richardrovigati@gmail.com') return res.status(403).json({ error: 'Acesso negado' });
-
+          const isAdmin = (email === 'richardrovigati@gmail.com');
           const instanceDisplayNames = {
             'zbab2f7c727336': 'Atlas da Fé',
+            'zba5b8f4b6e848': 'Atlas da Fé', // Mapping the new ID too
             'ZettaBots': 'ZettaBots'
           };
 
-          const allRes = await fetch(`${sbUrl}/rest/v1/instances?select=*&order=created_at.desc`, {
+          // Se for admin, pega tudo. Se não, filtra pelo email.
+          const queryParam = isAdmin ? 'select=*' : `email=eq.${encodeURIComponent(email)}&select=*`;
+          const allRes = await fetch(`${sbUrl}/rest/v1/instances?${queryParam}&order=created_at.desc`, {
             headers: { 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}` }
           });
           let allData = await allRes.json() || [];
@@ -977,12 +978,12 @@ export default async function handler(req, res) {
           // Add display name mapping
           allData = allData.map(instance => ({
             ...instance,
-            display_name: instanceDisplayNames[instance.instance_name] || instance.instance_name || instance.name || 'Instance'
+            display_name: instanceDisplayNames[instance.instance_name] || instance.instance_name || instance.name || 'Bot'
           }));
 
           return res.status(200).json({ success: true, instances: allData });
-        } catch (e) {
-          return res.status(500).json({ error: 'Admin fetch error' });
+        } catch (error) {
+          return res.status(500).json({ error: error.message });
         }
 
       case 'global-kill-switch': {
